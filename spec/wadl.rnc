@@ -1,0 +1,160 @@
+namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
+namespace local = ""
+namespace wadl = "http://research.sun.com/wadl/2006/07"
+
+start =
+  element wadl:application {
+    doc*,
+    grammars?,
+    resources?,
+    (resource | method | representation | fault)*,
+    foreign-attribute,
+    foreign-element
+  }
+languageTag = xsd:string {
+   pattern = "[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*"
+}
+doc = 
+  element wadl:doc {
+    attribute xml:lang { languageTag }?,
+    attribute title { text }?,
+    (text | foreign-element)*,
+    foreign-attribute
+  }
+grammars = 
+  element wadl:grammars { 
+    doc*,
+    incl*,
+    foreign-element 
+  }
+incl =
+  element wadl:include {
+    doc*, 
+    attribute href { xsd:anyURI },
+    foreign-attribute
+  }
+resources =
+  element wadl:resources {
+    doc*,
+    resource+,
+    attribute base { xsd:anyURI },
+    foreign-attribute,
+    foreign-element
+  }
+resource =
+  element wadl:resource {
+    (
+      (
+        attribute href { xsd:anyURI },
+        param*
+      ) |
+      (
+        doc*,
+        param*,
+        (method | resource)*,
+        attribute path { text }?,
+        attribute id { xsd:token }?
+       )
+    ),
+    foreign-element,
+    foreign-attribute
+  }
+method =
+  element wadl:method {
+    (attribute href { xsd:anyURI }
+     | (doc*,
+        request?,
+        response?,
+        attribute id { xsd:token }?,
+        attribute name {
+          "DELETE" | "GET" | "HEAD" | "POST" | "PUT" | xsd:token
+        })),
+    foreign-element,
+    foreign-attribute
+  }
+request =
+  element wadl:request {
+    doc*,
+    representation*,
+    param*,
+    foreign-attribute,
+    foreign-element
+  }
+response =
+  element wadl:response {
+    doc*, 
+    (representation | fault)*, 
+    foreign-attribute, 
+    foreign-element
+  }
+representation =
+  element wadl:representation {
+    (attribute href { xsd:anyURI }
+     | (doc*, 
+        param*,
+        attribute id { xsd:token }?,
+        attribute element { xsd:QName }?,
+        attribute mediaType { text }?,
+        attribute profile { list { xsd:anyURI} }?)),
+    foreign-attribute,
+    foreign-element
+  }
+fault =
+  element wadl:fault {
+    (attribute href { xsd:anyURI }
+     | (doc*, 
+        param*,
+        attribute id { xsd:token }?,
+        attribute element { xsd:QName }?,
+        attribute mediaType { text }?,
+        attribute status {
+          list { xsd:int+ }
+        }?)),
+    foreign-attribute,
+    foreign-element
+  }
+param =
+  element wadl:param {
+    doc*,
+    option*,
+    link?,
+    attribute name {xsd:token },
+    attribute type { text }?,
+    attribute default { text }?,
+    attribute path { text }?,
+    attribute style { "plain" | "form" | "matrix" }?,
+    attribute required { xsd:boolean }?,
+    attribute repeating { xsd:boolean }?,
+    attribute fixed { text }?,
+    foreign-element,
+    foreign-attribute
+  }
+option = 
+  element wadl:option {
+    doc*,
+    attribute value { xsd:string },
+    foreign-element,
+    foreign-attribute
+  }
+link = 
+  element wadl:link {
+    doc*,
+    attribute href { xsd:anyURI }?,
+    attribute rel { xsd:token }?,
+    attribute rev { xsd:token }?,
+    foreign-element,
+    foreign-attribute
+  }
+foreign-attribute = attribute * - (wadl:* | local:* | xml:*) { text }*
+foreign-element =
+  element * - (wadl:* | local:*) {
+    (attribute * { text }
+     | text
+     | any-element)*
+  }*
+any-element =
+  element * {
+    (attribute * { text }
+     | text
+     | any-element)*
+  }*

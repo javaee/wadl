@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://research.sun.com/wadl/2006/07 wadl.xsd"
+ xmlns:tns="urn:yahoo:yn"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ xmlns:yn="urn:yahoo:yn"
+ xmlns:ya="urn:yahoo:api"
+ xmlns="http://research.sun.com/wadl/2006/07">
+  <grammars>
+    <include 
+      href="NewsSearchResponse.xsd"/>
+    <include
+      href="Error.xsd"/>
+  </grammars>
+  
+  <resources base="http://api.search.yahoo.com/NewsSearchService/V1/">
+    <resource path="newsSearch">
+      <method name="GET" id="search">
+        <request>
+          <param name="appid" type="xsd:string" required="true"/>
+          <param name="query" type="xsd:string" required="true"/>
+          <param name="type" default="all">
+            <option value="all"/>
+            <option value="any"/>
+            <option value="phrase"/>
+          </param>
+          <param name="results" type="xsd:int" default="10"/>
+          <param name="start" type="xsd:int" default="1"/>
+          <param name="sort" default="rank">
+            <option value="rank"/>
+            <option value="date"/>
+          </param>
+          <param name="language" type="xsd:string"/>
+        </request>
+        <response>
+          <representation mediaType="application/xml"
+            element="yn:ResultSet"/>
+          <fault status="400" mediaType="application/xml"
+            element="ya:Error"/>
+        </response>
+      </method>
+    </resource>
+  </resources>
+  
+</application>

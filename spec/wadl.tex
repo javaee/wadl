@@ -1,0 +1,697 @@
+\documentclass[11pt]{article}
+\usepackage{times}
+\usepackage{moreverb}
+\usepackage{wadl} % just fixes verbatim font style to make it smaller
+\usepackage[dvips]{graphicx}
+\usepackage[dvips,
+  pdftitle={Web Application Description Language (WADL)},
+  pdfauthor={Marc J. Hadley, Sun Microsystems Inc.},
+  pdfsubject={Web Application Description Language (WADL)},
+  pdfkeywords={XML Web services HTTP},
+  letterpaper=true,
+  bookmarksnumbered=true
+]{hyperref}
+
+
+\textwidth = 6.5 in
+\textheight = 9 in
+\oddsidemargin = 0.0 in
+\evensidemargin = 0.0 in
+\topmargin = 0.0 in
+\headheight = 0.0 in
+\headsep = 0.0 in
+\parskip = 0.2in
+\parindent = 0.0in
+
+\title{Web Application Description Language (WADL)}
+\author{Marc J. Hadley, Sun Microsystems Inc.}
+% \date{July 2006}
+\begin{document}
+\def\verbatim@font{\small\ttfamily}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\maketitle
+\begin{abstract}
+This specification describes the Web Application Description Language (WADL). An increasing number of Web-based enterprises (Google, Yahoo, Amazon, Flickr to name but a few) are developing HTTP-based applications that provide programatic access to their internal data. Typically these applications are described using textual documentation that is sometimes supplemented with more formal specifications such as XML schema for XML-based data formats. WADL is designed to provide a machine process-able protocol description format for use with such HTTP-based Web applications. 
+\end{abstract}
+
+\section{Introduction}
+
+This specification describes the Web Application Description Language (WADL). WADL is designed to provide a machine process-able protocol description format for use with HTTP-based Web applications. 
+
+\subsection{Web Applications}
+
+For the purposes of this article, a Web application is defined as a HTTP-based application whose interactions are amenable to machine processing. While many existing Web sites are examples of HTTP-based applications, a large number of those require human cognitive function for successful non-brittle\footnote{Brittle use, e.g., HTML page scraping, is generally always possible but less desirable in terms of maintenance, efficiency and performance.} use. Typically Web applications:
+        
+\begin{itemize}
+\item Are based on existing Web architecture and infrastructure
+\item Are platform and programming language independent
+\item Promote re-use of the application beyond the browser
+\item Enable composition with other Web or desktop applications
+\item Require semantic clarity in content (representations) exchanged during their use
+\end{itemize}
+        
+The latter requirement can be fulfilled by the use of XML either by defining a complete custom schema for the application domain or embedding a custom micro-format in an existing schema using its extensibility points. Given the above definition of a Web application, one can see that the following aspects of an application could be usefully described in a machine processable format:
+        
+\begin{description}
+\item[Set of resources] Analogous to a site map showing the resources on offer.
+\item[Relationships between resources] Describing the links between resources, both referential and causal.
+\item[Methods that can be applied to each resource] The HTTP methods that can be applied to each resource, the expected inputs and outputs and their supported formats.
+\item[Resource representation formats] The supported MIME types and any XML schemas in use.
+\end{description}
+
+\subsection{Use Cases}
+
+The current state-of-the-art in Web application description is textual documentation plus one or more XML schemata. Whilst entirely adequate for human consumption, this level of description precludes the following use cases which require a more machine usable description format:
+
+\begin{description}
+\item[Application Modelling and Visualization] Support for development of resource modelling tools for resource relationship and choreography analysis and manipulation.
+\item[Code Generation] Automated generation of stub and skeleton code and code for manipulation of resource representations.
+\item[Configuration] Configuration of client and server using a portable format.
+\end{description}
+
+It would also be useful to have a common foundation for individual applications and protocols to re-use and perhaps extend rather than each inventing a new description format.
+
+\subsection{Example WADL Description}
+
+The following listing shows an example of a WADL description for the Yahoo News Search\cite{yahoows} application.
+
+\listinginput[1]{1}{YahooSearch.wadl}
+
+Lines 2--8 begin an application description and define the XML namespaces used elsewhere in the service description. Lines 9--14 define the XML grammars used by the service, in this case two W3C XML Schema files are included by reference. Lines 16--43 describe the Yahoo News Search Web resource and the HTTP methods it supports. Lines 18--40 describe the \lq search\rq\ GET method: lines 19--34 describe the input; lines 35--40 describe the possible outputs.
+
+\section{Description Components}
+
+All WADL elements have the following XML namespace name:
+
+\begin{itemize}
+\item \code{http://research.sun.com/wadl/2006/07}
+\end{itemize}
+
+This section describes each component of a WADL document in detail.
+
+\subsection{Application}
+
+The \code{application} element forms the root of a WADL description and contains the following:
+
+\begin{enumerate}
+\item Zero or more \code{doc} elements -- see section \ref{doc}.
+\item An optional \code{grammars} element -- see section \ref{grammars}.
+\item An optional \code{resources} element -- see section \ref{resources}.
+\item Zero or more of the following:
+\begin{itemize}
+\item \code{resource} elements --  see section \ref{resource}.
+\item \code{method} elements --  see section \ref{method}.
+\item \code{representation}  elements -- see section \ref{representation}.
+\item \code{fault} elements -- see section \ref{fault}.
+\end{itemize}
+\end{enumerate}
+
+\subsection{Documentation}
+\label{doc}
+
+Each WADL-defined element can have one or more child \code{doc} elements that can be used to document that element. The \code{doc} element has the following attributes:
+
+\begin{description}
+\item[\code{xml:lang}] Defines the language for the \code{title} attribute value and the contents of the \code{doc} element. If an element contains more than one \code{doc} element then they MUST have distinct values for their \code{xml:lang} attribute.
+\item[\code{title}] A short plain text description of the element being documented, the value SHOULD be suitable for use as a title for the contained documentation.
+\end{description}
+
+The \code{doc} element has mixed content and may contain text and zero or more child elements that form the body of the documentation. It is RECOMMENDED that the child elements be members of the text, list or table modules of XHTML\cite{xhtmlmodularization}.
+
+\subsection{Grammars}
+\label{grammars}
+
+The \code{grammars} element acts as a container for definitions of the format of data exchanged during execution of the protocol described by the WADL document. Such definitions may be included inline or by reference using the \code{include} element (see section \ref{include}). No particular data format definition language language is mandated; sections \ref{usingrelaxng} and \ref{usingxsd} describe use of RelaxNG and W3C XML Schema with WADL, respectively.
+
+It is permissible to include multiple definitions of a particular format: such definitions are assumed to be equivalent and consumers of a WADL description are free to choose amongst the alternatives or even combine them if they support that capability.
+
+\subsubsection{Include}
+\label{include}
+
+The \code{include} element allows the definitions of one or more data format descriptions  to be included by reference. The \code{href} attribute provides a URI for the referenced definitions and is of type \code{xsd:anyURI}. Use of the \code{include} element is logically equivalent to in-lining the referenced document within the WADL \code{grammars} element.
+
+\subsection{Resources}
+\label{resources}
+
+The \code{resources} element acts as a container for the resources provided by the application. A \code{resources} element has a \code{base} attribute of type \code{xsd:anyURI} that provides the base URI for each child resource identifier. Descendent \code{resource} elements (see section \ref{resource})  each describe a single resource provided by the application.
+
+\subsection{Resource}
+\label{resource}
+
+A \code{resource} element describes a single resource, identified by a URI, provided by the Web application. A \code{resource} element can either be a resource definition or a reference to a resource defined elsewhere.
+
+\subsubsection{Resource Reference}
+
+A \code{resource} reference element has a \code{href} attribute of type \code{xsd:anyURI}. The value of the \code{href} attribute is a URI reference to a \code{resource} definition element. A \code{resource} reference element MAY have zero or more child \code{param} elements (see section \ref{param}) and MUST NOT have any other WADL-defined attributes or contain any other WADL-defined child elements.
+
+This form of \code{resource} element may be used to reduce duplication when the same resource hierarchy is offered at multiple URIs.
+
+\subsubsection{Resource Definition}
+
+A \code{resource} definition element has the following attributes:
+
+\begin{description}
+\item[\code{id}] An optional identifier of the resource definition, required for globally defined resources, not allowed on locally embedded resources. Resource definitions are identified by an XML ID and are referred to using a URI reference.
+\item[\code{path}] An optional attribute of type \code{xsd:string}. If present, it provides a template for the identifier of the resource as a relative URI whose base URI is given by the \code{resource} element's parent \code{resource} or \code{resources} element.
+
+The value of the \code{path} attribute may be static or may contain embedded path parameters. A path parameter is represented within the \code{path} value as \lq\{\rq\ \emph{name} \lq\}\rq\ where \emph{name} is the name of the parameter. At runtime, the values of path parameters are substituted into the resource identifier when the resource is used, see section \ref{genresids} for a detailed example.
+
+Embedded path parameters have limited expressivity; for more complex generative URIs, use of the \code{param} element (see section \ref{param}) should be considered: a child \code{param} element whose \code{name} attribute value matches the \emph{name} of an embedded path parameter provides additional information about that path parameter.
+\end{description}
+
+A \code{resource} definition element contains the following child elements:
+
+\begin{itemize}
+\item Zero or more \code{doc} elements -- see section \ref{doc}.
+\item Zero or more \code{param} elements (see section \ref{param}), each of which define parameterized components of the \code{resource} element's URI identifier.
+\item Zero or more \code{method} (see section \ref{method}) elements, each of which describes the input to and output from an HTTP protocol method that can be applied to the resource.
+\item Zero or more \code{resource} elements that describe sub-resources.
+\end{itemize}
+
+\subsubsection{Path Parameters}
+\label{pathvar}
+
+Child \code{param} elements (see section \ref{param}) may be used to parameterize the identifier of their parent \code{resource} element. If the value of the \code{name} attribute of a child \code{param} element matches the name of a path parameter embedded in the parent resource's \code{path} attribute then the \code{param} element contains additional information about the embedded parameter rather than declaring a new path parameter.
+
+\subsubsection{Generating Resource Identifiers}
+\label{genresids}
+
+The URI for a \code{resource} element is obtained using the following rules:
+
+\begin{enumerate}
+\item If the {resource} element is a reference then substitute the referenced element
+\item Set \emph{identifier} equal to the URI computed (using this process) for the parent element (\code{resource} or \code{resources})
+\item If \emph{identifier} doesn't end with a \lq$/$\rq\ then append a \lq$/$\rq\ character to \emph{identifier}
+\item Substitute the values of any embedded path parameters into the value of the \code{path} attribute
+\item Append the value obtained in the previous step to \emph{identifier}
+\item For each child \code{param} element (see section \ref{param}), in document order, that has a value of \lq matrix\rq\ for its \code{style} attribute, append a representation of the parameter value to \emph{identifier} according to the following rules:
+      \begin{itemize}
+      \item Non-boolean matrix parameters are represented as: \lq;\rq\ \emph{name} \lq=\rq\ \emph{value}
+      \item Boolean matrix parameters are represented as: \lq;\rq\ \emph{name} when \emph{value} is \code{true} and are omitted from \emph{identifier} when \emph{value} is \code{false}
+      \end{itemize}
+where \emph{name} is the value of the \code{param} element's \code{name} attribute and \emph{value} is the runtime value of the parameter.
+\end{enumerate}
+
+The following example illustrates these rules and shows an extract from a Web application description that provides multiple resources:
+
+\begin{listing}{1}
+<resources base="http://example.com/">
+  <resource path="widgets">
+    <resource path="reports/stock">
+      <param name="instockonly" style="matrix"
+        type="xsd:boolean"/>
+      ...
+    </resource>
+    <resource path="{widgetId}">
+      ...
+    </resource>
+    ...
+  </resource>
+  <resource path="accounts/{accountId}">
+    ...
+  </resource>
+</resources>
+\end{listing}
+
+The above describes the following resources:
+\begin{itemize}
+\item A resource identified by a static URI: http://example.com/\-widgets
+\item A resource identified by a static URI: http://example.com/\-widgets/reports/stock
+\item A resource identified by a matrix URI: http://example.com/\-widgets/reports/stock;instockonly
+\item Multiple resources identified by generative URIs: http://example.com/widgets/{\em widgetId}, where the {\em widgetId} component of the URI is replaced at runtime with the value of a runtime parameter called widgetId.
+\item Multiple resources identified by generative URIs: http://example.com/accounts/{\em accountId}, where the {\em accountId} component of the URI is replaced at runtime with the value of a runtime parameter called accountId.
+\end{itemize}
+
+\subsection{Method}
+\label{method}
+
+A \code{method} element describes the input to and output from an HTTP protocol method that may be applied to a resource. A \code{method} element can either be a method definition or a reference to a method defined elsewhere.
+
+\subsubsection{Method Reference}
+
+A \code{method} reference element is a child of a \code{resource} element that has an \code{href} attribute whose type is \code{xsd:anyURI}. The value of the \code{href} attribute is a URI reference to a \code{method} definition element. A \code{method} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
+
+This form of \code{method} element may be used to reduce duplication when the same method applies to more than one resource.
+
+\subsubsection{Method Definition}
+
+A \code{method} definition element is a child of a \code{resource} or \code{application} element and has the following attributes:
+
+\begin{description}
+\item[\code{name}] Indicates the HTTP method used.
+\item[\code{id}] An identifier for the method, required for globally defined methods, not allowed on locally embedded methods. Methods are identified by an XML ID and are referred to using a URI reference.
+\end{description}
+
+It is permissible to have multiple child \code{method} elements that have the same value of the \code{name} attribute for a given resource; such siblings represent distinct variations of the same HTTP method and will typically have different input data.
+
+A \code{method} element has the following child elements:
+\begin{description}
+\item[\code{doc}] Zero or more \code{doc} elements -- see section \ref{doc}.
+\item[\code{request}] Describes the input to the method as a collection of parameters and an optional resource representation -- see section \ref{request}.
+\item[\code{response}] Describes the output of the method as a collection of alternate resource representations -- see section \ref{response}.
+\end{description}
+
+\subsection{Request}
+\label{request}
+
+A \code{request} element describes the input to be included when applying an HTTP method to a resource. A \code{request} element has no attributes and may contain the following child elements:
+
+\begin{enumerate}
+\item Zero or more \code{doc} elements -- see section \ref{doc}.
+\item Zero or more \code{representation} elements -- see section \ref{representation}. Note that use of \code{representation} elements is confined to HTTP methods that accept an entity body in the request (e.g., PUT or POST). Sibling \code{representation} elements represent logically equivalent alternatives, e.g., a particular resource might support multiple XML grammars for a particular request.
+\item Zero or more \code{param} elements -- see sections \ref{requestparam} and \ref{param}.
+\end{enumerate}
+
+\subsubsection{Query Parameters}
+\label{requestparam}
+
+Child \code{param} elements (see section \ref{param}) represent URI query parameters as described in section 17.13 of HTML 4.01\cite{html401}. The runtime values of query parameters are sent as URI query parameters when the HTTP method is invoked.
+
+The following example shows a resource with a  generative URI that supports a single HTTP method with a single optional query parameter:
+
+\begin{listing}{1}
+<resources base="http://example.com/widgets">
+  <resource path="{widgetId}">
+    <method name="GET">
+      <request>
+        <param name="verbose" type="xsd:boolean"/>
+      </request>
+      <response>
+        ...
+      </response>
+    </method>
+  </resource>
+</resources>
+\end{listing}
+
+If the value of the \code{widgetId} parameter is \lq 1234567890\rq\ and the value of the \code{verbose} parameter is \lq true\rq\ then the URI on which the HTTP GET will be performed is:
+\begin{quote}
+\code{http://example.com/widgets/1234567890?verbose=true}
+\end{quote}
+
+\subsection{Response}
+\label{response}
+
+A \code{response} element describes the output that results from performing an HTTP method on a resource. It may contain the following child elements:
+
+\begin{itemize}
+\item Zero or more \code{doc} elements -- see section \ref{doc}.
+\item Zero or more \code{representation} elements - see section \ref{representation}.
+\item Zero or more \code{fault} elements - see section \ref{fault}.
+\end{itemize}
+
+Each child \code{representation} element describes a resource representation that may result from performing the method.  Sibling \code{representation} elements indicate logically equivalent alternatives; normal HTTP mechanisms may be used to select a particular alternative. Each child \code{fault} element describes a fault condition that may occur -- note that not all possible fault conditions are likely to be described and client applications should be prepared to handle the full range of possible HTTP error conditions.
+
+\subsection{Representation}
+\label{representation}
+
+A \code{representation} element describes a representation of a resource's state. A \code{representation} element can either be a representation definition or a reference to a representation defined elsewhere.
+
+\subsubsection{Representation Reference}
+
+A \code{representation} reference element can be a child of a \code{request} or \code{response} element. It has a \code{href} attribute of type \code{xsd:anyURI}. The value of the \code{href} attribute is a URI reference to a \code{representation} definition element. A \code{representation} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
+
+This form of \code{representation} element may be used to reduce duplication when the same representation is used in multiple locations.
+
+\subsubsection{Representation Definition}
+
+A \code{representation} definition element can be a child of a \code{request}, \code{response} or \code{application} element. It has the following attributes:
+
+\begin{description}
+\item[\code{id}] An identifier for the representation, required for globally defined representations, not allowed on locally embedded representations. Representations are identified by an XML ID and are referred to using a URI reference.
+\item[\code{mediaType}] Indicates the media type of the representation.
+\item[\code{element}] For XML-based representations, specifies the qualified name of the root element as described within the \code{grammars} section -- see section \ref{grammars}. 
+\item[\code{profile}] Similar to the HTML \code{profile} attribute, gives the location of one or more meta data profiles, separated by white space. The meta-data profiles define the meaning of the \code{rel} and \code{rev} attributes of descendent \code{link} elements (see section \ref{link}).
+\end{description}
+
+In addition to the attributes listed above, a \code{representation} definition element can have zero or more child \code{doc} elements (see section \ref{doc}) and
+ \code{param} elements (see section \ref{param}).
+
+\subsubsection{Representation Parameters}
+\label{repparam}
+
+A child \code{param} element (see section \ref{param}) is used to parameterize its parent \code{representation} element. Representation parameters can have one of two different functions depending on the media type of the representation:
+
+\begin{enumerate}
+\item Define the content of the representation. For \code{representation} elements with a \code{mediaType} attribute whose value is either \lq application/x-www-form-urlencoded\rq\ or \lq multipart/form-data\rq\, the representation parameters define the content of the representation which is formatted according to the media type. The same may apply to other media types.
+\item Provide a hint to processors about items of interest within a representation. For XML based representations, representation parameters can be used to identify items of interest with the XML. The \code{path} attribute of a representation parameter indicates the path to the value of the parameter within the representation. For XML-based representations this is an XPath expression.
+\end{enumerate}
+
+\subsection{Fault}
+\label{fault}
+
+A \code{fault} element is similar to a \code{representation} element (see section \ref{representation}) in structure but differs in that it denotes an error condition. A \code{fault} element has the same attributes as a \code{representation} element but may also have an additional \code{status} attribute that provides a list of HTTP status codes associated with a particular error condition. Note that multiple \code{fault} elements may share one or more HTTP status codes: such elements may describe more granular fault conditions or may provide equivalent information in different formats.
+
+\subsubsection{Fault Parameters}
+\label{faultparam}
+
+Fault parameters are \code{param} elements (see section \ref{param}) that are direct children of a \code{fault} element. Fault parameters perform the same function for \code{fault} elements that representation parameters (see section \ref{repparam}) perform for \code{representation} elements.
+
+\subsection{Parameter}
+\label{param}
+
+A \code{param} element describes a parameterized component of its parent element and may be a child of a \code{resource} (see section \ref{resource}), \code{request} (see section \ref{request}), or \code{representation} (see section \ref{representation}) element. A \code{param} element has zero or more \code{doc} child elements (see section \ref{doc}), zero or more \code{option} child elements (see section \ref{option}), an optional \code{link} child element (see section \ref{link}) and has the following attributes:
+
+\begin{description}
+\item[\code{name}] The name of the parameter as an xsd:NMTOKEN. Required.
+\item[\code{type}] Optionally indicates the type of the parameter as an XML qualified name, defaults to \code{xsd:string}.
+\item[\code{default}] Optionally provides a value that is considered identical to an unspecified parameter value.
+\item[\code{style}] Optionally indicates the parameter style as one of the following values:
+  \begin{description}
+  \item[\code{plain}] The parameter is represented as a string encoding of the parameter value. This is the default when the parent element is \code{resource} (see section \ref{resource}) or \code{representation} (see section \ref{representation}) whose media type is neither  \lq application/x-www-form-urlencoded\rq\ nor \lq multipart/form-data\rq.
+  \item[\code{form}] The parameter is represented as a name value pair according to the rules specified in section 17.13 of HTML 4.01\cite{html401}. When the parent element is \code{request} (see section \ref{request}) the parameter becomes a URI query parameter. When the parent element is \code{representation} (see section \ref{representation}) whose media type is either  \lq application/x-www-form-urlencoded\rq\ or \lq multipart/form-data\rq\ the parameter is embedded within the representation.
+  \item[\code{matrix}] The parameter is represented as a matrix URI component.
+  \end{description}
+\item[\code{path}] When the parent element is a \code{representation} element, this attribute optionally provides a path to the value of the parameter within the representation.
+\item[\code{required}] Optionally indicates whether the parameter is required to be present or not, defaults to false (parameter not required).
+\item[\code{repeating}] Optionally indicates whether the parameter is single valued or may have multiple values, defaults to false (parameter is single valued).
+\item[\code{fixed}] Optionally provides a fixed value for the parameter.
+\end{description}
+
+Note that some combinations of the above attributes might not make sense in all cases. E.g. matrix URI parameters are normally optional so a \code{param} element with a \code{style} value of \lq matrix\rq\ and a \code{required} value of \lq true\rq\ might be unwise.
+
+\subsubsection{Option}
+\label{option}
+
+An \code{option} element defines one of a set of possible values for the parameter represented by its parent \code{param} element. An \code{option} element has a required \code{value} attribute that defines the value and zero or more \code{doc} elements that document the meaning of the value.
+
+\subsubsection{Link}
+\label{link}
+
+A \code{link} element is used to identify links to resources within representations. A \code{link} element is a child of a \code{param} element whose \code{path} attribute identifies the portion of its parent representation that contains a link URI.
+
+A \code{link} element contains zero or more \code{doc} elements (see section \ref{doc} and has the following attributes:
+
+\begin{description}
+\item[\code{href}] An optional URI reference to a \code{resource} element that defines the resource that the link identifies.
+\item[\code{rel}] An optional token that identifies the relationship of the resource identified by the link to the resource whose representation the link is embedded in. The value is scoped by the value of the ancestor \code{representation} (or \code{fault}) element's \code{profile} attribute.
+\item[\code{rev}] An optional token that identifies the relationship of the resource whose representation the link is embedded in to the resource identified by the link. This is the reverse relationship to that identified by  the \code{rel} attribute. The value is scoped by the value of the ancestor \code{representation} (or \code{fault}) element's \code{profile} attribute.
+\end{description}
+
+The following example shows an XML-based resource representation and two possible alternative WADL representation elements:
+
+\begin{listing}{1}
+<!-- XML-based representation of a widget -->
+<w:widget xmlns:w="http://example.com/widgets">
+  <w:loc>http://example.com/widgets/110113</w:loc>
+  <w:name>A Widget</w:name>
+  <w:description>A very useful gizmo.</w:description>
+  <w:price currency="USD">19.99</w:price>
+  <w:list>http://example.com/widgets</w:list>
+</w:widget>
+
+<!-- WADL fragment describing the widget representation
+     without parameters-->
+<representation mediaType="application/xml" 
+  element="w:widget"/>
+
+<!-- WADL fragment describing the widget representation
+     with parameters -->
+<representation mediaType="application/xml"
+  element="w:widget">
+  <param name="location"
+    type="xsd:anyURI" path="/w:widget/w:loc">
+    <link href="#widget" rel="self"/>
+  </param>
+  <param name="index"
+    type="xsd:anyURI" path="/w:widget/w:list">
+    <link href="#widgets" rel="index" rev="child"/>
+  </param>
+</representation>
+\end{listing} 
+
+The second version identifies two links within a widget representation:
+
+\begin{description}
+\item[\code{location}] The URI of the widget resource being represented. A widget resource is described by the WADL \code{resource} element whose \code{id} is \lq widget\rq.
+\item[\code{index}] The URI of a resource that acts as an index of widgets. The index resource is described by the WADL \code{resource} element whose \code{id} is \lq widgets\rq.
+\end{description}
+
+\subsection{Extensibility}
+
+Most WADL-defined elements are extensible using either elements or attributes from foreign namespaces. A WADL processor MAY ignore extensions that it does not understand and extension authors should design extensions with this in mind.
+
+\section{Use of RelaxNG with WADL}
+\label{usingrelaxng}
+
+One or more legal RelaxNG schemas may be embedded within a WADL \code{grammars} element or may be included by reference using an \code{include} element. Multiple RelaxNG schemas may be combined within a single schema using the facilities provided by RelaxNG (e.g., \code{rng:include}). The default namespace for an included RelaxNG grammar is the default namespace of the WADL \code{grammars} element.
+
+The \code{element} attribute of \code{representation} and \code{fault} elements refers to a corresponding RelaxNG element pattern using the XML qualified name of the element.
+
+\section{Use of W3C XML Schema with WADL}
+\label{usingxsd}
+
+One or more legal W3C XML Schemas may be embedded within a WADL \code{grammars} element or may be included by reference using a \code{include} element. Multiple W3C XML Schemas may be combined within a single schema using the facilities provided by W3C XML Schema (e.g., \code{xsd:include}).
+
+The \code{element} attribute of \code{representation} and \code{fault} elements refers to a corresponding W3C XML Schema global element declaration using the XML qualified name of the element.
+
+\section{WADL Media Type}
+
+WADL documents should be served using the \code{application/vnd.sun.wadl+xml} media type and use a \code{.wadl} filename extension. See the WADL media type registration\cite{wadlmedia} for full details.
+
+\appendix
+\cleardoublepage
+
+\section{Additional Examples}
+
+\subsection{Amazon Item Search}
+
+The following shows a WADL description of the Amazon item search service\cite{amazonws}:
+                
+\begin{listing}{1}
+<application xmlns="http://research.sun.com/wadl/2006/07"
+  xmlns:aws="http://webservices.amazon.com/AWSECommerceService/2005-07-26"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <grammars>
+    <include href="AWSECommerceService.xsd"/>
+  </grammars>
+    
+  <resources base="http://webservices.amazon.com/onca/">
+    <resource path="xml">
+      <method href="#ItemSearch"/>
+    </resource>
+  </resources>
+  
+  <method name="GET" id="ItemSearch">
+    <request>
+      <param name="Service" fixed="AWSECommerceService"/>
+      <param name="Version" fixed="2005-07-26"/>
+      <param name="Operation" fixed="ItemSearch"/>
+      <param name="SubscriptionId" type="xsd:string"
+        required="true"/>
+      <param name="SearchIndex" type="aws:SearchIndexType"
+        required="true"/>
+      <param name="Keywords" type="aws:KeywordList"
+        required="true"/>
+      <param name="ResponseGroup" type="aws:ResponseGroupType"/>
+    </request>
+    <response>
+      <representation mediaType="text/xml"
+        element="aws:ItemSearchResponse"/>
+    </response>
+  </method>
+</application>
+\end{listing}
+
+Note the following:
+
+\begin{itemize}
+\item  The method is attached to the resource as a reference to a globally defined method rather than being embedded directly. In this instance there is no need to do this beyond illustrating the capability but this is useful where one method can be applied to multiple resources.
+\item  A number of the query parameters are marked as fixed value. The Amazon API uses query parameters to identify services and operations within those services --- use of the fixed attribute can be used to allow description of multiple logical methods on the same resource. Without the ability to fix values in this way, the Amazon API would look like one single method with many parameters.
+\end{itemize}
+
+\subsection{Atom Publishing Protocol}
+
+The Atom publishing protocol\cite{atompub} defines a set of methods to
+introspect, view and update entries in an Atom feed. The publishing protocol is bootstrapped by performing a HTTP GET on a known URI for a particular set of feeds. The response consists of an XML document, of media type application/atomserv+xml, that describes the available feeds. An example of such is shown below:
+
+\begin{listing}{1}
+<service xmlns="http://purl.org/atom/app#"> 
+  <workspace title="Main Site" > 
+    <collection 
+      title="My Blog Entries" 
+      href="http://example.org/reilly/main" > 
+      <member-type>entry</member-type> 
+      <list-template>http://example.org/{index}</list-template> 
+    </collection> 
+    <collection 
+      title="Pictures" 
+      href="http://example.org/reilly/pic" > 
+      <member-type>media</member-type> 
+      <list-template>http://example.org/p/{index}</list-template> 
+    </collection> 
+  </workspace> 
+</service>
+\end{listing}
+
+Note the similarity between the Atom service document and WADL, both describe a set of resources and methods that may be applied to them. In the case of an Atom service document the applicable methods are implicit based on the member-type of a collection. An Atom service document also defines some additional metadata (the feed title) specific to the protocol domain. One could replicate the information in an Atom service document using WADL as follows.
+
+The first step is to create a WADL document that contains all of the Atom protocol methods, associated representations and resource templates. This only needs to be done once since the contents of this document can then be re-used by WADL documents specific to each site.
+
+\begin{listing}{1}
+<application xmlns="http://research.sun.com/wadl/2006/07" 
+  xmlns:app="http://purl.org/atom/app#" 
+  xmlns:atom="http://www.w3.org/2005/Atom"> 
+
+  <grammars> 
+    <include href="http://purl.org/atom/app.xsd"/> 
+  </grammars>
+  
+  <resource id="feed_resource" path="{feedId}" app:member-type="entry"> 
+    <method href="#getFeed"/> 
+    <method href="#addEntryCollectionMember"/> 
+  </resource> 
+
+  <resource id="entry_resource" path="{entries}{entryId}">
+    <method href="#readEntryCollectionMember"/>
+    <method href="#deleteCollectionMember"/>
+    <method href="#updateEntryCollectionMember"/>
+  </resource>
+
+  <representation id="entry" mediaType="application/atom+xml" 
+    element="atom:entry"/>
+
+  <representation id="feed" mediaType="application/atom+xml" 
+    element="atom:feed">
+    <param name="first_link"
+      path="/atom:feed/atom:link[@rel='first']">
+      <link href="#feed_resource" rel="first"/>
+    </representation>
+    <param name="next_link"
+      path="/atom:feed/atom:link[@rel='next']">
+      <link href="#feed_resource" rel="next" rev="previous"/>
+    </param>
+    <param name="prev_link"
+      path="/atom:feed/atom:link[@rel='previous']">
+      <link href="#feed_resource" rel="previous" rev="next"/>
+    </param>
+    <param name="last_link"
+      path="/atom:feed/atom:link[@rel='last']">
+      <link href="#feed_resource" rel="last"/>
+    </param>
+  </representation> 
+
+  <method name="GET" id="getFeed"> 
+    <response> 
+      <representation href="#feed"/> 
+    </response> 
+  </method>
+
+  <method name="POST" id="addEntryCollectionMember"> 
+    <request> 
+      <representation href="#entry"/> 
+    </request> 
+  </method> 
+
+  <method name="POST" id="addGenericCollectionMember"> 
+    <request> 
+      <representation href="#entry"/> 
+      <representation /> 
+    </request> 
+  </method> 
+
+  <method name="DELETE" id="deleteCollectionMember"/>
+
+  <method name="GET" id="readEntryCollectionMember"> 
+    <response> 
+      <representation href="#entry"/> 
+    </response> 
+  </method> 
+
+  <method name="GET" id="readGenericCollectionMember"> 
+    <response> 
+      <representation href="#entry"/> 
+      <representation /> 
+    </response> 
+  </method> 
+
+  <method name="PUT" id="updateEntryCollectionMember"> 
+    <request> 
+      <representation href="#entry"/> 
+    </request> 
+    <response> 
+      <representation href="#entry"/> 
+    </response> 
+  </method>
+
+  <method name="PUT" id="updateGenericCollectionMember"> 
+    <request> 
+      <representation href="#entry"/> 
+      <representation /> 
+    </request> 
+    <response> 
+      <representation href="#entry"/> 
+      <representation /> 
+    </response> 
+  </method>
+
+</application>
+\end{listing}
+
+Given the preceding document, one can create a WADL version of the prior Atom
+service document:
+
+\begin{listing}{1}
+<application xmlns="http://research.sun.com/wadl/2006/07" 
+  xml:base="http://purl.org/atom/app.wadl" 
+  xmlns:app="http://purl.org/atom/app#"> 
+
+  <resources base="http://example.org/"> 
+    <resource href="#feed_resource" app:member-type="entry">
+      <param name="feedId" fixed="reilly/main"/>
+    </resource>
+    <resource href="#entry_resource">
+      <param name="entries" fixed="reilly/main"/>
+    </resource>
+  </resources> 
+</application>
+\end{listing}
+
+Note the use of the xml:base attribute to allow use of relative URIs in method
+references. The above WADL document describes the following resources:
+
+\begin{itemize}
+\item \code{http://example.org/reilly/main}\newline This resource supports HTTP GET to retrieve an Atom feed document and HTTP POST to add a new entry to the feed.
+\item \code{http://example.org/reilly/main/\{entryId\}}\newline Where \code{\{entryId\}} is a generative path segment that allows selections of a particular entry in the feed. This resource supports HTTP GET to retrieve an Atom entry document, HTTP PUT to replace an Atom entry in the feed, and HTTP DELETE to remove an entry from the feed.
+\end{itemize}
+
+The above document also includes an Atom-specific extension element (\code{app:member-type}) to provide the same metadata as the Atom service document.
+
+\cleardoublepage
+\section{RelaxNG Schema for WADL}
+
+\listinginput[1]{1}{wadl.rnc}
+
+\cleardoublepage
+\section{XML Schema for WADL}
+
+\listinginput[1]{1}{wadl.xsd}
+
+\cleardoublepage
+{\raggedright
+\bibliographystyle{unsrt}
+\bibliography{references}
+}
+
+\section*{Acknowledgments}
+
+Thanks to the members of the http://lists.w3.org/\-Archives/\-Public/\-public-web-http-desc/ mailing list who provided useful feedback on several iterations of this specification. Mark Nottingham and John Nienart (Yahoo!) provided extensive feedback and helped structure the overall design. 
+
+\clearpage
+%\section*{About the Author}
+
+%Marc Hadley is a senior staff engineer in the Office of the CTO, Sun Microsystems. Marc represents Sun on the W3C XML Protocol, WS-Addressing and Web APIs working groups and is co-editor of the SOAP 1.2 and WS-Addressing 1.0 specifications. Previously he was co-specification lead for JAX-WS 2.0 (the Java\texttrademark\ API for XML-based Web Services) developed under the Java Community Process(SM) and has also served as Sun's technical lead and alternate board member at the Web Services Interoperability Organization (WS-I).
+
+\section*{Copyright Notice}
+
+Copyright © 2005, 2006 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, U.S.A. All rights reserved.
+
+Unlimited copying without fee is permitted provided that the copies are not made nor distributed for direct commercial advantage, and credit to the source is given. Otherwise, no part of this work covered by copyright may be reproduced in any form or by any means graphic, electronic, or mechanical, including photocopying, recording, taping, or storage in an information retrieval system, without the prior written permission of the copyright owner.
+
+U.S. Government Rights - Commercial software.  Government users are subject to the Sun Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its supplements. 
+
+Sun,  Sun Microsystems and  the Sun logo are trademarks or registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries.
+
+\raggedright DOCUMENTATION IS PROVIDED "AS IS" AND ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT, ARE DISCLAIMED, EXCEPT TO THE EXTENT THAT SUCH DISCLAIMERS ARE HELD TO BE LEGALLY INVALID. 
+\end{document} 
