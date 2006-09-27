@@ -14,14 +14,17 @@
     <description>Builds, tests, and runs the project wadl2java_yahoo.</description>
     <import file="nbproject/build-impl.xml"/>
 
-    <property name="wadl2java.home"
-        value="../wadl2java/dist" />
+    <property name="project.wadl2java"
+        value="../wadl2java" />
 
+    <property name="wadl2java.dist"
+        value="${project.wadl2java}/dist" />
+        
     <taskdef name="wjc" 
         classname="com.sun.research.ws.wadl2java.WJCTask">
       <classpath>
-        <fileset dir="${wadl2java.home}" includes="lib/*.jar" />
-        <pathelement location="${wadl2java.home}/wadl2java.jar"/>
+        <fileset dir="${wadl2java.dist}" includes="lib/*.jar" />
+        <pathelement location="${wadl2java.dist}/wadl2java.jar"/>
       </classpath>
     </taskdef>
   
@@ -31,7 +34,7 @@
         <produces dir="gen-src" includes="**/*.java" />
         <depends dir="." includes="*.xsd"/>
         <depends dir="." includes="build.xml"/>
-        <depends dir="${wadl2java.home}" includes="wadl2java.jar"/>
+        <depends dir="${wadl2java.dist}" includes="wadl2java.jar"/>
       </wjc>
     </target>
 
