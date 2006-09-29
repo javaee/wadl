@@ -20,10 +20,13 @@
     <property name="wadl2java.dist"
         value="${project.wadl2java}/dist" />
         
+    <property name="wadl2java.lib"
+        value="${project.wadl2java}/lib" />
+        
     <taskdef name="wjc" 
         classname="com.sun.research.ws.wadl2java.WJCTask">
       <classpath>
-        <fileset dir="${wadl2java.dist}" includes="lib/*.jar" />
+        <fileset dir="${wadl2java.lib}" includes="*.jar" />
         <pathelement location="${wadl2java.dist}/wadl2java.jar"/>
       </classpath>
     </taskdef>

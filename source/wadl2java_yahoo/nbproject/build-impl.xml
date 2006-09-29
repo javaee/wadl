@@ -235,9 +235,7 @@ is divided into following sections:
     COMPILATION SECTION
     ===================
     -->
-    <target name="deps-jar" depends="init" unless="no.deps">
-        <ant target="jar" inheritall="false" antfile="${project.wadl2java}/build.xml"/>
-    </target>
+    <target name="deps-jar" depends="init" unless="no.deps"/>
     <target name="-pre-pre-compile" depends="init,deps-jar">
         <mkdir dir="${build.classes.dir}"/>
     </target>
@@ -536,9 +534,7 @@ is divided into following sections:
     CLEANUP SECTION
     ===============
     -->
-    <target name="deps-clean" depends="init" unless="no.deps">
-        <ant target="clean" inheritall="false" antfile="${project.wadl2java}/build.xml"/>
-    </target>
+    <target name="deps-clean" depends="init" unless="no.deps"/>
     <target name="-do-clean" depends="init">
         <delete dir="${build.dir}"/>
         <delete dir="${dist.dir}"/>
