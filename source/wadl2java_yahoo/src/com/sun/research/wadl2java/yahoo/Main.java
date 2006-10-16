@@ -42,8 +42,10 @@ public class Main {
                     "jaxws_restful_sample", "java", Type.ANY, 10, 1, 
                     Sort.DATE, "en", Output.XML, null);
             for (ResultType result: results.getResult()) {
-                System.out.println(result.getTitle()+
-                        " ("+result.getClickUrl()+")");
+//                System.out.println(result.getTitle()+
+//                        " ("+result.getClickUrl()+")");
+                System.out.printf("%s (%s)\n", result.getTitle(),
+                        result.getClickUrl());
             }
         } catch (JAXBException ex) {
             ex.printStackTrace();
