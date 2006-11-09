@@ -21,7 +21,6 @@ package com.sun.research.wadl2java.yahoo;
 
 import com.yahoo.search.*;
 import com.yahoo.search.Endpoint.NewsSearch;
-import com.yahoo.search.Endpoint.NewsSearch.*;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
@@ -42,8 +41,6 @@ public class Main {
                     "jaxws_restful_sample", "java", Type.ANY, 10, 1, 
                     Sort.DATE, "en", Output.XML, null);
             for (ResultType result: results.getResult()) {
-//                System.out.println(result.getTitle()+
-//                        " ("+result.getClickUrl()+")");
                 System.out.printf("%s (%s)\n", result.getTitle(),
                         result.getClickUrl());
             }
