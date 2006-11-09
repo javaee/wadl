@@ -19,7 +19,7 @@
 
 package com.sun.research.ws.wadl2java.ast;
 
-import com.sun.research.ws.wadl.Fault;
+import com.sun.research.ws.wadl.RepresentationType;
 import com.sun.research.ws.wadl.Param;
 import com.sun.research.ws.wadl.Doc;
 import java.util.List;
@@ -31,14 +31,14 @@ import javax.xml.namespace.QName;
  */
 public class FaultNode {
     
-    private Fault fault;
+    private RepresentationType fault;
     String className;
     
     /**
      * Creates a new instance of FaultNode
      * @param f the unmarshalled JAXB-generated fault object
      */
-    public FaultNode(Fault f) {
+    public FaultNode(RepresentationType f) {
         fault = f;
         if (f.getId()!=null)
             className = ResourceNode.makeClassName(f.getId());

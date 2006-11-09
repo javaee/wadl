@@ -23,6 +23,7 @@ package com.sun.research.ws.wadl2java.ast;
 import com.sun.research.ws.wadl.Param;
 import com.sun.research.ws.wadl.ParamStyle;
 import com.sun.research.ws.wadl.Resource;
+import com.sun.research.ws.wadl.ResourceType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,9 +35,8 @@ import java.util.regex.Matcher;
  * Represents a segment of a URI with zero or more embedded parameters as found
  * in the path attribute of a WADL resource element. Embedded parameters are
  * represented as {name} where name is the name of the parameter. This class also
- * maintains the list of matrix parameters and any addition parameter information 
- * supplied using a child WADL param element.
- * @author mh124079
+ * maintains the list of matrix parameters, query parameters and any addition
+ * parameter information supplied using a child WADL param element.
  */
 public class PathSegment {
     
@@ -100,11 +100,11 @@ public class PathSegment {
         // iterate through child param elements to extract params
         Map<String, Param> pathParameters = new HashMap<String, Param>();
         for (Param p: resource.getParam()) {
-            if (p.getStyle() == null || p.getStyle() == ParamStyle.PLAIN)
+            if (p.getStyle() == null || p.getStyle() == ParamStyle.TEMPLATE)
                 pathParameters.put(p.getName(), p);
             else if (p.getStyle() == ParamStyle.MATRIX)
                 matrixParameters.add(p);
-            else if (p.getStyle() == ParamStyle.FORM)
+            else if (p.getStyle() == ParamStyle.QUERY)
                 queryParameters.add(p);
         }
         
@@ -124,6 +124,25 @@ public class PathSegment {
                 templateParameters.add(embeddedParam);
             }
         }
+    }
+    
+    /**
+     * Creates a new instance of PathSegment from a WADL resource type element
+     * @param resource the WADL resource type element
+     */
+    public PathSegment(ResourceType resource) {
+        template = null;
+        templateParameters = new ArrayList<Param>();
+        matrixParameters = new ArrayList<Param>();
+        queryParameters = new ArrayList<Param>();
+        
+        // iterate through child param elements to extract params
+        Map<String, Param> pathParameters = new HashMap<String, Param>();
+        for (Param p: resource.getParam()) {
+            if (p.getStyle() == ParamStyle.QUERY)
+                queryParameters.add(p);
+        }
+        
     }
     
     /**

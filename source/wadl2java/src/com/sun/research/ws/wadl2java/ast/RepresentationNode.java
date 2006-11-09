@@ -21,7 +21,7 @@ package com.sun.research.ws.wadl2java.ast;
 
 import com.sun.research.ws.wadl.Doc;
 import com.sun.research.ws.wadl.Param;
-import com.sun.research.ws.wadl.Representation;
+import com.sun.research.ws.wadl.RepresentationType;
 import java.util.List;
 import javax.xml.namespace.QName;
 
@@ -31,13 +31,13 @@ import javax.xml.namespace.QName;
  */
 public class RepresentationNode {
     
-    Representation rep;
+    RepresentationType rep;
     
     /**
      * Creates a new instance of RepresentationNode
      * @param r the unmarshalled JAXB-generated representation object
      */
-    public RepresentationNode(Representation r) {
+    public RepresentationNode(RepresentationType r) {
         rep = r;
     }
     

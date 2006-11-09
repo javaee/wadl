@@ -38,6 +38,7 @@ public class ResourceNode {
     private PathSegment pathSegment;
     private List<ResourceNode> childResources;
     private List<MethodNode> methods;
+    private List<ResourceTypeNode> types;
     private List<Doc> doc;
     
     /**
@@ -53,6 +54,7 @@ public class ResourceNode {
                 resources==null ? "" : resources.getBase());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();
+        types = new ArrayList<ResourceTypeNode>();
     }
     
     /**
@@ -68,6 +70,7 @@ public class ResourceNode {
         className = makeClassName(pathSegment.evaluate(null));
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();        
+        types = new ArrayList<ResourceTypeNode>();
     }
     
     /**
@@ -128,6 +131,19 @@ public class ResourceNode {
         return methods;
     }
     
+    public void addResourceType(ResourceTypeNode n) {
+        types.add(n);
+        methods.addAll(n.getMethods());
+    }
+    
+    /**
+     * Get the types for this resource
+     * @return a list of resource types
+     */
+    public List<ResourceTypeNode> getResourceTypes() {
+        return types;
+    }
+    
     /**
      * Get the parent resource
      * @return the parent resource or null if there isn't one.
@@ -153,17 +169,16 @@ public class ResourceNode {
     }
     
     /**
-     * Get a list of query parameters for this resource and its ancestors. The order of
+     * Get a list of query parameters for this resource and its types. The order of
      * parameters is the reverse of the ancestor list. I.e. root resource, child of root,
      * ..., parent of resource, resource.
      * @return list of query parameters
      */
     public List<Param> getQueryParams() {
         List<Param> params = new ArrayList<Param>();
-        ResourceNode n = this;
-        while (n != null) {
-            params.addAll(0, n.getPathSegment().getQueryParameters());
-            n = n.getParentResource();
+        params.addAll(getPathSegment().getQueryParameters());
+        for (ResourceTypeNode type: getResourceTypes()) {
+            params.addAll(type.getQueryParams());
         }
         return params;
     }

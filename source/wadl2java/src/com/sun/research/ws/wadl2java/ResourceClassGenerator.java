@@ -31,6 +31,7 @@ import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
+import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import com.sun.research.ws.wadl.*;
@@ -41,6 +42,7 @@ import com.sun.research.ws.wadl2java.ast.MethodNode;
 import com.sun.research.ws.wadl2java.ast.PathSegment;
 import com.sun.research.ws.wadl2java.ast.RepresentationNode;
 import com.sun.research.ws.wadl2java.ast.ResourceNode;
+import com.sun.research.ws.wadl2java.ast.ResourceTypeNode;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ import javax.xml.namespace.QName;
 public class ResourceClassGenerator {
     
     private ResourceNode resource;
-    private String pkg;
+    private JPackage pkg;
     private S2JJAXBModel s2jModel;
     private JCodeModel codeModel;
     private JFieldVar $jaxbDispatcher;
@@ -75,7 +77,7 @@ public class ResourceClassGenerator {
      * @param resource the resource element for which to generate a class
      */
     public ResourceClassGenerator(S2JJAXBModel s2jModel, JCodeModel codeModel, 
-            String pkg, JavaDocUtil javaDoc, ResourceNode resource) {
+            JPackage pkg, JavaDocUtil javaDoc, ResourceNode resource) {
         this.resource = resource;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
@@ -84,8 +86,26 @@ public class ResourceClassGenerator {
     }
     
     /**
-     * Get the generated class, will be null until <code>generateClass</code> has been called
-     * @return the generated class or null
+     * Creates a new instance of ResourceClassGenerator
+     * @param javaDoc a JavaDocUtil instance for use when generating documentation
+     * @param s2jModel the schema2java model to use for element to class mapping lookups
+     * @param codeModel code model instance to use when generating code
+     * @param pkg package for new classes
+     * @param resource the resource element for which to generate a class
+     */
+    public ResourceClassGenerator(S2JJAXBModel s2jModel, JCodeModel codeModel, 
+            JPackage pkg, JavaDocUtil javaDoc, JDefinedClass clazz) {
+        this.resource = null;
+        this.codeModel = codeModel;
+        this.javaDoc = javaDoc;
+        this.s2jModel = s2jModel;
+        this.pkg = pkg;
+        this.$class = clazz;
+    }
+    
+    /**
+     * Get the class for which methods will be generated
+     * @return the class or null if no class has yet been generated.
      */
     public JDefinedClass getGeneratedClass() {
         return $class;
@@ -100,6 +120,9 @@ public class ResourceClassGenerator {
      */
     public JDefinedClass generateClass(JDefinedClass parentClass) throws JClassAlreadyExistsException {
         JDefinedClass $impl = parentClass._class(JMod.PUBLIC | JMod.STATIC, resource.getClassName());
+        for (ResourceTypeNode t: resource.getResourceTypes()) {
+            $impl._implements(t.getGeneratedInterface());
+        }
         javaDoc.generateClassDoc(resource, $impl);
         $jaxbDispatcher = $impl.field(JMod.PRIVATE, JAXBDispatcher.class, "jaxbDispatcher");
         $dsDispatcher = $impl.field(JMod.PRIVATE, DSDispatcher.class, "dsDispatcher");
@@ -117,7 +140,7 @@ public class ResourceClassGenerator {
         $ctor._throws(JAXBException.class);
         JBlock $ctorBody = $ctor.body();
         JInvocation jcInit = codeModel.ref(JAXBContext.class).staticInvoke("newInstance");
-        jcInit.arg(JExpr.lit(pkg));
+        jcInit.arg(JExpr.lit(pkg.name()));
         JVar $jc = $ctorBody.decl(codeModel.ref(JAXBContext.class), "jc", jcInit);
         JClass arrayListOfString = codeModel.ref(ArrayList.class).narrow(String.class);
         JClass listOfString = codeModel.ref(List.class).narrow(String.class);
@@ -154,7 +177,7 @@ public class ResourceClassGenerator {
         $ctor._throws(JAXBException.class);
         $ctorBody = $ctor.body();
         jcInit = codeModel.ref(JAXBContext.class).staticInvoke("newInstance");
-        jcInit.arg(JExpr.lit(pkg));
+        jcInit.arg(JExpr.lit(pkg.name()));
         $jc = $ctorBody.decl(codeModel.ref(JAXBContext.class), "jc", jcInit);
         $ctorBody.assign($jaxbDispatcher, JExpr._new(codeModel.ref(JAXBDispatcher.class)).arg($jc).arg($uri));
         $ctorBody.assign($dsDispatcher, JExpr._new(codeModel.ref(DSDispatcher.class)).arg($uri));
@@ -172,7 +195,7 @@ public class ResourceClassGenerator {
         JDefinedClass $exCls = null;
         String exName = f.getClassName();
         try {
-            $exCls = codeModel._class(pkg+"."+exName);
+            $exCls = pkg._class( JMod.PUBLIC, exName);
             $exCls._extends(Exception.class);
             Mapping m = s2jModel.get(f.getElement());
             if (m==null)
@@ -188,7 +211,7 @@ public class ResourceClassGenerator {
             JMethod $faultInfoGetter = $exCls.method(JMod.PUBLIC, detailType, "getFaultInfo");
             $faultInfoGetter.body()._return($detailField);
         } catch (JClassAlreadyExistsException ex) {
-            $exCls = codeModel._getClass(pkg+"."+exName);
+            $exCls = ex.getExistingClass();
         }
         return $exCls;
     }
@@ -203,7 +226,7 @@ public class ResourceClassGenerator {
      * one for each combination.
      * @param method The WADL <code>method</code> element to process.
      */
-    protected void generateMethodDecls(MethodNode method) {
+    protected void generateMethodDecls(MethodNode method, boolean isAbstract) {
 
         List<RepresentationNode> supportedInputs = method.getSupportedInputs();
         List<RepresentationNode> supportedOutputs = method.getSupportedOutputs();
@@ -224,18 +247,18 @@ public class ResourceClassGenerator {
             // no input representations, just query parameters
             // for each output representation
             for (RepresentationNode returnType: supportedOutputs) {
-                generateMethodVariants(exceptionMap, method, false, null, returnType);
+                generateMethodVariants(exceptionMap, method, false, null, returnType, isAbstract);
                 if (method.hasOptionalParameters())
-                    generateMethodVariants(exceptionMap, method, true, null, returnType);
+                    generateMethodVariants(exceptionMap, method, true, null, returnType, isAbstract);
             }
         } else {
             // for each possible input representation
             for (RepresentationNode inputType: supportedInputs) {
                 // for each combination of input and output representation
                 for (RepresentationNode returnType: supportedOutputs) {
-                    generateMethodVariants(exceptionMap, method, false, inputType, returnType);
+                    generateMethodVariants(exceptionMap, method, false, inputType, returnType, isAbstract);
                     if (method.hasOptionalParameters())
-                        generateMethodVariants(exceptionMap, method, true, inputType, returnType);
+                        generateMethodVariants(exceptionMap, method, true, inputType, returnType, isAbstract);
                 }
             }
         }
@@ -280,9 +303,9 @@ public class ResourceClassGenerator {
      */
     protected void generateMethodVariants(Map<JType, JDefinedClass> exceptionMap,
             MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
-            RepresentationNode outputRep) {
-        generateDSMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep);
-        generateJAXBMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep);
+            RepresentationNode outputRep, boolean isAbstract) {
+        generateDSMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, isAbstract);
+        generateJAXBMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, isAbstract);
     }
     
     /**
@@ -299,7 +322,7 @@ public class ResourceClassGenerator {
      */
     protected void generateJAXBMethodDecl(Map<JType, JDefinedClass> exceptionMap,
             MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
-            RepresentationNode outputRep) {
+            RepresentationNode outputRep, boolean isAbstract) {
         // check if JAXB can be used with available information
         if ((outputRep != null && outputRep.getElement() == null) || (inputRep != null && inputRep.getElement() == null))
             return;
@@ -352,29 +375,31 @@ public class ResourceClassGenerator {
                 $genMethod.param(javaType, q.getName());
         }
         
-        // add the method body
-        JBlock $methodBody = $genMethod.body();
-        JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-        JVar $paramMap = $methodBody.decl(mapOfString, "parameterMap", JExpr._new(mapOfString));
-        for (Param q: params) {
-            if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
-                continue;
-            JFieldRef $paramArg = JExpr.ref(q.getName());
-            // check that required variables aren't null
-            if (q.isRequired() && q.getFixed()==null) {
-                JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
-                $throwBlock._throw(JExpr._new(codeModel.ref(
-                        IllegalArgumentException.class)).arg(
-                        JExpr.lit("Parameter "+q.getName()+" of method "+
-                        methodName+" is required and must not be null")));
+        if (!isAbstract) {
+            // add the method body
+            JBlock $methodBody = $genMethod.body();
+            JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
+            JVar $paramMap = $methodBody.decl(mapOfString, "parameterMap", JExpr._new(mapOfString));
+            for (Param q: params) {
+                if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
+                    continue;
+                JFieldRef $paramArg = JExpr.ref(q.getName());
+                // check that required variables aren't null
+                if (q.isRequired() && q.getFixed()==null) {
+                    JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
+                    $throwBlock._throw(JExpr._new(codeModel.ref(
+                            IllegalArgumentException.class)).arg(
+                            JExpr.lit("Parameter "+q.getName()+" of method "+
+                            methodName+" is required and must not be null")));
+                }
+                JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
+                if (q.getFixed()!=null)
+                    addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
+                else
+                    addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
             }
-            JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
-            if (q.getFixed()!=null)
-                addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
-            else
-                addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
+            generateJAXBDBody(method, exceptionMap, outputRep, returnType, $paramMap, inputRep, $methodBody);
         }
-        generateJAXBDBody(method, exceptionMap, outputRep, returnType, $paramMap, inputRep, $methodBody);
     }
 
     /**
@@ -391,7 +416,7 @@ public class ResourceClassGenerator {
      */
     protected void generateDSMethodDecl(Map<JType, JDefinedClass> exceptionMap,
             MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
-            RepresentationNode outputRep) {
+            RepresentationNode outputRep, boolean isAbstract) {
         // work out the method return type and the type of any input representation
         JType inputType=null, returnType=null;
         if (inputRep != null)
@@ -434,29 +459,31 @@ public class ResourceClassGenerator {
                 $genMethod.param(javaType, q.getName());
         }
         
-        // add the method body
-        JBlock $methodBody = $genMethod.body();
-        JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-        JVar $paramMap = $methodBody.decl(mapOfString, "parameterMap", JExpr._new(mapOfString));
-        for (Param q: params) {
-            if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
-                continue;
-            JFieldRef $paramArg = JExpr.ref(q.getName());
-            // check that required variables aren't null
-            if (q.isRequired() && q.getFixed()==null) {
-                JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
-                $throwBlock._throw(JExpr._new(codeModel.ref(
-                        IllegalArgumentException.class)).arg(
-                        JExpr.lit("Parameter "+q.getName()+" of method "+
-                        methodName+" is required and must not be null")));
+        if (!isAbstract) {
+            // add the method body
+            JBlock $methodBody = $genMethod.body();
+            JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
+            JVar $paramMap = $methodBody.decl(mapOfString, "parameterMap", JExpr._new(mapOfString));
+            for (Param q: params) {
+                if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
+                    continue;
+                JFieldRef $paramArg = JExpr.ref(q.getName());
+                // check that required variables aren't null
+                if (q.isRequired() && q.getFixed()==null) {
+                    JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
+                    $throwBlock._throw(JExpr._new(codeModel.ref(
+                            IllegalArgumentException.class)).arg(
+                            JExpr.lit("Parameter "+q.getName()+" of method "+
+                            methodName+" is required and must not be null")));
+                }
+                JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
+                if (q.getFixed()!=null)
+                    addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
+                else
+                    addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
             }
-            JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
-            if (q.getFixed()!=null)
-                addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
-            else
-                addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
+            generateDSDBody(method, outputRep, returnType, $paramMap, inputRep, $methodBody);
         }
-        generateDSDBody(method, outputRep, returnType, $paramMap, inputRep, $methodBody);
     }
 
     /**

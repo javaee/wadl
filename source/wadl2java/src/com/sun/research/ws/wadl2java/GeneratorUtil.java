@@ -19,6 +19,7 @@
 
 package com.sun.research.ws.wadl2java;
 
+import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
@@ -71,7 +72,7 @@ public class GeneratorUtil {
         if (param.getOption().size() > 0) {
             JDefinedClass $enum;
             try {
-                $enum = parentClass._enum(JMod.PUBLIC, ResourceNode.makeClassName(param.getName()));
+                $enum = parentClass._package()._enum(ResourceNode.makeClassName(param.getName()));
                 javaDoc.generateEnumDoc(param, $enum);
                 for (Option o: param.getOption()) {
                     JEnumConstant c = $enum.enumConstant(makeConstantName(o.getValue()));

@@ -32,6 +32,7 @@ import java.util.List;
 public class MethodNode {
     
     private ResourceNode parentResource;
+    private ResourceTypeNode parentResourceType;
     private String name;
     private List<Param> queryParams;
     private List<RepresentationNode> supportedInputs;
@@ -48,8 +49,27 @@ public class MethodNode {
         method = m;
         name = m.getName();
         parentResource = r;
+        parentResourceType = null;
         queryParams = new ArrayList<Param>();
         queryParams.addAll(parentResource.getQueryParams());
+        supportedInputs = new ArrayList<RepresentationNode>();
+        supportedOutputs = new ArrayList<RepresentationNode>();
+        faults = new ArrayList<FaultNode>();
+        r.getMethods().add(this);
+    }
+    
+    /**
+     * Creates a new instance of MethodNode and attach it to a resource type
+     * @param m the unmarshalled JAXB-generated method object
+     * @param r the resource to attach the method to
+     */
+    public MethodNode(Method m, ResourceTypeNode r) {
+        method = m;
+        name = m.getName();
+        parentResource = null;
+        parentResourceType = r;
+        queryParams = new ArrayList<Param>();
+        queryParams.addAll(r.getQueryParams());
         supportedInputs = new ArrayList<RepresentationNode>();
         supportedOutputs = new ArrayList<RepresentationNode>();
         faults = new ArrayList<FaultNode>();

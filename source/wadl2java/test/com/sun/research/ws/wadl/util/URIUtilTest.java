@@ -102,7 +102,6 @@ public class URIUtilTest extends TestCase {
         
         String expResult = "p1=v1&p2=true&p3=v3&p4=v4a&p4=v4a&p4=v4c&";
         String result = URIUtil.buildQueryString(queryParams);
-        System.out.println(result);
         assertTrue(result.split("&").length == 6);
         assertTrue(result.contains("p1=v1"));
         assertTrue(result.contains("p2=true"));

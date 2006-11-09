@@ -30,6 +30,7 @@ import com.sun.research.ws.wadl.Param;
 import com.sun.research.ws.wadl2java.ast.MethodNode;
 import com.sun.research.ws.wadl2java.ast.RepresentationNode;
 import com.sun.research.ws.wadl2java.ast.ResourceNode;
+import com.sun.research.ws.wadl2java.ast.ResourceTypeNode;
 import java.io.IOException;
 import org.w3c.dom.Element;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -164,6 +165,20 @@ public class JavaDocUtil {
     }
     
     /**
+     * Extract documentation from a WADL resource type and add it to a corresponding 
+     * generated interface.
+     * @param n the WADL resource type
+     * @param iface the corresponding interface
+     */
+    void generateClassDoc(ResourceTypeNode n, JDefinedClass iface) {
+        if (n.getDoc().size() < 1)
+            return;
+        Doc d = n.getDoc().get(0);
+        JDocComment jdoc = iface.javadoc();
+        appendTextContent(d, jdoc);
+    }
+
+    /**
      * Extract documentation from a WADL method and add it to the corresponding
      * generated Java method
      * @param m the WADL method
@@ -249,4 +264,5 @@ public class JavaDocUtil {
         JDocComment jdoc = c.javadoc();
         appendTextContent(d, jdoc);
     }
+
 }
