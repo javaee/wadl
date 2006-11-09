@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- xsi:schemaLocation="http://research.sun.com/wadl/2006/07 wadl.xsd"
+ xsi:schemaLocation="http://research.sun.com/wadl/2006/10 wadl.xsd"
  xmlns:tns="urn:yahoo:yn"
  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
  xmlns:yn="urn:yahoo:yn"
  xmlns:ya="urn:yahoo:api"
- xmlns="http://research.sun.com/wadl/2006/07">
+ xmlns="http://research.sun.com/wadl/2006/10">
   <grammars>
     <include 
       href="NewsSearchResponse.xsd"/>
@@ -17,20 +17,22 @@
     <resource path="newsSearch">
       <method name="GET" id="search">
         <request>
-          <param name="appid" type="xsd:string" required="true"/>
-          <param name="query" type="xsd:string" required="true"/>
-          <param name="type" default="all">
+          <param name="appid" type="xsd:string" 
+            style="query" required="true"/>
+          <param name="query" type="xsd:string"
+            style="query" required="true"/>
+          <param name="type" style="query" default="all">
             <option value="all"/>
             <option value="any"/>
             <option value="phrase"/>
           </param>
-          <param name="results" type="xsd:int" default="10"/>
-          <param name="start" type="xsd:int" default="1"/>
-          <param name="sort" default="rank">
+          <param name="results" style="query" type="xsd:int" default="10"/>
+          <param name="start" style="query" type="xsd:int" default="1"/>
+          <param name="sort" style="query" default="rank">
             <option value="rank"/>
             <option value="date"/>
           </param>
-          <param name="language" type="xsd:string"/>
+          <param name="language" style="query" type="xsd:string"/>
         </request>
         <response>
           <representation mediaType="application/xml"

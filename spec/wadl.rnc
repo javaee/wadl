@@ -1,24 +1,21 @@
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 namespace local = ""
-namespace wadl = "http://research.sun.com/wadl/2006/07"
+namespace wadl = "http://research.sun.com/wadl/2006/10"
 
 start =
   element wadl:application {
     doc*,
     grammars?,
     resources?,
-    (resource | method | representation | fault)*,
+    ( resource_type | method | representation | fault )*,
     foreign-attribute,
     foreign-element
   }
-languageTag = xsd:string {
-   pattern = "[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*"
-}
 doc = 
   element wadl:doc {
     attribute xml:lang { languageTag }?,
     attribute title { text }?,
-    (text | foreign-element)*,
+    ( text | foreign-element )*,
     foreign-attribute
   }
 grammars = 
@@ -41,75 +38,84 @@ resources =
     foreign-attribute,
     foreign-element
   }
+resource_type =
+  element wadl:resource_type {
+    doc*,
+    param*,
+    method*,
+    attribute id { xsd:token }?,
+    foreign-element,
+    foreign-attribute
+  }
 resource =
   element wadl:resource {
-    (
-      (
-        attribute href { xsd:anyURI },
-        param*
-      ) |
-      (
-        doc*,
-        param*,
-        (method | resource)*,
-        attribute path { text }?,
-        attribute id { xsd:token }?
-       )
-    ),
+    doc*,
+    param*,
+    (method | resource)*,
+    attribute type { list {xsd:anyURI} } ?,
+    attribute path { text }?,
+    attribute id { xsd:token }?,
+    attribute queryType { text }?,
     foreign-element,
     foreign-attribute
   }
 method =
   element wadl:method {
-    (attribute href { xsd:anyURI }
-     | (doc*,
+    (
+      (
+        attribute href { xsd:anyURI }
+      ) | (
+        doc*,
         request?,
         response?,
         attribute id { xsd:token }?,
         attribute name {
           "DELETE" | "GET" | "HEAD" | "POST" | "PUT" | xsd:token
-        })),
+        }
+      )
+    ),
     foreign-element,
     foreign-attribute
   }
 request =
   element wadl:request {
     doc*,
-    representation*,
     param*,
+    representation*,
     foreign-attribute,
     foreign-element
   }
 response =
   element wadl:response {
     doc*, 
+    param*,
     (representation | fault)*, 
     foreign-attribute, 
     foreign-element
   }
+representation_type = 
+  (
+    (
+      attribute href { xsd:anyURI }
+    ) | (
+      doc*, 
+      param*,
+      attribute id { xsd:token }?,
+      attribute element { xsd:QName }?,
+      attribute mediaType { text }?,
+      attribute profile { list { xsd:anyURI} }?,
+      attribute status { list { xsd:int+ } }?
+    )
+  )
 representation =
   element wadl:representation {
-    (attribute href { xsd:anyURI }
-     | (doc*, 
-        param*,
-        attribute id { xsd:token }?,
-        attribute element { xsd:QName }?,
-        attribute mediaType { text }?,
-        attribute profile { list { xsd:anyURI} }?)),
+    representation_type,
     foreign-attribute,
     foreign-element
   }
 fault =
   element wadl:fault {
-    (attribute href { xsd:anyURI }
-     | (doc*, 
-        param*,
-        attribute id { xsd:token }?,
-        attribute element { xsd:QName }?,
-        attribute mediaType { text }?,
-        attribute status {
-          list { xsd:int+ }
-        }?)),
+    representation_type,
     foreign-attribute,
     foreign-element
   }
@@ -119,10 +125,13 @@ param =
     option*,
     link?,
     attribute name {xsd:token },
+    attribute style { 
+      "plain" | "query" | "matrix" | "header" | "template"
+    },
+    attribute id { xsd:token }?,
     attribute type { text }?,
     attribute default { text }?,
     attribute path { text }?,
-    attribute style { "plain" | "form" | "matrix" }?,
     attribute required { xsd:boolean }?,
     attribute repeating { xsd:boolean }?,
     attribute fixed { text }?,
@@ -139,7 +148,7 @@ option =
 link = 
   element wadl:link {
     doc*,
-    attribute href { xsd:anyURI }?,
+    attribute resource_type { xsd:anyURI }?,
     attribute rel { xsd:token }?,
     attribute rev { xsd:token }?,
     foreign-element,
@@ -158,3 +167,6 @@ any-element =
      | text
      | any-element)*
   }*
+languageTag = xsd:string {
+   pattern = "[A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*"
+}
