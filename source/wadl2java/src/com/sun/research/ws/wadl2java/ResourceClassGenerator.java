@@ -199,7 +199,7 @@ public class ResourceClassGenerator {
             $exCls._extends(Exception.class);
             Mapping m = s2jModel.get(f.getElement());
             if (m==null)
-                System.err.println("Warning: fault element "+f.getElement().toString()+" not found, using Object");
+                System.err.println(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
             JType detailType = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
             JVar $detailField = $exCls.field(JMod.PRIVATE, detailType, "m_faultInfo");
             JMethod $ctor = $exCls.constructor(JMod.PUBLIC);
@@ -233,13 +233,13 @@ public class ResourceClassGenerator {
         Map<JType, JDefinedClass> exceptionMap = new HashMap<JType, JDefinedClass>();
         for (FaultNode f: method.getFaults()) {
             if (f.getElement()==null) {// skip fault for which there's no XML
-                System.err.println("Warning: skipping fault with no XML element");
+                System.err.println(Wadl2JavaMessages.FAULT_NO_ELEMENT());
                 continue;
             }
             JDefinedClass generatedException = generateExceptionClass(f);
             Mapping m = s2jModel.get(f.getElement());
             if (m==null)
-                System.err.println("Warning: fault element "+f.getElement().toString()+" not found, using Object");
+                System.err.println(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
             JType faultType = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
             exceptionMap.put(faultType, generatedException);
         }
@@ -281,7 +281,7 @@ public class ResourceClassGenerator {
         
         Mapping m = s2jModel.get(element);
         if (m==null)
-            System.err.println("Warning: element "+element.toString()+" not found, using Object");
+            System.err.println(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
         type = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
         return type;
     }
@@ -389,8 +389,7 @@ public class ResourceClassGenerator {
                     JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
                     $throwBlock._throw(JExpr._new(codeModel.ref(
                             IllegalArgumentException.class)).arg(
-                            JExpr.lit("Parameter "+q.getName()+" of method "+
-                            methodName+" is required and must not be null")));
+                            JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
                 }
                 JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
                 if (q.getFixed()!=null)
@@ -473,8 +472,7 @@ public class ResourceClassGenerator {
                     JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
                     $throwBlock._throw(JExpr._new(codeModel.ref(
                             IllegalArgumentException.class)).arg(
-                            JExpr.lit("Parameter "+q.getName()+" of method "+
-                            methodName+" is required and must not be null")));
+                            JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
                 }
                 JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
                 if (q.getFixed()!=null)
@@ -514,7 +512,7 @@ public class ResourceClassGenerator {
         for (JType faultType: exceptionMap.keySet()) {
             JDefinedClass matchingException = exceptionMap.get(faultType);
             JBlock $throwBlock = $methodBody._if(JExpr.invoke(JExpr.dotclass(faultType.boxify()), "isInstance").arg($retVal))._then();
-            $throwBlock._throw(JExpr._new(matchingException).arg(JExpr.lit("Invocation failed, see FaultInfo property for details")).arg(JExpr.cast(faultType,$retVal)));
+            $throwBlock._throw(JExpr._new(matchingException).arg(JExpr.lit(Wadl2JavaMessages.INVOCATION_FAILED())).arg(JExpr.cast(faultType,$retVal)));
         }
         
         $methodBody._return(JExpr.cast(returnType,$retVal));

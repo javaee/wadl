@@ -25,7 +25,17 @@
       </classpath>
     </taskdef>
   
+    <taskdef name="resourcegen" classname="com.sun.tools.resourcegen.ResourceGenTask">
+      <classpath>
+        <fileset dir="lib" includes="*.jar" />
+      </classpath>
+    </taskdef>
+  
     <target name="-pre-compile">
+      <echo message="Generating resource classes..." />
+      <resourcegen destDir="gen-src">
+          <resource dir="src" includes="**/*.properties"/>
+      </resourcegen>
       <echo message="Compiling the schema..." />
       <xjc schema="wadl.xsd" package="com.sun.research.ws.wadl" target="gen-src">
         <produces dir="gen-src/com/sun/research/ws/wadl" includes="**/*.java" />

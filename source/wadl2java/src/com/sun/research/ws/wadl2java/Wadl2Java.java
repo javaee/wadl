@@ -134,7 +134,7 @@ public class Wadl2Java {
         processedDocs.add(desc.toString());
         
         // read in WADL file
-        System.out.println("Processing: "+desc.toString());
+        System.out.println(Wadl2JavaMessages.PROCESSING(desc.toString()));
         Application a = (Application)u.unmarshal(desc.toURL());
         
         // process embedded schemas
@@ -145,7 +145,7 @@ public class Wadl2Java {
                 if (processedDocs.contains(incl.toString()))
                     continue;
                 processedDocs.add(incl.toString());
-                System.out.println("Processing: "+incl.toString());
+                System.out.println(Wadl2JavaMessages.PROCESSING(incl.toString()));
                 InputSource input = new InputSource(incl.toURL().openStream());
                 input.setSystemId(incl.toString());
                 s2j.parseSchema(input);
@@ -461,7 +461,7 @@ public class Wadl2Java {
         if (n != null) {
             resource.addResourceType(n);
         } else {
-            System.err.println("Warning: reference '"+href+"'not found in "+file.toString()+", skipping: ");
+            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
         }  
     }
     
@@ -605,11 +605,11 @@ public class Wadl2Java {
         String id = file.toString()+href.substring(href.indexOf('#'));
         o = idMap.get(id);
         if (o == null) {
-            System.err.println("Warning: reference '"+href+"'not found in "+file.toString()+", skipping: ");
+            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
             return null;
         }
         else if (!clazz.isInstance(o)) {
-            System.err.println("Warning: reference '"+href+"' in "+file.toString()+" identifies the wrong kind of element, skipping: ");
+            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href, file.toString()));
             return null;
         }
         return (T)o;
@@ -626,7 +626,7 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the warning.
          */
         public void warning(SAXParseException sAXParseException) {
-            System.err.println("Warning: "+sAXParseException.getMessage());
+            System.err.println(Wadl2JavaMessages.WARNING(sAXParseException.getMessage()));
         }
 
         /**
@@ -634,7 +634,7 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the informative message.
          */
         public void info(SAXParseException sAXParseException) {
-            System.err.println("Info: "+sAXParseException.getMessage());
+            System.err.println(Wadl2JavaMessages.INFO(sAXParseException.getMessage()));
         }
 
         /**
@@ -642,7 +642,7 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the fatal error.
          */
         public void fatalError(SAXParseException sAXParseException) {
-            System.err.println("Fatal Error: "+sAXParseException.getMessage());
+            System.err.println(Wadl2JavaMessages.ERROR_FATAL(sAXParseException.getMessage()));
         }
 
         /**
@@ -650,7 +650,7 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the error.
          */
         public void error(SAXParseException sAXParseException) {
-            System.err.println("Error: "+sAXParseException.getMessage());
+            System.err.println(Wadl2JavaMessages.ERROR(sAXParseException.getMessage()));
         }
         
     }

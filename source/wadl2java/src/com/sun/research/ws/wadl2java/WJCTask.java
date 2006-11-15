@@ -139,23 +139,23 @@ public class WJCTask extends Task {
      */
     public void execute() throws BuildException {
         if (pkg == null)
-            throw new BuildException("package attribute must be sepcified");
+            throw new BuildException(Wadl2JavaMessages.PACKAGE_ATTRIBUTE_REQUIRED());
         if (target == null)
-            throw new BuildException("target attribute must be specified");
+            throw new BuildException(Wadl2JavaMessages.TARGET_ATTRIBUTE_REQUIRED());
         if (!target.exists())
-            throw new BuildException("target directory ("+target.toString()+") must exist");
+            throw new BuildException(Wadl2JavaMessages.TARGET_DIRECTORY_MUST_EXIST(target.toString()));
         if (!target.isDirectory())
-            throw new BuildException("target attribute ("+target.toString()+") must specify a directory");
+            throw new BuildException(Wadl2JavaMessages.TARGET_ATTRIBUTE_DIRECTORY(target.toString()));
         if (desc == null)
-            throw new BuildException("description attribute must be specified");
+            throw new BuildException(Wadl2JavaMessages.DESCRIPTION_REQUIRED());
         
         if (desc.getScheme()==null || desc.getScheme().equals("file")) {
             // assume a file if not explicitly told otherwise
             File fileDesc = new File(this.getOwningTarget().getProject().getBaseDir(), desc.getPath());
             if (!fileDesc.exists())
-                throw new BuildException("WADL description ("+desc.toString()+") must exist");
+                throw new BuildException(Wadl2JavaMessages.WADL_DESCRIPTION_MUST_EXIST(desc.toString()));
             if (!fileDesc.isFile())
-                throw new BuildException("WADL description ("+desc.toString()+") must be a file");
+                throw new BuildException(Wadl2JavaMessages.WADL_DESCRIPTION_FILE(desc.toString()));
             desc = fileDesc.toURI();
 
             // check if description has changed since code was last generated
@@ -181,7 +181,7 @@ public class WJCTask extends Task {
             }
 
             if (earliestProducedFileStamp < Long.MAX_VALUE && latestConsumedFileStamp < earliestProducedFileStamp) {
-                log("Generated code is up to date, skipping compilation");
+                log(Wadl2JavaMessages.SKIPPING_COMPILATION());
                 return;
             }
         }
@@ -192,7 +192,7 @@ public class WJCTask extends Task {
             wadlProcessor.process(desc);
         } catch (Exception ex) {
             ex.printStackTrace();
-            throw new BuildException("WADL file processing failed", ex);
+            throw new BuildException(Wadl2JavaMessages.PROCESSING_FAILED(), ex);
         }
     }
 }

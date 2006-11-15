@@ -54,7 +54,7 @@ public class Main {
      * Print out the usage message
      */
     protected static void printUsage() {
-        System.err.println("Usage: wadl2java -o outputDir -p package file.wadl");
+        System.err.println(Wadl2JavaMessages.USAGE());
     }
     
     /**
@@ -77,7 +77,7 @@ public class Main {
                 else if (args[i].equals("-p"))
                     pkg = args[i+1];
                 else {
-                    System.err.println("Unknown option: "+args[i]);
+                    System.err.println(Wadl2JavaMessages.UNKNOWN_OPTION(args[i]));
                     printUsage();
                     System.exit(1);
                 }
@@ -88,12 +88,12 @@ public class Main {
                 // assume a file if not told otherwise
                 File wadlFile = new File(wadlDesc.getPath());
                 if (!wadlFile.exists() || !wadlFile.isFile()) {
-                    System.err.println(wadlFile.getPath()+" is not a file");
+                    System.err.println(Wadl2JavaMessages.NOT_A_FILE(wadlFile.getPath()));
                     printUsage();
                     System.exit(1);
                 }
                 if (!outputDir.exists() || !outputDir.isDirectory()) {
-                    System.err.println(outputDir.getPath()+" is not a directory");
+                    System.err.println(Wadl2JavaMessages.NOT_A_DIRECTORY(outputDir.getPath()));
                     printUsage();
                     System.exit(1);
                 }

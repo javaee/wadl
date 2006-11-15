@@ -201,7 +201,7 @@ public class PathSegment {
                 paramValue = parameterValues.get(paramName).toString();
             else if (param.isRequired())
                 throw new IllegalArgumentException(
-                    "No value for required parameter: "+paramName);
+                    AstMessages.TEMPLATE_VALUE_MISSING(paramName));
             retVal = retVal.replaceAll("\\{"+paramName+"\\}", 
                 paramValue);
         }
@@ -216,7 +216,7 @@ public class PathSegment {
                 paramValue = paramObject.toString();
             } else if (param.isRequired())
                 throw new IllegalArgumentException(
-                    "No value for required matrix parameter: "+paramName);
+                    AstMessages.MATRIX_VALUE_MISSING(paramName));
 
             if (paramObject==null)
                 continue;
