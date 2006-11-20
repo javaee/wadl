@@ -50,6 +50,10 @@ public class GeneratorUtil {
     public static String makeConstantName(String input) {
         if (input==null || input.length()==0)
             input = "CONSTANT";
+        char firstChar = input.charAt(0);
+        if (firstChar>='0' && firstChar<='9') {
+            input = "V_"+input;
+        }
         input = input.replaceAll("\\W","_");
         input = input.toUpperCase();
         return input;
