@@ -19,6 +19,7 @@
   <grammars>
     <include href="NewsSearchResponse.xsd"/>
     <include href="NewsSearchError.xsd"/>
+    <include href="binding.xjb"/>
   </grammars>
   
   <resources base="http://api.search.yahoo.com/NewsSearchService/V1/">

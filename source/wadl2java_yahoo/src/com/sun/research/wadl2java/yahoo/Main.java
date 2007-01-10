@@ -37,10 +37,10 @@ public class Main {
     public static void main(String[] args) {
         try {
             NewsSearch s = new NewsSearch();
-            ResultSet results = s.getAsResultSet( 
-                    "jaxws_restful_sample", "java", Type.ANY, 10, 1, 
+            ResultSet resultSet = s.getAsResultSet( 
+                    "jaxws_restful_sample", "java sun", Type.ALL, 10, 1, 
                     Sort.DATE, "en", Output.XML, null);
-            for (ResultType result: results.getResult()) {
+            for (Result result: resultSet.getResultList()) {
                 System.out.printf("%s (%s)\n", result.getTitle(),
                         result.getClickUrl());
             }
