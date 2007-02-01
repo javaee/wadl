@@ -347,7 +347,8 @@ public class ResourceClassGenerator {
         if (outputRep != null)
             javaDoc.generateReturnDoc(outputRep, $genMethod);
         
-        // see if any exceptions are required
+        // add throws for any required exceptions
+        $genMethod._throws(java.net.URISyntaxException.class);
         for (JDefinedClass $ex: exceptionMap.values()) {
             $genMethod._throws($ex);
         }
@@ -434,6 +435,9 @@ public class ResourceClassGenerator {
         javaDoc.generateMethodDoc(method, $genMethod);
         if (outputRep != null)
             javaDoc.generateReturnDoc(outputRep, $genMethod);
+
+        // add throws for any required exceptions
+        $genMethod._throws(java.net.URISyntaxException.class);
         
         // add a parameter for the input representation (if required)
         if (inputType != null) {

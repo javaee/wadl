@@ -20,6 +20,7 @@
 package com.sun.research.ws.wadl.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ import javax.xml.ws.http.HTTPBinding;
 public class JAXBDispatcher {
     
     Dispatch<Object> d;
+    URI uri;
     
     /**
      * Creates a new instance of JAXBDispatcher
@@ -60,6 +62,11 @@ public class JAXBDispatcher {
         ServiceManager sm = ServiceManager.newInstance();
         String url = URIUtil.buildURI(pathSegments, matrixParams, paramValues);
         d = sm.createJAXBDispatch(jc,url);
+        try {
+            uri = new URI(url);
+        } catch (URISyntaxException ex) {
+            ex.printStackTrace();
+        }
     }
     
     /**
@@ -72,6 +79,7 @@ public class JAXBDispatcher {
     public JAXBDispatcher(JAXBContext jc, URI uri) {
         ServiceManager sm = ServiceManager.newInstance();
         d = sm.createJAXBDispatch(jc,uri.toString());
+        this.uri = uri;
     } 
 
     
@@ -81,14 +89,16 @@ public class JAXBDispatcher {
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      * @return the unmarshalled resource representation.
      */
-    public Object doGET(Map<String, Object> queryParams, String expectedMimeType) {
+    public Object doGET(Map<String, Object> queryParams, String expectedMimeType) throws URISyntaxException {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "GET");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
-        String queryString = URIUtil.buildQueryString(queryParams); 
-        requestContext.put(MessageContext.QUERY_STRING, queryString);
+        String queryString = URIUtil.buildQueryString(queryParams);
+        String url = URIUtil.appendQueryString(uri, queryString);
+        requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
+//        requestContext.put(MessageContext.QUERY_STRING, queryString);
         return d.invoke(null);
     }
 
@@ -100,7 +110,7 @@ public class JAXBDispatcher {
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      * @return the unmarshalled resource representation.
      */
-    public Object doPOST(Object input, String inputMimeType, Map<String, Object> queryParams, String expectedMimeType) {
+    public Object doPOST(Object input, String inputMimeType, Map<String, Object> queryParams, String expectedMimeType) throws URISyntaxException {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "POST");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
@@ -108,7 +118,9 @@ public class JAXBDispatcher {
         headers.put("Content-Type", Arrays.asList(inputMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
         String queryString = URIUtil.buildQueryString(queryParams); 
-        requestContext.put(MessageContext.QUERY_STRING, queryString);
+        String url = URIUtil.appendQueryString(uri, queryString);
+        requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
+//        requestContext.put(MessageContext.QUERY_STRING, queryString);
         return d.invoke(input);
     }
 
@@ -121,7 +133,7 @@ public class JAXBDispatcher {
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      * @return the unmarshalled resource representation.
      */
-    public Object doPUT(Object input, String inputMimeType, Map<String, Object> queryParams, String expectedMimeType) {
+    public Object doPUT(Object input, String inputMimeType, Map<String, Object> queryParams, String expectedMimeType) throws URISyntaxException {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "PUT");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
@@ -129,7 +141,9 @@ public class JAXBDispatcher {
         headers.put("Content-Type", Arrays.asList(inputMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
         String queryString = URIUtil.buildQueryString(queryParams); 
-        requestContext.put(MessageContext.QUERY_STRING, queryString);
+        String url = URIUtil.appendQueryString(uri, queryString);
+        requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
+//        requestContext.put(MessageContext.QUERY_STRING, queryString);
         return d.invoke(input);
     }
 }

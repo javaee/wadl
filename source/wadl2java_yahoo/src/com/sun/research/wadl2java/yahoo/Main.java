@@ -44,9 +44,7 @@ public class Main {
                 System.out.printf("%s (%s)\n", result.getTitle(),
                         result.getClickUrl());
             }
-        } catch (JAXBException ex) {
-            ex.printStackTrace();
-        } catch (SearchErrorException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }

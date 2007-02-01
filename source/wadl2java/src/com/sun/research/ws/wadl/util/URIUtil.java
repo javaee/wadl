@@ -21,6 +21,8 @@ package com.sun.research.ws.wadl.util;
 
 import com.sun.research.ws.wadl2java.ast.PathSegment;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,12 @@ public class URIUtil {
         }
         
         return buf.toString();
+    }
+    
+    public static String appendQueryString(URI uri, String queryString) throws URISyntaxException {
+        URI newURI = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(),
+                uri.getPort(), uri.getPath(), queryString, uri.getFragment());
+        return newURI.toString();
     }
     
     /**

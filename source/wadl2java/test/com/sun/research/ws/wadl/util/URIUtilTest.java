@@ -99,16 +99,17 @@ public class URIUtilTest extends TestCase {
         v4.add("v4b");
         v4.add("v4c");
         queryParams.put("p4", v4);
+        queryParams.put("p5", "a b");
         
-        String expResult = "p1=v1&p2=true&p3=v3&p4=v4a&p4=v4a&p4=v4c&";
         String result = URIUtil.buildQueryString(queryParams);
-        assertTrue(result.split("&").length == 6);
+        assertTrue(result.split("&").length == 7);
         assertTrue(result.contains("p1=v1"));
         assertTrue(result.contains("p2=true"));
         assertTrue(result.contains("p3=v3"));
         assertTrue(result.contains("p4=v4a"));
         assertTrue(result.contains("p4=v4b"));
         assertTrue(result.contains("p4=v4c"));
+        assertTrue(result.contains("p5=a+b"));
     }
     
 }
