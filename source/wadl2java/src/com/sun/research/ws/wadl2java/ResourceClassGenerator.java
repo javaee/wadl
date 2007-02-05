@@ -24,6 +24,7 @@ import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JFieldRef;
@@ -129,12 +130,16 @@ public class ResourceClassGenerator {
                 
         // generate constructor with parameters for each WADL defined path parameter
         JMethod $ctor = $impl.constructor(JMod.PUBLIC);
+        JDocComment jdoc = $ctor.javadoc();
+        jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE());
         for (PathSegment segment: resource.getPathSegments()) {
             for (Param p: segment.getTemplateParameters()) {
                 $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc), p.getName());
+                javaDoc.generateParamDoc(p, $ctor);
             }
             for (Param p: segment.getMatrixParameters()) {
                 $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc), p.getName());
+                javaDoc.generateParamDoc(p, $ctor);
             }
         }
         $ctor._throws(JAXBException.class);
