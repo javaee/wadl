@@ -136,9 +136,17 @@ public class ResourceNode {
         return methods;
     }
     
+    /**
+     * Add a new base type for this resource - adds any methods, query or
+     * matrix parameters specified on the type to those specified for
+     * this resource.
+     * @param n the abstract resource type node to add
+     */
     public void addResourceType(ResourceTypeNode n) {
         types.add(n);
         methods.addAll(n.getMethods());
+        pathSegment.getQueryParameters().addAll(n.getQueryParams());
+        pathSegment.getMatrixParameters().addAll(n.getMatrixParams());
     }
     
     /**
@@ -174,18 +182,11 @@ public class ResourceNode {
     }
     
     /**
-     * Get a list of query parameters for this resource and its types. The order of
-     * parameters is the reverse of the ancestor list. I.e. root resource, child of root,
-     * ..., parent of resource, resource.
+     * Get a list of query parameters for this resource and its types.
      * @return list of query parameters
      */
     public List<Param> getQueryParams() {
-        List<Param> params = new ArrayList<Param>();
-        params.addAll(getPathSegment().getQueryParameters());
-        for (ResourceTypeNode type: getResourceTypes()) {
-            params.addAll(type.getQueryParams());
-        }
-        return params;
+        return getPathSegment().getQueryParameters();
     }
     
     /**

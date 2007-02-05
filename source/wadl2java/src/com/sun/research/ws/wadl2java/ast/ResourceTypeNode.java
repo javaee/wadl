@@ -39,10 +39,8 @@ public class ResourceTypeNode {
     private JDefinedClass generatedInterface;
     
     /**
-     * Create a new instance of ResourceNode and attach it as a child of an existing
-     * resource
-     * @param resource the unmarshalled JAXB-generated resource object
-     * @param parent the parent resource to attach the new resource to
+     * Create a new instance of ResourceTypeNode
+     * @param resourceType the unmarshalled JAXB-generated object
      */
     public ResourceTypeNode(ResourceType resourceType) {
         doc = resourceType.getDoc();
@@ -90,6 +88,10 @@ public class ResourceTypeNode {
     
     public List<Param> getQueryParams() {
         return pathSegment.getQueryParameters();
+    }
+        
+    public List<Param> getMatrixParams() {
+        return pathSegment.getMatrixParameters();
     }
         
     /**

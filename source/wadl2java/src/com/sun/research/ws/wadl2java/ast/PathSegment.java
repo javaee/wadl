@@ -141,6 +141,8 @@ public class PathSegment {
         for (Param p: resource.getParam()) {
             if (p.getStyle() == ParamStyle.QUERY)
                 queryParameters.add(p);
+            else if (p.getStyle() == ParamStyle.MATRIX)
+                matrixParameters.add(p);
         }
         
     }
