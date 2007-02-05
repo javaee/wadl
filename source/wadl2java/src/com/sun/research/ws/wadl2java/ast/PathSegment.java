@@ -208,12 +208,10 @@ public class PathSegment {
         StringBuffer buf = new StringBuffer(retVal);
         for (Param param: matrixParameters) {
             String paramName = param.getName();
-            String paramValue = null;
             Object paramObject = null;
             
             if (parameterValues.containsKey(paramName)) {
                 paramObject = parameterValues.get(paramName);
-                paramValue = paramObject.toString();
             } else if (param.isRequired())
                 throw new IllegalArgumentException(
                     AstMessages.MATRIX_VALUE_MISSING(paramName));
@@ -231,7 +229,7 @@ public class PathSegment {
                 buf.append(';');
                 buf.append(paramName);
                 buf.append('=');
-                buf.append(paramValue);
+                buf.append(String.valueOf(paramObject));
             }
         }
         return buf.toString();

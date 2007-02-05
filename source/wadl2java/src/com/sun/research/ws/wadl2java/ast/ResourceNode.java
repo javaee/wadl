@@ -67,7 +67,7 @@ public class ResourceNode {
         doc = resource.getDoc();
         parentResource = parent;
         pathSegment = new PathSegment(resource);
-        className = makeClassName(pathSegment.evaluate(null));
+        className = makeClassName(pathSegment.getTemplate());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();        
         types = new ArrayList<ResourceTypeNode>();
@@ -101,10 +101,15 @@ public class ResourceNode {
      */
     public static String makeClassName(String input) {
         if (input==null || input.length()==0)
-            input = "Index";
-        input = input.replaceAll("\\W","_");
-        input = input.substring(0,1).toUpperCase()+input.substring(1);
-        return input;
+            return("Index");
+        StringBuffer buf = new StringBuffer();
+        for(String segment: input.split("[^a-zA-Z0-9]")) {
+            if (segment.length()<1)
+                continue;
+            buf.append(segment.substring(0,1).toUpperCase());
+            buf.append(segment.substring(1));
+        }
+        return buf.toString();
     }
     
     /**
