@@ -43,102 +43,68 @@ import javax.xml.ws.http.HTTPBinding;
 public class DSDispatcher {
     
     Dispatch<DataSource> d;
-    URI uri;
     
     /**
      * Creates a new instance of JAXBDispatcher
-     * @param pathSegments a list of path segments that will be concatenated to form the URI of the
-     * resource. Embedded parameters are represented as {<i>name</i>} where <i>name</i>
-     * is the name of the parameter. Each path segment has a corresponding list of
-     * matrix URI parameters in the same position in the matrixParams list.
-     * @param matrixParams a set of matrix parameters that will be added to their corresponding path
-     * segments to form the URI of the resource. Each entry in the list is a set of
-     * matrix parameters for the path segment in the same list position.
-     * @param paramValues a map of parameter names to values. Values may be of any class, the object's
-     * toString method is used to produce a stringified value when embedded in the
-     * resource's URI.
      */
-    public DSDispatcher(List<String> pathSegments, List<List<String>> matrixParams, Map<String, Object> paramValues) {
+    public DSDispatcher() {
         ServiceManager sm = ServiceManager.newInstance();
-        String url = URIUtil.buildURI(pathSegments, matrixParams, paramValues);
-        d = sm.createDSDispatch(url);
-        try {
-            uri = new URI(url);
-        } catch (URISyntaxException ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    /**
-     * Creates a new instance of JAXBDispatcher
-     * @param uri the URI of the endpoint
-     */
-    public DSDispatcher(URI uri) {
-        ServiceManager sm = ServiceManager.newInstance();
-        d = sm.createDSDispatch(uri.toString());
-        this.uri = uri;
+        d = sm.createDSDispatch("http://127.0.0.1/");
     }
     
     /**
      * Perform a HTTP GET on the resource
-     * @param queryParams a set of query parameters that will be passed using the URI in the HTTP GET
-     * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      * @return the unmarshalled resource representation.
+     * @param url the URL of the resource
+     * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      */
-    public DataSource doGET(Map<String, Object> queryParams, String expectedMimeType) throws URISyntaxException {
+    public DataSource doGET(String url, String expectedMimeType) {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "GET");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
-        String queryString = URIUtil.buildQueryString(queryParams); 
-        String url = URIUtil.appendQueryString(uri, queryString);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
-//        requestContext.put(MessageContext.QUERY_STRING, queryString);
         return d.invoke(null);
     }
 
     /**
      * Perform a HTTP POST on the resource
+     * 
+     * @return the unmarshalled resource representation.
+     * @param url the URL of the resource
      * @param input the body of the POST request
      * @param inputMimeType the MIME type of the body of the POST request
-     * @param queryParams a set of query parameters that will be passed using the URI in the HTTP GET
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
-     * @return the unmarshalled resource representation.
      */
-    public DataSource doPOST(DataSource input, String inputMimeType, Map<String, Object> queryParams, String expectedMimeType) throws URISyntaxException {
+    public DataSource doPOST(DataSource input, String inputMimeType, String url, String expectedMimeType) {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "POST");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
         headers.put("Content-Type", Arrays.asList(inputMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
-        String queryString = URIUtil.buildQueryString(queryParams); 
-        String url = URIUtil.appendQueryString(uri, queryString);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
-//        requestContext.put(MessageContext.QUERY_STRING, queryString);
         return d.invoke(input);
     }
 
     /**
      * Perform a HTTP PUT on the resource
+     * 
+     * @return the unmarshalled resource representation.
+     * @param url the URL of the resource
      * @param input the body of the POST request
      * @param inputMimeType the MIME type of the body of the POST request
-     * @param queryParams a set of query parameters that will be passed using the URI in the HTTP GET
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
-     * @return the unmarshalled resource representation.
      */
-    public DataSource doPUT(DataSource input, String inputMimeType, Map<String, Object> queryParams, String expectedMimeType) throws URISyntaxException {
+    public DataSource doPUT(DataSource input, String inputMimeType, String url, String expectedMimeType) {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "PUT");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
         headers.put("Content-Type", Arrays.asList(inputMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
-        String queryString = URIUtil.buildQueryString(queryParams); 
-        String url = URIUtil.appendQueryString(uri, queryString);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
-//        requestContext.put(MessageContext.QUERY_STRING, queryString);
         return d.invoke(input);
     }
 

@@ -78,12 +78,34 @@ public class URIUtil {
         return buf.toString();
     }
     
+    /**
+     * Add a query string to a URI
+     * @param uri the URI
+     * @param queryString the query string
+     * @throws java.net.URISyntaxException if the resulting URI is malformed
+     * @return the resulting URI
+     */
     public static String appendQueryString(URI uri, String queryString) throws URISyntaxException {
         URI newURI = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(),
                 uri.getPort(), uri.getPath(), queryString, uri.getFragment());
         return newURI.toString();
     }
     
+    /**
+     * Add a query string to a URI
+     * 
+     * @return the resulting URI
+     * @param uri the URI
+     * @param queryString the query string
+     */
+    public static String appendQueryString(String uri, String queryString) {
+        if (queryString==null || queryString.length()==0)
+            return uri;
+        else if (uri.endsWith("?"))
+            return uri+queryString;
+        else
+            return uri+"?"+queryString;
+    }
     /**
      * Builds a URI query string from a map of keys and values.
      * @param queryParams a map of keys and their values. A value may be a <code>List</code> for repeating values.

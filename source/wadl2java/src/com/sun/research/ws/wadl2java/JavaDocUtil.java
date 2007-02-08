@@ -237,6 +237,21 @@ public class JavaDocUtil {
     }
 
     /**
+     * Extract documentation from a WADL param and add it to the 
+     * corresponding Java method return.
+     * @param p the parameter to extract documentation from
+     * @param jm the corresponding Java method
+     */
+    public void generateReturnDoc(Param p, JMethod jm) {
+        if (p.getDoc().size() < 1)
+            return;
+        Doc d = p.getDoc().get(0);
+        JDocComment jdoc = jm.javadoc();
+        JCommentPart jp = jdoc.addReturn();
+        appendTextContent(d, jp);
+    }
+
+    /**
      * Extract documentation from a WADL representation and add it to the 
      * corresponding Java method return.
      * @param r the WADL representation

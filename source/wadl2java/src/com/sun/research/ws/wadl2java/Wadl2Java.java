@@ -304,6 +304,10 @@ public class Wadl2Java {
         }
     }
     
+    /**
+     * Generate Java interfaces for WADL resource types
+     * @throws com.sun.codemodel.JClassAlreadyExistsException if the interface to be generated already exists
+     */
     protected void generateResourceTypeInterfaces() 
             throws JClassAlreadyExistsException {
         for (String id: ifaceMap.keySet()) {
@@ -316,6 +320,10 @@ public class Wadl2Java {
             // generate Java methods for each resource method
             for (MethodNode m: n.getMethods()) {
                 rcGen.generateMethodDecls(m, true);
+            }
+            // generate bean properties for matrix parameters
+            for (Param p: n.getMatrixParams()) {
+                rcGen.generateBeanProperty(iface, p, true);
             }
         }
     }
@@ -392,6 +400,11 @@ public class Wadl2Java {
         return n;
     }
     
+    /**
+     * Build an abstract tree for a resource types in a WADL file
+     * @param ifaceId the identifier of the resource type
+     * @param a the application element of the root WADL file
+     */
     protected void buildResourceTypes(String ifaceId, Application a) {
         try {
             URI file = new URI(ifaceId.substring(0,ifaceId.indexOf('#')));
@@ -415,16 +428,6 @@ public class Wadl2Java {
      */
     protected void buildResourceTree(ResourceNode parent, 
             Resource resource, URI file) {
-        // check for resource reference
-/*        String href = resource.getHref();
-        if (href != null && href.length() > 0) {
-            // dereference resource
-            if (!href.startsWith("#")) {
-                // referecnce to element in another document
-                file = getReferencedFile(file, href);
-            }
-            resource = dereferenceLocalHref(file, href, Resource.class);
-        }*/
         if (resource != null) {
             ResourceNode n = parent.addChild(resource);
             for (String type: resource.getType()) {
