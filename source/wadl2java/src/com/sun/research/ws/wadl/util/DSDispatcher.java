@@ -82,7 +82,8 @@ public class DSDispatcher {
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "POST");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
-        headers.put("Content-Type", Arrays.asList(inputMimeType));
+        if (inputMimeType != null)
+            headers.put("Content-Type", Arrays.asList(inputMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
         return d.invoke(input);
@@ -102,7 +103,8 @@ public class DSDispatcher {
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "PUT");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
-        headers.put("Content-Type", Arrays.asList(inputMimeType));
+        if (inputMimeType != null)
+            headers.put("Content-Type", Arrays.asList(inputMimeType));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
         return d.invoke(input);

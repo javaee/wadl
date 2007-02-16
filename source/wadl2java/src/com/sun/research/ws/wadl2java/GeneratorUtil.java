@@ -33,6 +33,8 @@ import com.sun.codemodel.JVar;
 import com.sun.research.ws.wadl.Option;
 import com.sun.research.ws.wadl.Param;
 import com.sun.research.ws.wadl2java.ast.ResourceNode;
+import java.util.Arrays;
+import java.util.HashSet;
 import javax.xml.namespace.QName;
 
 /**
@@ -40,6 +42,18 @@ import javax.xml.namespace.QName;
  * @author mh124079
  */
 public class GeneratorUtil {
+    
+    private static HashSet<String> keywords = new HashSet<String>(
+        Arrays.asList("abstract", "assert", "boolean", 
+        "break", "byte", "case", "catch", "char", "class", "const", "continue",
+        "default", "do", "double", "else", "enum", "extends", "false", "final",
+        "finally", "float", "for", "goto", "if", "implements", "import",
+        "instanceof", "int", "interface", "long", "native", "new", "null", 
+        "package", "private", "protected", "public", "return", "short", 
+        "static", "strictfp", "super", "switch", "synchronized", "this", 
+        "throw", "throws", "transient", "true", "try", "void", "volatile", 
+        "while"));
+
     
     /**
      * Make a Java constant name for the supplied WADL parameter. Capitalizes all
@@ -57,7 +71,48 @@ public class GeneratorUtil {
         input = input.replaceAll("\\W","_");
         input = input.toUpperCase();
         return input;
-
+    }
+    
+    /**
+     * Utility function for generating a suitable Java class name from an arbitrary
+     * string. Replaces any characters not allowed in an class name with '_'.
+     * @param input the string
+     * @return a string suitable for use as a Java class name
+     */
+    public static String makeClassName(String input) {
+        if (input==null || input.length()==0)
+            return("Index");
+        StringBuffer buf = new StringBuffer();
+        for(String segment: input.split("[^a-zA-Z0-9]")) {
+            if (segment.length()<1)
+                continue;
+            buf.append(segment.substring(0,1).toUpperCase());
+            buf.append(segment.substring(1));
+        }
+        return buf.toString();
+    }
+    
+    public static String makeParamName(String input) {
+        if (input==null || input.length()==0)
+            return("param");
+        StringBuffer buf = new StringBuffer();
+        boolean firstSegment = true;
+        for(String segment: input.split("[^a-zA-Z0-9]")) {
+            if (segment.length()<1)
+                continue;
+            if (firstSegment) {
+                buf.append(segment.toLowerCase());
+                firstSegment = false;
+            } else {
+                buf.append(segment.substring(0,1).toUpperCase());
+                buf.append(segment.substring(1));
+            }
+        }
+        String paramName = buf.toString();
+        if (keywords.contains(paramName))
+            return "_"+paramName;
+        else
+            return paramName;
     }
     
     /**
@@ -76,7 +131,7 @@ public class GeneratorUtil {
         if (param.getOption().size() > 0) {
             JDefinedClass $enum;
             try {
-                $enum = parentClass._package()._enum(ResourceNode.makeClassName(param.getName()));
+                $enum = parentClass._package()._enum(makeClassName(param.getName()));
                 javaDoc.generateEnumDoc(param, $enum);
                 for (Option o: param.getOption()) {
                     JEnumConstant c = $enum.enumConstant(makeConstantName(o.getValue()));

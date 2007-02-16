@@ -217,7 +217,7 @@ public class JavaDocUtil {
             return;
         Doc d = p.getDoc().get(0);
         JDocComment jdoc = jm.javadoc();
-        JCommentPart jp = jdoc.addParam(p.getName());
+        JCommentPart jp = jdoc.addParam(GeneratorUtil.makeParamName(p.getName()));
         appendTextContent(d, jp);
     }
 

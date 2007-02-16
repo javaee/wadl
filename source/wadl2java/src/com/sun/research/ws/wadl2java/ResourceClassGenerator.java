@@ -142,13 +142,15 @@ public class ResourceClassGenerator {
         jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE());
         for (PathSegment segment: resource.getPathSegments()) {
             for (Param p: segment.getTemplateParameters()) {
-                $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc), p.getName());
+                $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc),
+                        GeneratorUtil.makeParamName(p.getName()));
                 javaDoc.generateParamDoc(p, $ctor);
                 generateBeanProperty($impl, p, false);
             }
             for (Param p: segment.getMatrixParameters()) {
                 if (p.isRequired()) {
-                    $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc), p.getName());
+                    $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc),
+                            GeneratorUtil.makeParamName(p.getName()));
                     javaDoc.generateParamDoc(p, $ctor);
                 }
                 generateBeanProperty($impl, p, false);
@@ -182,12 +184,12 @@ public class ResourceClassGenerator {
         for (PathSegment segment: resource.getPathSegments()) {
             for (Param p: segment.getTemplateParameters()) {
                 // codegen: templateAndMatrixParameterValues.put(name, value);
-                $ctorBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(p.getName()));
+                $ctorBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(GeneratorUtil.makeParamName(p.getName())));
             }
             for (Param p: segment.getMatrixParameters()) {
                 if (p.isRequired()) {
                     // codegen: templateAndMatrixParameterValues.put(name, value);
-                    $ctorBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(p.getName()));
+                    $ctorBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(GeneratorUtil.makeParamName(p.getName())));
                 }
             }
         }
@@ -389,9 +391,9 @@ public class ResourceClassGenerator {
             q.setName(paramName);
             javaDoc.generateParamDoc(q, $genMethod);
             if (q.isRepeating())
-                $genMethod.param(codeModel.ref(List.class).narrow(javaType), q.getName());
+                $genMethod.param(codeModel.ref(List.class).narrow(javaType), GeneratorUtil.makeParamName(q.getName()));
             else
-                $genMethod.param(javaType, q.getName());
+                $genMethod.param(javaType, GeneratorUtil.makeParamName(q.getName()));
         }
         
         if (!isAbstract) {
@@ -402,7 +404,7 @@ public class ResourceClassGenerator {
             for (Param q: params) {
                 if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
                     continue;
-                JFieldRef $paramArg = JExpr.ref(q.getName());
+                JFieldRef $paramArg = JExpr.ref(GeneratorUtil.makeParamName(q.getName()));
                 // check that required variables aren't null
                 if (q.isRequired() && q.getFixed()==null) {
                     JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
@@ -476,9 +478,9 @@ public class ResourceClassGenerator {
             q.setName(paramName);
             javaDoc.generateParamDoc(q, $genMethod);
             if (q.isRepeating())
-                $genMethod.param(codeModel.ref(List.class).narrow(javaType), q.getName());
+                $genMethod.param(codeModel.ref(List.class).narrow(javaType), GeneratorUtil.makeParamName(q.getName()));
             else
-                $genMethod.param(javaType, q.getName());
+                $genMethod.param(javaType, GeneratorUtil.makeParamName(q.getName()));
         }
         
         if (!isAbstract) {
@@ -489,7 +491,7 @@ public class ResourceClassGenerator {
             for (Param q: params) {
                 if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
                     continue;
-                JFieldRef $paramArg = JExpr.ref(q.getName());
+                JFieldRef $paramArg = JExpr.ref(GeneratorUtil.makeParamName(q.getName()));
                 // check that required variables aren't null
                 if (q.isRequired() && q.getFixed()==null) {
                     JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
@@ -524,8 +526,13 @@ public class ResourceClassGenerator {
         JExpression $url = $methodBody.decl(codeModel.ref(String.class), "url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
         JInvocation $executeMethod = $jaxbDispatcher.invoke("do"+method.getName());
         if (method.getName().equals("POST") || method.getName().equals("PUT")) {
-            $executeMethod.arg(JExpr.ref("input"));
-            $executeMethod.arg(JExpr.lit(inputRep.getMediaType()));
+            if (inputRep == null) {
+                $executeMethod.arg(JExpr._null());
+                $executeMethod.arg(JExpr._null());
+            } else {
+                $executeMethod.arg(JExpr.ref("input"));
+                $executeMethod.arg(JExpr.lit(inputRep.getMediaType()));
+            }
         }
         $executeMethod.arg($url);
         $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
@@ -558,8 +565,13 @@ public class ResourceClassGenerator {
         JExpression $url = $methodBody.decl(codeModel.ref(String.class), "url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
         JInvocation $executeMethod = $dsDispatcher.invoke("do"+method.getName());
         if (method.getName().equals("POST") || method.getName().equals("PUT")) {
-            $executeMethod.arg(JExpr.ref("input"));
-            $executeMethod.arg(JExpr.lit(inputRep.getMediaType()));
+            if (inputRep == null) {
+                $executeMethod.arg(JExpr._null());
+                $executeMethod.arg(JExpr._null());
+            } else {
+                $executeMethod.arg(JExpr.ref("input"));
+                $executeMethod.arg(JExpr.lit(inputRep.getMediaType()));
+            }
         }
         $executeMethod.arg($url);
         $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
@@ -595,12 +607,12 @@ public class ResourceClassGenerator {
         JMethod $setter = $impl.method(JMod.PUBLIC, codeModel.VOID, "set"+propertyName);
         jdoc = $setter.javadoc();
         jdoc.append("Set "+p.getName());
-        $setter.param(propertyType, p.getName());
+        $setter.param(propertyType, GeneratorUtil.makeParamName(p.getName()));
         javaDoc.generateParamDoc(p, $setter);
         if (!isAbstract) {
             JBlock $setterBody = $setter.body();
             // codegen: templateAndMatrixParameterValues.put("name", value);
-            $setterBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(p.getName()));
+            $setterBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(GeneratorUtil.makeParamName(p.getName())));
         }
     }
 }

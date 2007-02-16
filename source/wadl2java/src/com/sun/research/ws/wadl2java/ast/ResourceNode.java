@@ -24,6 +24,7 @@ import com.sun.research.ws.wadl.Doc;
 import com.sun.research.ws.wadl.Param;
 import com.sun.research.ws.wadl.Resource;
 import com.sun.research.ws.wadl.Resources;
+import com.sun.research.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +68,7 @@ public class ResourceNode {
         doc = resource.getDoc();
         parentResource = parent;
         pathSegment = new PathSegment(resource);
-        className = makeClassName(pathSegment.getTemplate());
+        className = GeneratorUtil.makeClassName(pathSegment.getTemplate());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();        
         types = new ArrayList<ResourceTypeNode>();
@@ -91,25 +92,6 @@ public class ResourceNode {
      */
     public String getClassName() {
         return className;
-    }
-    
-    /**
-     * Utility function for generating a suitable Java class name from an arbitrary
-     * string. Replaces any characters not allowed in an class name with '_'.
-     * @param input the string
-     * @return a string suitable for use as a Java class name
-     */
-    public static String makeClassName(String input) {
-        if (input==null || input.length()==0)
-            return("Index");
-        StringBuffer buf = new StringBuffer();
-        for(String segment: input.split("[^a-zA-Z0-9]")) {
-            if (segment.length()<1)
-                continue;
-            buf.append(segment.substring(0,1).toUpperCase());
-            buf.append(segment.substring(1));
-        }
-        return buf.toString();
     }
     
     /**

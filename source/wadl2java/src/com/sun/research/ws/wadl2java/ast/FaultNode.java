@@ -22,6 +22,7 @@ package com.sun.research.ws.wadl2java.ast;
 import com.sun.research.ws.wadl.RepresentationType;
 import com.sun.research.ws.wadl.Param;
 import com.sun.research.ws.wadl.Doc;
+import com.sun.research.ws.wadl2java.GeneratorUtil;
 import java.util.List;
 import javax.xml.namespace.QName;
 
@@ -41,9 +42,9 @@ public class FaultNode {
     public FaultNode(RepresentationType f) {
         fault = f;
         if (f.getId()!=null)
-            className = ResourceNode.makeClassName(f.getId());
+            className = GeneratorUtil.makeClassName(f.getId());
         else if (f.getElement()!=null)
-            className = ResourceNode.makeClassName(f.getElement().getLocalPart());
+            className = GeneratorUtil.makeClassName(f.getElement().getLocalPart());
         else
             className = getMediaTypeAsClassName();
         className+="Exception";
@@ -64,7 +65,7 @@ public class FaultNode {
      * @return a suitable class name
      */
     public String getMediaTypeAsClassName() {
-        return ResourceNode.makeClassName(getMediaType());
+        return GeneratorUtil.makeClassName(getMediaType());
     }
     
     /**
