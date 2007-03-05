@@ -129,12 +129,12 @@ public class ResourceClassGenerator {
             $impl._implements(t.getGeneratedInterface());
         }
         javaDoc.generateClassDoc(resource, $impl);
-        $jaxbDispatcher = $impl.field(JMod.PRIVATE, JAXBDispatcher.class, "jaxbDispatcher");
-        $dsDispatcher = $impl.field(JMod.PRIVATE, DSDispatcher.class, "dsDispatcher");
-        $uriBuilder = $impl.field(JMod.PRIVATE, UriBuilder.class, "uriBuilder");
-        $jaxbContext = $impl.field(JMod.PRIVATE, JAXBContext.class, "jc");
+        $jaxbDispatcher = $impl.field(JMod.PRIVATE, JAXBDispatcher.class, "_jaxbDispatcher");
+        $dsDispatcher = $impl.field(JMod.PRIVATE, DSDispatcher.class, "_dsDispatcher");
+        $uriBuilder = $impl.field(JMod.PRIVATE, UriBuilder.class, "_uriBuilder");
+        $jaxbContext = $impl.field(JMod.PRIVATE, JAXBContext.class, "_jc");
         JClass mapOfStringObject = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-        $templateMatrixParamValMap = $impl.field(JMod.PRIVATE, mapOfStringObject, "templateAndMatrixParameterValues");
+        $templateMatrixParamValMap = $impl.field(JMod.PRIVATE, mapOfStringObject, "_templateAndMatrixParameterValues");
                 
         // generate constructor with parameters for each WADL defined path parameter
         JMethod $ctor = $impl.constructor(JMod.PUBLIC);
@@ -169,7 +169,7 @@ public class ResourceClassGenerator {
 
         // codegen: java.util.List<String> matrixParamSet;
         JClass listOfString = codeModel.ref(List.class).narrow(String.class);
-        JVar $matrixParamSet = $ctorBody.decl(listOfString, "matrixParamSet");
+        JVar $matrixParamSet = $ctorBody.decl(listOfString, "_matrixParamSet");
         for (PathSegment segment: resource.getPathSegments()) {
             // codegen: matrixParamSet = uriBuilder.addPathSegment(...)
             $ctorBody.assign($matrixParamSet, $uriBuilder.invoke("addPathSegment").arg(JExpr.lit(segment.getTemplate())));
@@ -380,10 +380,11 @@ public class ResourceClassGenerator {
         }
         
         // add a parameter for each query parameter
-        List<Param> params = includeOptionalParams ? 
-            method.getQueryParameters() : method.getRequiredParameters();
+        List<Param> params = method.getRequiredParameters();
+        if (includeOptionalParams)
+            params.addAll(method.getOptionalParameters());
         for (Param q: params) {
-            // skip fixed value query parameters in the method arguments
+            // skip fixed value parameters in the method arguments
             if (q.getFixed() != null)
                 continue;
             JClass javaType = GeneratorUtil.getJavaType(q, codeModel, $class, javaDoc);
@@ -400,7 +401,8 @@ public class ResourceClassGenerator {
             // add the method body
             JBlock $methodBody = $genMethod.body();
             JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-            JVar $paramMap = $methodBody.decl(mapOfString, "queryParameterValues", JExpr._new(mapOfString));
+            JVar $queryParamMap = $methodBody.decl(mapOfString, "_queryParameterValues", JExpr._new(mapOfString));
+            JVar $headerParamMap = $methodBody.decl(mapOfString, "_headerParameterValues", JExpr._new(mapOfString));
             for (Param q: params) {
                 if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
                     continue;
@@ -412,13 +414,14 @@ public class ResourceClassGenerator {
                             IllegalArgumentException.class)).arg(
                             JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
                 }
+                JVar $paramMap = q.getStyle() == ParamStyle.QUERY ? $queryParamMap : $headerParamMap;
                 JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
                 if (q.getFixed()!=null)
                     addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
                 else
                     addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
             }
-            generateJAXBDBody(method, exceptionMap, outputRep, returnType, $paramMap, inputRep, $methodBody);
+            generateJAXBDBody(method, exceptionMap, outputRep, returnType, $queryParamMap, $headerParamMap, inputRep, $methodBody);
         }
     }
 
@@ -467,8 +470,9 @@ public class ResourceClassGenerator {
         }
         
         // add a parameter for each query parameter
-        List<Param> params = includeOptionalParams ? 
-            method.getQueryParameters() : method.getRequiredParameters();
+        List<Param> params = method.getRequiredParameters();
+        if (includeOptionalParams)
+            params.addAll(method.getOptionalParameters());
         for (Param q: params) {
             // skip fixed value query parameters in the method arguments
             if (q.getFixed() != null)
@@ -487,7 +491,8 @@ public class ResourceClassGenerator {
             // add the method body
             JBlock $methodBody = $genMethod.body();
             JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-            JVar $paramMap = $methodBody.decl(mapOfString, "queryParameterValues", JExpr._new(mapOfString));
+            JVar $queryParamMap = $methodBody.decl(mapOfString, "_queryParameterValues", JExpr._new(mapOfString));
+            JVar $headerParamMap = $methodBody.decl(mapOfString, "_headerParameterValues", JExpr._new(mapOfString));
             for (Param q: params) {
                 if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
                     continue;
@@ -499,13 +504,14 @@ public class ResourceClassGenerator {
                             IllegalArgumentException.class)).arg(
                             JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
                 }
+                JVar $paramMap = q.getStyle() == ParamStyle.QUERY ? $queryParamMap : $headerParamMap;
                 JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
                 if (q.getFixed()!=null)
                     addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
                 else
                     addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
             }
-            generateDSDBody(method, outputRep, returnType, $paramMap, inputRep, $methodBody);
+            generateDSDBody(method, outputRep, returnType, $queryParamMap, $headerParamMap, inputRep, $methodBody);
         }
     }
 
@@ -521,9 +527,9 @@ public class ResourceClassGenerator {
      */
     protected void generateJAXBDBody(final MethodNode method, final Map<JType, 
             JDefinedClass> exceptionMap, final RepresentationNode outputRep, 
-            final JType returnType, final JVar $queryParamValueMap, 
+            final JType returnType, final JVar $queryParamValueMap, final JVar $headerParamValueMap, 
             final RepresentationNode inputRep, final JBlock $methodBody) {
-        JExpression $url = $methodBody.decl(codeModel.ref(String.class), "url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
+        JExpression $url = $methodBody.decl(codeModel.ref(String.class), "_url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
         JInvocation $executeMethod = $jaxbDispatcher.invoke("do"+method.getName());
         if (method.getName().equals("POST") || method.getName().equals("PUT")) {
             if (inputRep == null) {
@@ -535,8 +541,9 @@ public class ResourceClassGenerator {
             }
         }
         $executeMethod.arg($url);
+        $executeMethod.arg($headerParamValueMap);
         $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
-        JExpression $retVal = $methodBody.decl(codeModel.ref(Object.class), "retVal", $executeMethod);
+        JExpression $retVal = $methodBody.decl(codeModel.ref(Object.class), "_retVal", $executeMethod);
 
         // check type of returned object and throw generated exception if
         // it matches a fault declared in the description
@@ -560,9 +567,9 @@ public class ResourceClassGenerator {
      */
     protected void generateDSDBody(final MethodNode method, 
             final RepresentationNode outputRep, final JType returnType, 
-            final JVar $queryParamValueMap, final RepresentationNode inputRep, 
+            final JVar $queryParamValueMap, final JVar $headerParamValueMap, final RepresentationNode inputRep, 
             final JBlock $methodBody) {
-        JExpression $url = $methodBody.decl(codeModel.ref(String.class), "url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
+        JExpression $url = $methodBody.decl(codeModel.ref(String.class), "_url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
         JInvocation $executeMethod = $dsDispatcher.invoke("do"+method.getName());
         if (method.getName().equals("POST") || method.getName().equals("PUT")) {
             if (inputRep == null) {
@@ -574,8 +581,9 @@ public class ResourceClassGenerator {
             }
         }
         $executeMethod.arg($url);
+        $executeMethod.arg($headerParamValueMap);
         $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
-        JExpression $retVal = $methodBody.decl(codeModel.ref(javax.activation.DataSource.class), "retVal", $executeMethod);
+        JExpression $retVal = $methodBody.decl(codeModel.ref(javax.activation.DataSource.class), "_retVal", $executeMethod);
         
         $methodBody._return($retVal);
     }

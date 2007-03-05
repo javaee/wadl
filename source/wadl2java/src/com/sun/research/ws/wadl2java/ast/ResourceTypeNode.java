@@ -72,6 +72,10 @@ public class ResourceTypeNode {
         return pathSegment.getQueryParameters();
     }
         
+    public List<Param> getHeaderParams() {
+        return pathSegment.getHeaderParameters();
+    }
+        
     public List<Param> getMatrixParams() {
         return pathSegment.getMatrixParameters();
     }

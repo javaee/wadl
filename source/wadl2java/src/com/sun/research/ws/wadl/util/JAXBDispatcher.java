@@ -64,11 +64,13 @@ public class JAXBDispatcher {
      * @param url the URL of the resource
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      */
-    public Object doGET(String url, String expectedMimeType) {
+    public Object doGET(String url, Map<String, Object> httpHeaders, String expectedMimeType) {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "GET");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
+        for(String key: httpHeaders.keySet())
+            headers.put(key, Arrays.asList(httpHeaders.get(key).toString()));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
         return d.invoke(null);
@@ -83,13 +85,15 @@ public class JAXBDispatcher {
      * @param inputMimeType the MIME type of the body of the POST request
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      */
-    public Object doPOST(Object input, String inputMimeType, String url, String expectedMimeType) {
+    public Object doPOST(Object input, String inputMimeType, String url, Map<String, Object> httpHeaders, String expectedMimeType) {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "POST");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
         if (inputMimeType != null)
             headers.put("Content-Type", Arrays.asList(inputMimeType));
+        for(String key: httpHeaders.keySet())
+            headers.put(key, Arrays.asList(httpHeaders.get(key).toString()));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
         return d.invoke(input);
@@ -105,13 +109,15 @@ public class JAXBDispatcher {
      * @param inputMimeType the MIME type of the body of the POST request
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      */
-    public Object doPUT(Object input, String inputMimeType, String url, String expectedMimeType) {
+    public Object doPUT(Object input, String inputMimeType, String url, Map<String, Object> httpHeaders, String expectedMimeType) {
         Map<String, Object> requestContext = d.getRequestContext();
         requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "PUT");
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put("Accept", Arrays.asList(expectedMimeType));
         if (inputMimeType != null)
             headers.put("Content-Type", Arrays.asList(inputMimeType));
+        for(String key: httpHeaders.keySet())
+            headers.put(key, Arrays.asList(httpHeaders.get(key).toString()));
         requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
         requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
         return d.invoke(input);

@@ -44,6 +44,7 @@ public class PathSegment {
     private List<Param> templateParameters;
     private List<Param> matrixParameters;
     private List<Param> queryParameters;
+    private List<Param> headerParameters;
     
     /**
      * Construct a PathSegment instance using a string representation. All parameters
@@ -62,9 +63,10 @@ public class PathSegment {
      */
     public PathSegment(String template, List<String> matrixParameters) {
         this.template = template;
-        templateParameters = new ArrayList<Param>();
+        this.templateParameters = new ArrayList<Param>();
         this.matrixParameters = new ArrayList<Param>();
-        queryParameters = new ArrayList<Param>();
+        this.queryParameters = new ArrayList<Param>();
+        this.headerParameters = new ArrayList<Param>();
 
         // parse template for embedded parameters
         Pattern embeddedParamPattern = Pattern.compile("\\{.*?\\}");
@@ -93,9 +95,10 @@ public class PathSegment {
      */
     public PathSegment(Resource resource) {
         template = resource.getPath() == null ? "" : resource.getPath();
-        templateParameters = new ArrayList<Param>();
-        matrixParameters = new ArrayList<Param>();
-        queryParameters = new ArrayList<Param>();
+        this.templateParameters = new ArrayList<Param>();
+        this.matrixParameters = new ArrayList<Param>();
+        this.queryParameters = new ArrayList<Param>();
+        this.headerParameters = new ArrayList<Param>();
         
         // iterate through child param elements to extract params
         Map<String, Param> pathParameters = new HashMap<String, Param>();
@@ -106,6 +109,8 @@ public class PathSegment {
                 matrixParameters.add(p);
             else if (p.getStyle() == ParamStyle.QUERY)
                 queryParameters.add(p);
+            else if (p.getStyle() == ParamStyle.HEADER)
+                headerParameters.add(p);
         }
         
         // parse template for embedded parameters
@@ -135,6 +140,7 @@ public class PathSegment {
         templateParameters = new ArrayList<Param>();
         matrixParameters = new ArrayList<Param>();
         queryParameters = new ArrayList<Param>();
+        headerParameters = new ArrayList<Param>();
         
         // iterate through child param elements to extract params
         Map<String, Param> pathParameters = new HashMap<String, Param>();
@@ -143,6 +149,8 @@ public class PathSegment {
                 queryParameters.add(p);
             else if (p.getStyle() == ParamStyle.MATRIX)
                 matrixParameters.add(p);
+            else if (p.getStyle() == ParamStyle.HEADER)
+                headerParameters.add(p);
         }
         
     }
@@ -175,10 +183,18 @@ public class PathSegment {
     
     /**
      * Get list of query parameters attached to the path segment
-     * @return a list of matrix parameter names
+     * @return a list of query parameter names
      */
     public List<Param> getQueryParameters() {
         return queryParameters;
+    }
+    
+    /**
+     * Get list of header parameters attached to the path segment
+     * @return a list of header parameter names
+     */
+    public List<Param> getHeaderParameters() {
+        return headerParameters;
     }
     
     /**

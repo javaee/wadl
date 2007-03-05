@@ -172,6 +172,14 @@ public class ResourceNode {
     }
     
     /**
+     * Get a list of header parameters for this resource and its types.
+     * @return list of header parameters
+     */
+    public List<Param> getHeaderParams() {
+        return getPathSegment().getHeaderParameters();
+    }
+    
+    /**
      * List of child documentation elements
      * @return documentation list, one item per language
      */

@@ -35,6 +35,7 @@ public class MethodNode {
     private ResourceTypeNode parentResourceType;
     private String name;
     private List<Param> queryParams;
+    private List<Param> headerParams;
     private List<RepresentationNode> supportedInputs;
     private List<RepresentationNode> supportedOutputs;
     private List<FaultNode> faults;
@@ -52,6 +53,8 @@ public class MethodNode {
         parentResourceType = null;
         queryParams = new ArrayList<Param>();
         queryParams.addAll(parentResource.getQueryParams());
+        headerParams = new ArrayList<Param>();
+        headerParams.addAll(parentResource.getHeaderParams());
         supportedInputs = new ArrayList<RepresentationNode>();
         supportedOutputs = new ArrayList<RepresentationNode>();
         faults = new ArrayList<FaultNode>();
@@ -70,6 +73,8 @@ public class MethodNode {
         parentResourceType = r;
         queryParams = new ArrayList<Param>();
         queryParams.addAll(r.getQueryParams());
+        headerParams = new ArrayList<Param>();
+        headerParams.addAll(r.getHeaderParams());
         supportedInputs = new ArrayList<RepresentationNode>();
         supportedOutputs = new ArrayList<RepresentationNode>();
         faults = new ArrayList<FaultNode>();
@@ -93,12 +98,24 @@ public class MethodNode {
     }
     
     /**
-     * Get the parameters mrked as required
+     * Get all the header parameters
+     * @return list of header parameters
+     */
+    public List<Param> getHeaderParameters() {
+        return headerParams;
+    }
+    
+    /**
+     * Get the parameters marked as required
      * @return list of required parameters
      */
     public List<Param> getRequiredParameters() {
         ArrayList<Param> required = new ArrayList<Param>();
         for (Param p: getQueryParameters()) {
+            if (p.isRequired())
+                required.add(p);
+        }
+        for (Param p: getHeaderParameters()) {
             if (p.isRequired())
                 required.add(p);
         }
@@ -112,6 +129,10 @@ public class MethodNode {
     public List<Param> getOptionalParameters() {
         ArrayList<Param> optional = new ArrayList<Param>();
         for (Param p: getQueryParameters()) {
+            if (!p.isRequired())
+                optional.add(p);
+        }
+        for (Param p: getHeaderParameters()) {
             if (!p.isRequired())
                 optional.add(p);
         }
