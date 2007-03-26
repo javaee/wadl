@@ -44,10 +44,34 @@
     
     <target name="-post-clean">
         <delete dir="gen-src"/>
+        <delete dir="package"/>
     </target>
   
     <target name="-post-init">
         <mkdir dir="gen-src"/>
+    </target>
+    
+    <target name="source-package">
+        <mkdir dir="package"/>
+        <zip destfile="package/wadl2java.src.zip">
+            <zipfileset dir="lib" prefix="wadl2java/lib"/>
+            <zipfileset dir="nbproject" prefix="wadl2java/nbproject"/>
+            <zipfileset dir="src" prefix="wadl2java/src"/>
+            <zipfileset dir="test" prefix="wadl2java/test"/>
+            <zipfileset dir="." includes="build.xml" fullpath="wadl2java/build.xml"/>
+            <zipfileset dir="." includes="manifest.mf" fullpath="wadl2java/manifest.mf"/>
+            <zipfileset dir="." includes="wadl.xsd" fullpath="wadl2java/wadl.xsd"/>
+            <zipfileset dir="." includes="xml.xsd" fullpath="wadl2java/xml.xsd"/>
+        </zip>
+    </target>
+    
+    <target name="dist-package" depends="jar">
+        <mkdir dir="package"/>
+        <zip destfile="package/wadl2java.dist.zip">
+            <zipfileset dir="dist/lib" prefix="wadl2java/lib"/>
+            <zipfileset dir="dist" includes="wadl2java.jar" fullpath="wadl2java/wadl2java.jar"/>
+            <zipfileset dir="." includes="README.txt" fullpath="wadl2java/README.txt"/>
+        </zip>
     </target>
 
     <!--
