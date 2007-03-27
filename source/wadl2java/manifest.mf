@@ -1,3 +1,5 @@
 Manifest-Version: 1.0
+Class-Path: lib/activation.jar lib/ant.jar lib/jaxb-api.jar lib/jaxb-i
+ mpl.jar lib/jaxb-xjc.jar lib/jaxws-api.jar lib/jaxws-rt.jar lib/jsr17
+ 3_api.jar lib/resolver.jar lib/sjsxp.jar lib/resourcegen.jar
 X-COMMENT: Main-Class will be added automatically by build
-
