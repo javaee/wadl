@@ -68,7 +68,7 @@
     <target name="dist-package" depends="-do-jar-with-libraries">
         <mkdir dir="package"/>
         <zip destfile="package/wadl2java.dist.zip">
-            <zipfileset dir="lib" includes="activation.jar jaxb-impl.jar jaxws-rt.jar resourcegen.jar ant.jar jaxb-xjc.jar jsr173_api.jar sjsxp.jar jaxb-api.jar jaxws-api.jar resolver.jar" prefix="wadl2java/lib"/>
+            <zipfileset dir="lib" includes="activation.jar jaxb-impl.jar jaxws-rt.jar resourcegen.jar ant.jar jaxb-xjc.jar jsr173_api.jar sjsxp.jar jaxb-api.jar jaxws-api.jar resolver.jar jsr181-api.jar saaj-api.jar saaj-impl.jar" prefix="wadl2java/lib"/>
             <zipfileset dir="dist" includes="wadl2java.jar" fullpath="wadl2java/wadl2java.jar"/>
             <zipfileset dir="." includes="README.txt" fullpath="wadl2java/README.txt"/>
         </zip>
