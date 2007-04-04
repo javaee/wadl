@@ -328,6 +328,29 @@ public class ResourceClassGenerator {
     }
     
     /**
+     * Generate a name for the method
+     * @param method the WADL <code>method</code> element for the Java method being generated.
+     * @param outputRep the WADL <code>representation</code> element for the response format.
+     * @param returnType a reference to the Java return type
+     */
+    protected String getMethodName(MethodNode method, RepresentationNode outputRep,
+            JType returnType) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(method.getName().toLowerCase());
+        if (outputRep.getId() != null) {
+            buf.append(outputRep.getId().substring(0,1).toUpperCase());
+            buf.append(outputRep.getId().substring(1).toLowerCase());
+        }
+        buf.append("As");
+        if (returnType != null) {
+            buf.append(returnType.name());
+        } else {
+            buf.append(outputRep.getMediaTypeAsClassName());
+        }
+        return buf.toString();
+    }
+    
+    /**
      * Generate a Java method for a specified combination of WADL <code>method</code>,
      * input <code>representation</code> and output <code>representation</code>
      * elements.
@@ -357,10 +380,8 @@ public class ResourceClassGenerator {
         else
             returnType = codeModel.VOID;
         
-        // generate a name for the method (http method, "As", output representation) 
-        String returnTypeSuffix = outputRep.getElement()==null ? 
-            outputRep.getMediaTypeAsClassName() : returnType.name();
-        String methodName = method.getName().toLowerCase()+"As"+returnTypeSuffix;
+        // generate a name for the method 
+        String methodName = getMethodName(method, outputRep, returnType);
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);
@@ -451,9 +472,8 @@ public class ResourceClassGenerator {
         else
             returnType = codeModel.VOID;
         
-        // generate a name for the method (http method, "As", output representation) 
-        String returnTypeSuffix = outputRep.getMediaTypeAsClassName();
-        String methodName = method.getName().toLowerCase()+"As"+returnTypeSuffix;
+        // generate a name for the method 
+        String methodName = getMethodName(method, outputRep, null);
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);

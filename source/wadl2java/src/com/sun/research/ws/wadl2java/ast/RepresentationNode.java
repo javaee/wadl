@@ -91,4 +91,12 @@ public class RepresentationNode {
     public List<Doc> getDoc() {
         return rep.getDoc();
     }
+    
+    /**
+     * Get the representation id (if any)
+     * @return the id or null if no id
+     */
+    public String getId() {
+        return rep.getId();
+    }
 }
