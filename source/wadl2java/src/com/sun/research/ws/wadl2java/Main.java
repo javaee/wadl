@@ -25,6 +25,8 @@ import java.net.URISyntaxException;
 import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Command line support for WADL to Java tool
@@ -71,11 +73,14 @@ public class Main {
             int i=0;
             File outputDir = null;
             String pkg = null;
+            List<File> customizations = new ArrayList<File>();
             while (i<args.length-2) {
                 if (args[i].equals("-o"))
                     outputDir = new File(args[i+1]);
                 else if (args[i].equals("-p"))
                     pkg = args[i+1];
+                else if (args[i].equals("-c"))
+                    customizations.add(new File(args[i+1]));
                 else {
                     System.err.println(Wadl2JavaMessages.UNKNOWN_OPTION(args[i]));
                     printUsage();
@@ -97,9 +102,16 @@ public class Main {
                     printUsage();
                     System.exit(1);
                 }
+                for (File customization: customizations) {
+                    if (!customization.exists() || !customization.isFile()) {
+                        System.err.println(Wadl2JavaMessages.NOT_A_FILE(customization.getPath()));
+                        printUsage();
+                        System.exit(1);
+                    }
+                }
                 wadlDesc = wadlFile.toURI();
             }
-            Wadl2Java w = new Wadl2Java(outputDir, pkg);
+            Wadl2Java w = new Wadl2Java(outputDir, pkg, customizations);
             w.process(wadlDesc);
         } catch (URISyntaxException ex) {
             ex.printStackTrace();

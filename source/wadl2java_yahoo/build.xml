@@ -34,6 +34,7 @@
     <target name="-pre-compile">
       <echo message="Compiling the description..." />
       <wjc description="YahooSearch.wadl" package="com.yahoo.search" target="gen-src">
+        <customizations dir="." includes="binding.xjb" />
         <produces dir="gen-src" includes="**/*.java" />
         <depends dir="." includes="*.xsd"/>
         <depends dir="." includes="build.xml"/>

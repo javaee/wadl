@@ -54,6 +54,7 @@ import org.xml.sax.SAXParseException;
 public class Wadl2Java {
     
     private File outputDir;
+    private List<File> customizations;
     private String pkg;
     private JPackage jPkg;
     private S2JJAXBModel s2jModel;
@@ -76,6 +77,20 @@ public class Wadl2Java {
         this.pkg = pkg;
         this.javaDoc = new JavaDocUtil();
         this.processedDocs = new ArrayList<String>();
+        this.customizations = new ArrayList<File>();
+    }
+    
+    /**
+     * Creates a new instance of a Wadl2Java processor.
+     * @param outputDir the directory in which to generate code.
+     * @param pkg the Java package in which to generate code.
+     */
+    public Wadl2Java(File outputDir, String pkg, List<File> customizations) {
+        this.outputDir = outputDir;
+        this.pkg = pkg;
+        this.javaDoc = new JavaDocUtil();
+        this.processedDocs = new ArrayList<String>();
+        this.customizations = customizations;
     }
     
     /**
@@ -159,6 +174,13 @@ public class Wadl2Java {
                     embeddedSchemaNo++;
                 }
             }
+        }
+        for (File customization: customizations) {
+            URI incl = desc.resolve(customization.getPath());
+            System.out.println(Wadl2JavaMessages.PROCESSING(incl.toString()));
+            InputSource input = new InputSource(incl.toURL().openStream());
+            input.setSystemId(incl.toString());
+            s2j.parseSchema(input);
         }
         buildIDMap(a, desc);
         return a;

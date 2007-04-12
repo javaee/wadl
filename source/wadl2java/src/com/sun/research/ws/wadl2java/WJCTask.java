@@ -47,6 +47,7 @@ import org.apache.tools.ant.types.FileSet;
  * &lt;target name="-pre-compile"&gt;
  *   &lt;echo message="Compiling the description..." /&gt;
  *   &lt;wjc description="file.wadl" package="com.yahoo.search" target="gen-src"&gt;
+ *     &lt;customizations dir="." includes="binding.xjc"/&gt;
  *     &lt;produces dir="gen-src/com/yahoo/search" includes="*.java"/&gt;
  *     &lt;depends dir="." includes="schema.xsd"/&gt;
  *   &lt;/wjc&gt;
@@ -61,6 +62,7 @@ public class WJCTask extends Task {
     private URI desc;
     private List<FileSet> producedFileSets;
     private List<FileSet> consumedFileSets;
+    private List<FileSet> customizationFileSets;
     
     /**
      * Default constructor for WJCTask
@@ -109,6 +111,17 @@ public class WJCTask extends Task {
     }
 
     /**
+     * Add a pre-configured FileSet for a <code>produces</code> child element.
+     * The fileset defines a set of files produced by this task and is used 
+     * in an up-to-date check when deciding if the WADL description should be
+     * compiled or not.
+     * @param fileset the pre-configured FileSet object
+     */
+    public void addConfiguredCustomizations(FileSet fileset) {
+        customizationFileSets.add(fileset);
+    }
+
+    /**
      * Add a pre-configured FileSet for a <code>depends</code> child element.
      * The fileset defines a set of files used by this task and is used 
      * in an up-to-date check when deciding if the WADL description should be
@@ -131,6 +144,7 @@ public class WJCTask extends Task {
         desc = null;
         producedFileSets = new ArrayList<FileSet>();
         consumedFileSets = new ArrayList<FileSet>();
+        customizationFileSets = new ArrayList<FileSet>();
     }
 
     /**
@@ -148,6 +162,16 @@ public class WJCTask extends Task {
             throw new BuildException(Wadl2JavaMessages.TARGET_ATTRIBUTE_DIRECTORY(target.toString()));
         if (desc == null)
             throw new BuildException(Wadl2JavaMessages.DESCRIPTION_REQUIRED());
+        
+        List<File> customizations = new ArrayList<File>();
+        for (FileSet fs: customizationFileSets) {
+            DirectoryScanner ds = fs.getDirectoryScanner(getProject());
+            String[] includedFiles = ds.getIncludedFiles();
+            for (String filename: includedFiles) {
+                File f = new File(ds.getBasedir(), filename);
+                customizations.add(f);
+            }
+        }
         
         if (desc.getScheme()==null || desc.getScheme().equals("file")) {
             // assume a file if not explicitly told otherwise
@@ -179,6 +203,10 @@ public class WJCTask extends Task {
                         latestConsumedFileStamp = f.lastModified();
                 }
             }
+            for (File f: customizations) {
+                if (f.lastModified() > latestConsumedFileStamp)
+                    latestConsumedFileStamp = f.lastModified();
+            }
 
             if (earliestProducedFileStamp < Long.MAX_VALUE && latestConsumedFileStamp < earliestProducedFileStamp) {
                 log(Wadl2JavaMessages.SKIPPING_COMPILATION());
@@ -188,7 +216,7 @@ public class WJCTask extends Task {
         
         // pre-requisites satisfied, compile the description
         try {
-            Wadl2Java wadlProcessor = new Wadl2Java(target, pkg);
+            Wadl2Java wadlProcessor = new Wadl2Java(target, pkg, customizations);
             wadlProcessor.process(desc);
         } catch (Exception ex) {
             ex.printStackTrace();
