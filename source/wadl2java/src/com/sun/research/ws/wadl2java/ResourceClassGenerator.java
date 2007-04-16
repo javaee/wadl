@@ -72,6 +72,7 @@ public class ResourceClassGenerator {
     private JFieldVar $templateMatrixParamValMap;
     private JDefinedClass $class = null;
     private JavaDocUtil javaDoc;
+    private String generatedPackages;
     
     /**
      * Creates a new instance of ResourceClassGenerator
@@ -82,12 +83,13 @@ public class ResourceClassGenerator {
      * @param resource the resource element for which to generate a class
      */
     public ResourceClassGenerator(S2JJAXBModel s2jModel, JCodeModel codeModel, 
-            JPackage pkg, JavaDocUtil javaDoc, ResourceNode resource) {
+            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
         this.resource = resource;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
         this.s2jModel = s2jModel;
         this.pkg = pkg;
+        this.generatedPackages = generatedPackages;
     }
     
     /**
@@ -99,13 +101,14 @@ public class ResourceClassGenerator {
      * @param clazz the existing class
      */
     public ResourceClassGenerator(S2JJAXBModel s2jModel, JCodeModel codeModel, 
-            JPackage pkg, JavaDocUtil javaDoc, JDefinedClass clazz) {
+            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
         this.resource = null;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
         this.s2jModel = s2jModel;
         this.pkg = pkg;
         this.$class = clazz;
+        this.generatedPackages = generatedPackages;
     }
     
     /**
@@ -159,7 +162,7 @@ public class ResourceClassGenerator {
         $ctor._throws(JAXBException.class);
         JBlock $ctorBody = $ctor.body();
         // codegen: jc = JAXBContext.newInstance("com.example.test");
-        $ctorBody.assign($jaxbContext, codeModel.ref(JAXBContext.class).staticInvoke("newInstance").arg(JExpr.lit(pkg.name())));
+        $ctorBody.assign($jaxbContext, codeModel.ref(JAXBContext.class).staticInvoke("newInstance").arg(JExpr.lit(generatedPackages)));
         // codegen: jaxbDispatcher = new JAXBDispatcher(jc);
         $ctorBody.assign($jaxbDispatcher, JExpr._new(codeModel.ref(JAXBDispatcher.class)).arg($jaxbContext));
         // codegen: dsDispatcher = new DSDispatcher(jc);

@@ -73,20 +73,26 @@ public class Main {
             int i=0;
             File outputDir = null;
             String pkg = null;
+            boolean autoPackage = false;
             List<File> customizations = new ArrayList<File>();
             while (i<args.length-2) {
-                if (args[i].equals("-o"))
+                if (args[i].equals("-o")) {
                     outputDir = new File(args[i+1]);
-                else if (args[i].equals("-p"))
+                    i+=2;
+                } else if (args[i].equals("-p")) {
                     pkg = args[i+1];
-                else if (args[i].equals("-c"))
+                    i+=2;
+                } else if (args[i].equals("-c")) {
                     customizations.add(new File(args[i+1]));
-                else {
+                    i+=2;
+                } else if (args[i].equals("-a")) {
+                    autoPackage = true;
+                    i+=1;
+                } else {
                     System.err.println(Wadl2JavaMessages.UNKNOWN_OPTION(args[i]));
                     printUsage();
                     System.exit(1);
                 }
-                i+=2;
             }
             URI wadlDesc = new URI(args[args.length-1]);
             if (wadlDesc.getScheme()==null || wadlDesc.getScheme().equals("file")) {
@@ -111,7 +117,7 @@ public class Main {
                 }
                 wadlDesc = wadlFile.toURI();
             }
-            Wadl2Java w = new Wadl2Java(outputDir, pkg, customizations);
+            Wadl2Java w = new Wadl2Java(outputDir, pkg, autoPackage, customizations);
             w.process(wadlDesc);
         } catch (URISyntaxException ex) {
             ex.printStackTrace();

@@ -19,10 +19,12 @@
 
 package com.sun.research.wadl2java.yahoo;
 
-import com.yahoo.search.*;
 import com.yahoo.search.Endpoint.NewsSearch;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
+import com.yahoo.search.Output;
+import com.yahoo.search.Sort;
+import com.yahoo.search.Type;
+import yahoo.yn.Result;
+import yahoo.yn.ResultSet;
 
 /**
  * Simple command line example to query the Yahoo News Search service

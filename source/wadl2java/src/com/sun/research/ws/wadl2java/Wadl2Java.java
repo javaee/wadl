@@ -29,6 +29,7 @@ import com.sun.research.ws.wadl2java.ast.ResourceTypeNode;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -66,18 +67,21 @@ public class Wadl2Java {
     private Unmarshaller u;
     private SchemaCompiler s2j;
     private ErrorListener errorListener;
+    private String generatedPackages = "";
+    private boolean autoPackage;
 
     /**
      * Creates a new instance of a Wadl2Java processor.
      * @param outputDir the directory in which to generate code.
      * @param pkg the Java package in which to generate code.
      */
-    public Wadl2Java(File outputDir, String pkg) {
+    public Wadl2Java(File outputDir, String pkg, boolean autoPackage) {
         this.outputDir = outputDir;
         this.pkg = pkg;
         this.javaDoc = new JavaDocUtil();
         this.processedDocs = new ArrayList<String>();
         this.customizations = new ArrayList<File>();
+        this.autoPackage = autoPackage;
     }
     
     /**
@@ -85,12 +89,13 @@ public class Wadl2Java {
      * @param outputDir the directory in which to generate code.
      * @param pkg the Java package in which to generate code.
      */
-    public Wadl2Java(File outputDir, String pkg, List<File> customizations) {
+    public Wadl2Java(File outputDir, String pkg, boolean autoPackage, List<File> customizations) {
         this.outputDir = outputDir;
         this.pkg = pkg;
         this.javaDoc = new JavaDocUtil();
         this.processedDocs = new ArrayList<String>();
         this.customizations = customizations;
+        this.autoPackage = autoPackage;
     }
     
     /**
@@ -113,7 +118,8 @@ public class Wadl2Java {
         u = jbc.createUnmarshaller();
         s2j = new SchemaCompilerImpl();
         errorListener = new SchemaCompilerErrorListener();
-        s2j.setDefaultPackageName(pkg);
+        if (!autoPackage)
+            s2j.setDefaultPackageName(pkg);
         s2j.setErrorListener(errorListener);
         idMap = new HashMap<String, Object>();
         ifaceMap = new HashMap<String, ResourceTypeNode>();
@@ -124,6 +130,17 @@ public class Wadl2Java {
         s2jModel = s2j.bind();
         if (s2jModel != null) {
             codeModel = s2jModel.generateCode(null, errorListener);
+            Iterator<JPackage> packages = codeModel.packages();
+            StringBuilder buf = new StringBuilder();
+            while(packages.hasNext()) {
+                JPackage genPkg = packages.next();
+                if (!genPkg.isDefined("ObjectFactory"))
+                    continue;
+                if (buf.length() > 0)
+                    buf.append(':');
+                buf.append(genPkg.name());
+            }
+            generatedPackages = buf.toString();
             jPkg = codeModel._package(pkg);
             generateResourceTypeInterfaces();
             generateEndpointClass(r);
@@ -338,7 +355,7 @@ public class Wadl2Java {
             n.setGeneratedInterface(iface);
             javaDoc.generateClassDoc(n, iface);
             ResourceClassGenerator rcGen = new ResourceClassGenerator(s2jModel, 
-                codeModel, jPkg, javaDoc, iface);
+                codeModel, jPkg, generatedPackages, javaDoc, iface);
             // generate Java methods for each resource method
             for (MethodNode m: n.getMethods()) {
                 rcGen.generateMethodDecls(m, true);
@@ -385,7 +402,7 @@ public class Wadl2Java {
             throws JClassAlreadyExistsException {
         
         ResourceClassGenerator rcGen = new ResourceClassGenerator(s2jModel, 
-            codeModel, jPkg, javaDoc, resource);
+            codeModel, jPkg, generatedPackages, javaDoc, resource);
         JDefinedClass impl = rcGen.generateClass(parent);
         
         // generate Java methods for each resource method
