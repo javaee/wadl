@@ -46,7 +46,8 @@ import org.apache.tools.ant.types.FileSet;
  *
  * &lt;target name="-pre-compile"&gt;
  *   &lt;echo message="Compiling the description..." /&gt;
- *   &lt;wjc description="file.wadl" package="com.yahoo.search" target="gen-src"&gt;
+ *   &lt;wjc description="file.wadl" package="com.yahoo.search"
+ *       autoSchemaPackage="true|false" target="gen-src"&gt;
  *     &lt;customizations dir="." includes="binding.xjc"/&gt;
  *     &lt;produces dir="gen-src/com/yahoo/search" includes="*.java"/&gt;
  *     &lt;depends dir="." includes="schema.xsd"/&gt;
