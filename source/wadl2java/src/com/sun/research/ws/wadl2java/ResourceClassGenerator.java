@@ -161,11 +161,13 @@ public class ResourceClassGenerator {
         }
         $ctor._throws(JAXBException.class);
         JBlock $ctorBody = $ctor.body();
-        // codegen: jc = JAXBContext.newInstance("com.example.test");
-        $ctorBody.assign($jaxbContext, codeModel.ref(JAXBContext.class).staticInvoke("newInstance").arg(JExpr.lit(generatedPackages)));
-        // codegen: jaxbDispatcher = new JAXBDispatcher(jc);
-        $ctorBody.assign($jaxbDispatcher, JExpr._new(codeModel.ref(JAXBDispatcher.class)).arg($jaxbContext));
-        // codegen: dsDispatcher = new DSDispatcher(jc);
+        if (generatedPackages.length() > 0) {
+            // codegen: jc = JAXBContext.newInstance("com.example.test");
+            $ctorBody.assign($jaxbContext, codeModel.ref(JAXBContext.class).staticInvoke("newInstance").arg(JExpr.lit(generatedPackages)));
+            // codegen: jaxbDispatcher = new JAXBDispatcher(jc);
+            $ctorBody.assign($jaxbDispatcher, JExpr._new(codeModel.ref(JAXBDispatcher.class)).arg($jaxbContext));
+        }
+        // codegen: dsDispatcher = new DSDispatcher();
         $ctorBody.assign($dsDispatcher, JExpr._new(codeModel.ref(DSDispatcher.class)));
         // codegen: uriBuilder = new UriBuilder();
         $ctorBody.assign($uriBuilder, JExpr._new(codeModel.ref(UriBuilder.class)));
@@ -290,18 +292,14 @@ public class ResourceClassGenerator {
      * schema imported by the WADL file otherwise no such Java type will have been
      * generated and this method will return <code>Object</code>.
      * @param element the name of the XML element.
-     * @return the Java type that was generated for the specified element, <code>Object</code>
-     * if no matching generated type was found or <code>DataSource</code> if element is null.
+     * @return the Java type that was generated for the specified element or null
+     * if no matching generated type was found.
      */
     protected JType getTypeFromElement(QName element) {
-        JType type = null;
-        if (element==null)
-            return codeModel._ref(javax.activation.DataSource.class);
-        
         Mapping m = s2jModel.get(element);
         if (m==null)
             System.err.println(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
-        type = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
+        JType type = m==null ? null : m.getType().getTypeClass();
         return type;
     }
     
@@ -376,10 +374,16 @@ public class ResourceClassGenerator {
 
         // work out the method return type and the type of any input representation
         JType inputType=null, returnType=null;
-        if (inputRep != null)
+        if (inputRep != null) {
             inputType = getTypeFromElement(inputRep.getElement());
-        if (outputRep != null)
+            if (inputType == null)
+                return;
+        }
+        if (outputRep != null) {
             returnType = getTypeFromElement(outputRep.getElement());
+            if (returnType == null)
+                return;
+        }
         else
             returnType = codeModel.VOID;
         
@@ -469,9 +473,9 @@ public class ResourceClassGenerator {
         // work out the method return type and the type of any input representation
         JType inputType=null, returnType=null;
         if (inputRep != null)
-            inputType = getTypeFromElement(null);
+            inputType = codeModel._ref(javax.activation.DataSource.class);
         if (outputRep != null)
-            returnType = getTypeFromElement(null);
+            returnType = codeModel._ref(javax.activation.DataSource.class);
         else
             returnType = codeModel.VOID;
         
