@@ -47,6 +47,8 @@ import com.sun.research.ws.wadl2java.ast.ResourceNode;
 import com.sun.research.ws.wadl2java.ast.ResourceTypeNode;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.S2JJAXBModel;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -397,6 +399,9 @@ public class ResourceClassGenerator {
             javaDoc.generateReturnDoc(outputRep, $genMethod);
         
         // add throws for any required exceptions
+        $genMethod._throws(JAXBException.class);
+        $genMethod._throws(MalformedURLException.class);
+        $genMethod._throws(IOException.class);
         for (JDefinedClass $ex: exceptionMap.values()) {
             $genMethod._throws($ex);
         }
@@ -489,6 +494,8 @@ public class ResourceClassGenerator {
             javaDoc.generateReturnDoc(outputRep, $genMethod);
 
         // add throws for any required exceptions
+        $genMethod._throws(MalformedURLException.class);
+        $genMethod._throws(IOException.class);
         
         // add a parameter for the input representation (if required)
         if (inputType != null) {

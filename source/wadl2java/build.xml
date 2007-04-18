@@ -25,7 +25,7 @@
       </classpath>
     </taskdef>
   
-    <taskdef name="resourcegen" classname="com.sun.tools.resourcegen.ResourceGenTask">
+    <taskdef name="resourcegen" classname="com.sun.tools.localizer.resourcegen.ResourceGenTask">
       <classpath>
         <fileset dir="lib" includes="*.jar" />
       </classpath>

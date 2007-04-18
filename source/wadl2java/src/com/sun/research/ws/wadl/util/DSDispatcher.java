@@ -11,7 +11,7 @@
  */
 
 /*
- * JAXBDispatcher.java
+ * DSDispatcher.java
  *
  * Created on May 1, 2006, 9:57 AM
  *
@@ -19,37 +19,27 @@
 
 package com.sun.research.ws.wadl.util;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Map;
-import java.net.URI;
 import javax.activation.DataSource;
-import javax.xml.bind.JAXBContext;
-import javax.xml.namespace.QName;
-import javax.xml.ws.Dispatch;
-import javax.xml.ws.Service;
-import javax.xml.ws.handler.MessageContext;
-import javax.xml.ws.http.HTTPBinding;
 
 /**
- * A wrapper for JAX-WS <code>Dispatch<DataSource></code> containing methods used by code
+ * Comms utility containing methods used by code
  * generated for WADL methods.
  * @author mh124079
  */
 public class DSDispatcher {
     
-    Dispatch<DataSource> d;
-    
     /**
      * Creates a new instance of JAXBDispatcher
      */
     public DSDispatcher() {
-        ServiceManager sm = ServiceManager.newInstance();
-        d = sm.createDSDispatch("http://127.0.0.1/");
     }
     
     /**
@@ -58,16 +48,26 @@ public class DSDispatcher {
      * @param url the URL of the resource
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      */
-    public DataSource doGET(String url, Map<String, Object> httpHeaders, String expectedMimeType) {
-        Map<String, Object> requestContext = d.getRequestContext();
-        requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "GET");
-        Map<String, List<String>> headers = new HashMap<String, List<String>>();
-        headers.put("Accept", Arrays.asList(expectedMimeType));
-        for(String key: httpHeaders.keySet())
-            headers.put(key, Arrays.asList(httpHeaders.get(key).toString()));
-        requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
-        requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
-        return d.invoke(null);
+    public DataSource doGET(String url, Map<String, Object> httpHeaders, String expectedMimeType) throws MalformedURLException, IOException {
+        URL u = new URL(url);
+        URLConnection c = u.openConnection();
+        InputStream in = null;
+        String mediaType = null;
+        if (c instanceof HttpURLConnection) {
+            HttpURLConnection h = (HttpURLConnection)c;
+            h.setRequestMethod("GET");
+            h.setRequestProperty("Accept", expectedMimeType);
+            for(String key: httpHeaders.keySet())
+                h.setRequestProperty(key, httpHeaders.get(key).toString());
+            h.connect();
+            mediaType = h.getContentType();
+            if (h.getResponseCode() < 400)
+                in = h.getInputStream();
+            else
+                in = h.getErrorStream();
+        }
+        
+        return new StreamDataSource(mediaType, in);
     }
 
     /**
@@ -79,18 +79,36 @@ public class DSDispatcher {
      * @param inputMimeType the MIME type of the body of the POST request
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      */
-    public DataSource doPOST(DataSource input, String inputMimeType, String url, Map<String, Object> httpHeaders, String expectedMimeType) {
-        Map<String, Object> requestContext = d.getRequestContext();
-        requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "POST");
-        Map<String, List<String>> headers = new HashMap<String, List<String>>();
-        headers.put("Accept", Arrays.asList(expectedMimeType));
-        if (inputMimeType != null)
-            headers.put("Content-Type", Arrays.asList(inputMimeType));
-        for(String key: httpHeaders.keySet())
-            headers.put(key, Arrays.asList(httpHeaders.get(key).toString()));
-        requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
-        requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
-        return d.invoke(input);
+    public DataSource doPOST(DataSource input, String inputMimeType, String url, Map<String, Object> httpHeaders, String expectedMimeType) throws MalformedURLException, IOException {
+        URL u = new URL(url);
+        URLConnection c = u.openConnection();
+        InputStream in = null;
+        String mediaType = null;
+        if (c instanceof HttpURLConnection) {
+            HttpURLConnection h = (HttpURLConnection)c;
+            h.setRequestMethod("POST");
+            h.setChunkedStreamingMode(-1);
+            h.setRequestProperty("Accept", expectedMimeType);
+            h.setRequestProperty("Content-Type", inputMimeType);
+            for(String key: httpHeaders.keySet())
+                h.setRequestProperty(key, httpHeaders.get(key).toString());
+            h.setDoOutput(true);
+            h.connect();
+            OutputStream out = h.getOutputStream();
+            byte buffer[] = new byte[4096];
+            int bytes;
+            while ((bytes = input.getInputStream().read(buffer)) != -1) {
+                out.write(buffer, 0, bytes);
+            }
+            out.close();
+            mediaType = h.getContentType();
+            if (h.getResponseCode() < 400)
+                in = h.getInputStream();
+            else
+                in = h.getErrorStream();
+        }
+        
+        return new StreamDataSource(mediaType, in);
     }
 
     /**
@@ -102,18 +120,36 @@ public class DSDispatcher {
      * @param inputMimeType the MIME type of the body of the POST request
      * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
      */
-    public DataSource doPUT(DataSource input, String inputMimeType, String url, Map<String, Object> httpHeaders,  String expectedMimeType) {
-        Map<String, Object> requestContext = d.getRequestContext();
-        requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "PUT");
-        Map<String, List<String>> headers = new HashMap<String, List<String>>();
-        headers.put("Accept", Arrays.asList(expectedMimeType));
-        if (inputMimeType != null)
-            headers.put("Content-Type", Arrays.asList(inputMimeType));
-        for(String key: httpHeaders.keySet())
-            headers.put(key, Arrays.asList(httpHeaders.get(key).toString()));
-        requestContext.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
-        requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
-        return d.invoke(input);
+    public DataSource doPUT(DataSource input, String inputMimeType, String url, Map<String, Object> httpHeaders,  String expectedMimeType) throws MalformedURLException, IOException {
+        URL u = new URL(url);
+        URLConnection c = u.openConnection();
+        InputStream in = null;
+        String mediaType = null;
+        if (c instanceof HttpURLConnection) {
+            HttpURLConnection h = (HttpURLConnection)c;
+            h.setRequestMethod("PUT");
+            h.setChunkedStreamingMode(-1);
+            h.setRequestProperty("Accept", expectedMimeType);
+            h.setRequestProperty("Content-Type", inputMimeType);
+            for(String key: httpHeaders.keySet())
+                h.setRequestProperty(key, httpHeaders.get(key).toString());
+            h.setDoOutput(true);
+            h.connect();
+            OutputStream out = h.getOutputStream();
+            byte buffer[] = new byte[4096];
+            int bytes;
+            while ((bytes = input.getInputStream().read(buffer)) != -1) {
+                out.write(buffer, 0, bytes);
+            }
+            out.close();
+            mediaType = h.getContentType();
+            if (h.getResponseCode() < 400)
+                in = h.getInputStream();
+            else
+                in = h.getErrorStream();
+        }
+        
+        return new StreamDataSource(mediaType, in);
     }
 
 }
