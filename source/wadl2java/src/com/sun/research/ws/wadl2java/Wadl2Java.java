@@ -193,7 +193,7 @@ public class Wadl2Java {
             }
         }
         for (File customization: customizations) {
-            URI incl = desc.resolve(customization.getPath());
+            URI incl = desc.resolve(customization.toURI());
             System.out.println(Wadl2JavaMessages.PROCESSING(incl.toString()));
             InputSource input = new InputSource(incl.toURL().openStream());
             input.setSystemId(incl.toString());
