@@ -97,7 +97,8 @@ public class DSDispatcher {
             OutputStream out = h.getOutputStream();
             byte buffer[] = new byte[4096];
             int bytes;
-            while ((bytes = input.getInputStream().read(buffer)) != -1) {
+            InputStream inputStream = input.getInputStream();
+            while ((bytes = inputStream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytes);
             }
             out.close();
@@ -138,7 +139,8 @@ public class DSDispatcher {
             OutputStream out = h.getOutputStream();
             byte buffer[] = new byte[4096];
             int bytes;
-            while ((bytes = input.getInputStream().read(buffer)) != -1) {
+            InputStream inputStream = input.getInputStream();
+            while ((bytes = inputStream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytes);
             }
             out.close();
