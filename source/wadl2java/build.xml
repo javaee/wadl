@@ -37,7 +37,7 @@
           <resource dir="src" includes="**/*.properties"/>
       </resourcegen>
       <echo message="Compiling the schema..." />
-      <xjc schema="wadl.xsd" package="com.sun.research.ws.wadl" target="gen-src">
+      <xjc schema="wadl.xsd" package="com.sun.research.ws.wadl" destDir="gen-src">
         <produces dir="gen-src/com/sun/research/ws/wadl" includes="**/*.java" />
       </xjc>
     </target>
