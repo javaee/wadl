@@ -26,7 +26,7 @@
     <taskdef name="wjc" 
         classname="com.sun.research.ws.wadl2java.WJCTask">
       <classpath>
-        <fileset dir="${wadl2java.lib}" includes="*.jar" />
+        <fileset dir="${wadl2java.lib}" includes="*.jar" excludes="javaee-api-5.jar"/>
         <pathelement location="${wadl2java.dist}/wadl2java.jar"/>
       </classpath>
     </taskdef>
