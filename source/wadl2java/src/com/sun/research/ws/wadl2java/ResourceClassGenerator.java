@@ -269,19 +269,33 @@ public class ResourceClassGenerator {
         if (supportedInputs.size()==0) {
             // no input representations, just query parameters
             // for each output representation
-            for (RepresentationNode returnType: supportedOutputs) {
-                generateMethodVariants(exceptionMap, method, false, null, returnType, isAbstract);
+            if (supportedOutputs.size() == 0) {
+                generateMethodVariants(exceptionMap, method, false, null, null, isAbstract);
                 if (method.hasOptionalParameters())
-                    generateMethodVariants(exceptionMap, method, true, null, returnType, isAbstract);
+                    generateMethodVariants(exceptionMap, method, true, null, null, isAbstract);
+                
+            } else {
+                for (RepresentationNode returnType: supportedOutputs) {
+                    generateMethodVariants(exceptionMap, method, false, null, returnType, isAbstract);
+                    if (method.hasOptionalParameters())
+                        generateMethodVariants(exceptionMap, method, true, null, returnType, isAbstract);
+                }
             }
         } else {
             // for each possible input representation
             for (RepresentationNode inputType: supportedInputs) {
                 // for each combination of input and output representation
-                for (RepresentationNode returnType: supportedOutputs) {
-                    generateMethodVariants(exceptionMap, method, false, inputType, returnType, isAbstract);
+                if (supportedOutputs.size() == 0) {
+                    generateMethodVariants(exceptionMap, method, false, inputType, null, isAbstract);
                     if (method.hasOptionalParameters())
-                        generateMethodVariants(exceptionMap, method, true, inputType, returnType, isAbstract);
+                        generateMethodVariants(exceptionMap, method, true, inputType, null, isAbstract);
+                    
+                } else {
+                    for (RepresentationNode returnType: supportedOutputs) {
+                        generateMethodVariants(exceptionMap, method, false, inputType, returnType, isAbstract);
+                        if (method.hasOptionalParameters())
+                            generateMethodVariants(exceptionMap, method, true, inputType, returnType, isAbstract);
+                    }
                 }
             }
         }
@@ -340,14 +354,15 @@ public class ResourceClassGenerator {
             JType returnType) {
         StringBuilder buf = new StringBuilder();
         buf.append(method.getName().toLowerCase());
-        if (outputRep.getId() != null) {
+        if (outputRep != null && outputRep.getId() != null) {
             buf.append(outputRep.getId().substring(0,1).toUpperCase());
             buf.append(outputRep.getId().substring(1).toLowerCase());
         }
-        buf.append("As");
         if (returnType != null) {
+            buf.append("As");
             buf.append(returnType.name());
-        } else {
+        } else if (outputRep != null) {
+            buf.append("As");
             buf.append(outputRep.getMediaTypeAsClassName());
         }
         return buf.toString();
@@ -576,8 +591,16 @@ public class ResourceClassGenerator {
         }
         $executeMethod.arg($url);
         $executeMethod.arg($headerParamValueMap);
-        $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
+        if (outputRep != null)
+            $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
+        else
+            $executeMethod.arg(JExpr._null());
         JExpression $retVal = $methodBody.decl(codeModel.ref(Object.class), "_retVal", $executeMethod);
+        JBlock $nullBlock = $methodBody._if($retVal.eq(JExpr._null()))._then();
+        if (outputRep != null)
+            $nullBlock._return(JExpr._null());
+        else
+            $nullBlock._return();
 
         // check type of returned object and throw generated exception if
         // it matches a fault declared in the description
@@ -587,7 +610,10 @@ public class ResourceClassGenerator {
             $throwBlock._throw(JExpr._new(matchingException).arg(JExpr.lit(Wadl2JavaMessages.INVOCATION_FAILED())).arg(JExpr.cast(faultType,$retVal)));
         }
         
-        $methodBody._return(JExpr.cast(returnType,$retVal));
+        if (outputRep != null)
+            $methodBody._return(JExpr.cast(returnType,$retVal));
+        else
+            $methodBody._return();
     }
 
     /**
@@ -616,10 +642,15 @@ public class ResourceClassGenerator {
         }
         $executeMethod.arg($url);
         $executeMethod.arg($headerParamValueMap);
-        $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
+        if (outputRep != null)
+            $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
+        else
+            $executeMethod.arg(JExpr._null());
         JExpression $retVal = $methodBody.decl(codeModel.ref(javax.activation.DataSource.class), "_retVal", $executeMethod);
-        
-        $methodBody._return($retVal);
+        if (outputRep != null)
+            $methodBody._return($retVal);
+        else
+            $methodBody._return();
     }
 
     /**

@@ -87,6 +87,40 @@ public class JAXBDispatcher {
     }
 
     /**
+     * Perform a HTTP DELETE on the resource
+     * 
+     * 
+     * @return the unmarshalled resource representation.
+     * @param url the URL of the resource
+     * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
+     */
+    public Object doDELETE(String url, Map<String, Object> httpHeaders, String expectedMimeType) throws MalformedURLException, IOException, JAXBException {
+        URL u = new URL(url);
+        URLConnection c = u.openConnection();
+        InputStream in = null;
+        String mediaType = null;
+        if (c instanceof HttpURLConnection) {
+            HttpURLConnection h = (HttpURLConnection)c;
+            h.setRequestMethod("GET");
+            if (expectedMimeType != null)
+                h.setRequestProperty("Accept", expectedMimeType);
+            for(String key: httpHeaders.keySet())
+                h.setRequestProperty(key, httpHeaders.get(key).toString());
+            h.connect();
+            mediaType = h.getContentType();
+            if (h.getResponseCode() < 400)
+                in = h.getInputStream();
+            else
+                in = h.getErrorStream();
+        }
+        
+        Unmarshaller um = jc.createUnmarshaller();
+        Object o = um.unmarshal(in);
+        
+        return o;
+    }
+
+    /**
      * Perform a HTTP POST on the resource
      * 
      * @return the unmarshalled resource representation.
@@ -146,7 +180,8 @@ public class JAXBDispatcher {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("PUT");
             h.setChunkedStreamingMode(-1);
-            h.setRequestProperty("Accept", expectedMimeType);
+            if (expectedMimeType != null)
+                h.setRequestProperty("Accept", expectedMimeType);
             h.setRequestProperty("Content-Type", inputMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());

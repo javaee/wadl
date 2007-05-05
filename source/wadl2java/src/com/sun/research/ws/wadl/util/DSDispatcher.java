@@ -71,6 +71,35 @@ public class DSDispatcher {
     }
 
     /**
+     * Perform a HTTP DELETE on the resource
+     * @return the unmarshalled resource representation.
+     * @param url the URL of the resource
+     * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
+     */
+    public DataSource doDELETE(String url, Map<String, Object> httpHeaders, String expectedMimeType) throws MalformedURLException, IOException {
+        URL u = new URL(url);
+        URLConnection c = u.openConnection();
+        InputStream in = null;
+        String mediaType = null;
+        if (c instanceof HttpURLConnection) {
+            HttpURLConnection h = (HttpURLConnection)c;
+            h.setRequestMethod("DELETE");
+            if (expectedMimeType != null)
+                h.setRequestProperty("Accept", expectedMimeType);
+            for(String key: httpHeaders.keySet())
+                h.setRequestProperty(key, httpHeaders.get(key).toString());
+            h.connect();
+            mediaType = h.getContentType();
+            if (h.getResponseCode() < 400)
+                in = h.getInputStream();
+            else
+                in = h.getErrorStream();
+        }
+        
+        return new StreamDataSource(mediaType, in);
+    }
+
+    /**
      * Perform a HTTP POST on the resource
      * 
      * @return the unmarshalled resource representation.
@@ -130,7 +159,8 @@ public class DSDispatcher {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("PUT");
             h.setChunkedStreamingMode(-1);
-            h.setRequestProperty("Accept", expectedMimeType);
+            if (expectedMimeType != null)
+                h.setRequestProperty("Accept", expectedMimeType);
             h.setRequestProperty("Content-Type", inputMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
