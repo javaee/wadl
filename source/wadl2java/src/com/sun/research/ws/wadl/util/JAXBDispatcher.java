@@ -101,7 +101,7 @@ public class JAXBDispatcher {
         String mediaType = null;
         if (c instanceof HttpURLConnection) {
             HttpURLConnection h = (HttpURLConnection)c;
-            h.setRequestMethod("GET");
+            h.setRequestMethod("DELETE");
             if (expectedMimeType != null)
                 h.setRequestProperty("Accept", expectedMimeType);
             for(String key: httpHeaders.keySet())
