@@ -614,19 +614,19 @@ The first step is to create a WADL document that contains the Atom protocol meth
     element="atom:feed">
     <param name="first_link" style="plain"
       path="/atom:feed/atom:link[@rel='first']">
-      <link href="#feed_resource" rel="first"/>
+      <link resource_type="#entry_feed" rel="first"/>
     </representation>
     <param name="next_link" style="plain"
       path="/atom:feed/atom:link[@rel='next']">
-      <link href="#feed_resource" rel="next" rev="previous"/>
+      <link resource_type="#entry_feed" rel="next" rev="previous"/>
     </param>
     <param name="prev_link" style="plain"
       path="/atom:feed/atom:link[@rel='previous']">
-      <link href="#feed_resource" rel="previous" rev="next"/>
+      <link resource_type="#entry_feed" rel="previous" rev="next"/>
     </param>
     <param name="last_link" style="plain"
       path="/atom:feed/atom:link[@rel='last']">
-      <link href="#feed_resource" rel="last"/>
+      <link resource_type="#entry_feed" rel="last"/>
     </param>
   </representation> 
 
@@ -657,7 +657,6 @@ service document:
 
 \begin{listing}{1}
 <application xmlns="http://research.sun.com/wadl/2006/07" 
-  xml:base="http://purl.org/atom/app.wadl" 
   xmlns:app="http://purl.org/atom/app#"> 
 
   <resources base="http://example.org/"> 
