@@ -1,0 +1,5 @@
+TODO
+----
+
+- Add section on global vs local usage, explain how to use WADL for a single resource as well as a collection.
+- Make param into a referencable element like method and representation. Useful for common param declarations.
