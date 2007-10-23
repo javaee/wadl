@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.sun.research.ws</groupId>
+    <artifactId>wadl</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>wadl2java-maven-plugin</artifactId>
+  <name>WADL2Java Maven Plugin</name>
+  <packaging>maven-plugin</packaging>
+  <description>
+    A Maven plugin to support working with WADL.
+  </description>
+  <dependencies>
+    <dependency>
+      <groupId>com.sun.research.ws</groupId>
+      <artifactId>wadl2java</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-project</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>2.0</version>
+    </dependency>
+  </dependencies>
+</project>
