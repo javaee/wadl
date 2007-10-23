@@ -65,7 +65,7 @@
         </executions>
         <configuration>
           <schemaDirectory>.</schemaDirectory>
-          <generatePackage>com.sun.research.ws.wadl</generatePackage>
+          <generatePackage>org.jvnet.ws.wadl</generatePackage>
         </configuration>
       </plugin>
       <plugin>
@@ -75,7 +75,7 @@
         <configuration>
           <programs>
             <program>
-              <mainClass>com.sun.research.ws.wadl2java.Main</mainClass>
+              <mainClass>org.jvnet.ws.wadl.wadl2java.Main</mainClass>
               <name>wadl2java</name>
             </program>
           </programs>
