@@ -31,7 +31,7 @@ files will be written to <code>./gen-src/com/example/test</code>. The directory
 <pre>&lt;property name="jaxws.home" value="/path/to/jax-ws/directory" /&gt;
 &lt;property name="wadl2java.home" value="/path/to/wadl2java/directory" /&gt;
 
-&lt;taskdef name="wjc" classname="com.sun.research.ws.wadl2java.WJCTask"&gt;
+&lt;taskdef name="wjc" classname="org.jvnet.ws.wadl2java.WJCTask"&gt;
   &lt;classpath&gt;
     &lt;fileset dir="${jaxws.home}" includes="lib/*.jar" /&gt;
     &lt;pathelement location="${wadl2java.home}/dist/wadl2java.jar"/&gt;
@@ -43,7 +43,7 @@ files will be written to <code>./gen-src/com/example/test</code>. The directory
   &lt;wjc description="file.wadl" package="com.yahoo.search" target="gen-src"/&gt;
 &lt;/target&gt;</pre>
 
-@see <a href="http://research.sun.com/techrep/2006/abstract-153.html">WADL Specification</a>
+@see <a href="https://wadl.dev.java.net/#spec">WADL Specification</a>
 
   </body>
 </html>
