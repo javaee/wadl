@@ -10,7 +10,7 @@
  * permissions and limitations under the License.
  */
 
-package com.sun.research.ws.wadl.util;
+package org.jvnet.ws.wadl.util;
 
 import java.util.ArrayList;
 

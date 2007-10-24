@@ -17,7 +17,7 @@
  *
  */
 
-package com.sun.research.ws.wadl.util;
+package org.jvnet.ws.wadl.util;
 
 import java.io.IOException;
 import java.io.InputStream;

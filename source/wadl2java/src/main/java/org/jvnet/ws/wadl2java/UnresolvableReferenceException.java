@@ -11,33 +11,32 @@
  */
 
 /*
- * ReferenceTargetException.java
+ * UnresolvableReferenceException.java
  *
- * Created on June 1, 2006, 10:07 AM
+ * Created on June 1, 2006, 10:05 AM
  *
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 /**
- * Thrown when a reference resolves to an object of the incorrect type
+ * Thrown when a reference cannot be resolved
  * @author mh124079
  */
-public class ReferenceTargetException extends java.lang.Exception {
+public class UnresolvableReferenceException extends java.lang.Exception {
     
     /**
-     * Creates a new instance of <code>ReferenceTargetException</code> without detail message.
+     * Creates a new instance of <code>UnresolvableReferenceException</code> without detail message.
      */
-    public ReferenceTargetException() {
+    public UnresolvableReferenceException() {
     }
     
     
     /**
-     * Constructs an instance of <code>ReferenceTargetException</code> with the specified detail message.
-     * 
+     * Constructs an instance of <code>UnresolvableReferenceException</code> with the specified detail message.
      * @param msg the detail message.
      */
-    public ReferenceTargetException(String msg) {
+    public UnresolvableReferenceException(String msg) {
         super(msg);
     }
 }

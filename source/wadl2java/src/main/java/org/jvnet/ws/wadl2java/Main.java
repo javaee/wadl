@@ -17,7 +17,7 @@
  *
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
 import java.io.IOException;
@@ -33,7 +33,7 @@ import java.util.List;
  *
  * <p>Usage:</p>
  *
- * <pre>java com.sun.research.ws.wadl2java.Main -p package -o directory file.wadl</pre>
+ * <pre>java ws.wadl2java.Main -p package -o directory file.wadl</pre>
  *
  * <p>where:</p>
  * 

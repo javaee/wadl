@@ -17,9 +17,9 @@
  *
  */
 
-package com.sun.research.ws.wadl.util;
+package org.jvnet.ws.wadl.util;
 
-import com.sun.research.ws.wadl2java.ast.PathSegment;
+import org.jvnet.ws.wadl2java.ast.PathSegment;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;

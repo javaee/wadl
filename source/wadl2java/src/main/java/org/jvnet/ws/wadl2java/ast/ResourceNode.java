@@ -17,14 +17,14 @@
  *
  */
 
-package com.sun.research.ws.wadl2java.ast;
+package org.jvnet.ws.wadl2java.ast;
 
-import com.sun.research.ws.wadl.Application;
-import com.sun.research.ws.wadl.Doc;
-import com.sun.research.ws.wadl.Param;
-import com.sun.research.ws.wadl.Resource;
-import com.sun.research.ws.wadl.Resources;
-import com.sun.research.ws.wadl2java.GeneratorUtil;
+import org.jvnet.ws.wadl.Application;
+import org.jvnet.ws.wadl.Doc;
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl.Resource;
+import org.jvnet.ws.wadl.Resources;
+import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
 

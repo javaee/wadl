@@ -17,9 +17,9 @@
  */
 
 
-package com.sun.research.ws.wadl.util;
+package org.jvnet.ws.wadl.util;
 
-import com.sun.research.ws.wadl2java.ast.PathSegment;
+import org.jvnet.ws.wadl2java.ast.PathSegment;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

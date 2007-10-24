@@ -17,12 +17,12 @@
  *
  */
 
-package com.sun.research.ws.wadl2java.ast;
+package org.jvnet.ws.wadl2java.ast;
 
-import com.sun.research.ws.wadl.RepresentationType;
-import com.sun.research.ws.wadl.Param;
-import com.sun.research.ws.wadl.Doc;
-import com.sun.research.ws.wadl2java.GeneratorUtil;
+import org.jvnet.ws.wadl.RepresentationType;
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl.Doc;
+import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.List;
 import javax.xml.namespace.QName;
 

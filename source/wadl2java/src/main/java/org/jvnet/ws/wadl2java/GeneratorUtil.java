@@ -17,7 +17,7 @@
  *
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JClass;
@@ -30,9 +30,9 @@ import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
-import com.sun.research.ws.wadl.Option;
-import com.sun.research.ws.wadl.Param;
-import com.sun.research.ws.wadl2java.ast.ResourceNode;
+import org.jvnet.ws.wadl.Option;
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl2java.ast.ResourceNode;
 import java.util.Arrays;
 import java.util.HashSet;
 import javax.xml.namespace.QName;

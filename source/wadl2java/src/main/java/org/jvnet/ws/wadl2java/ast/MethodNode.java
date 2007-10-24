@@ -17,11 +17,11 @@
  *
  */
 
-package com.sun.research.ws.wadl2java.ast;
+package org.jvnet.ws.wadl2java.ast;
 
-import com.sun.research.ws.wadl.Doc;
-import com.sun.research.ws.wadl.Method;
-import com.sun.research.ws.wadl.Param;
+import org.jvnet.ws.wadl.Doc;
+import org.jvnet.ws.wadl.Method;
+import org.jvnet.ws.wadl.Param;
 import java.util.ArrayList;
 import java.util.List;
 

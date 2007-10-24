@@ -17,13 +17,13 @@
  * Created on April 27, 2006, 4:59 PM
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 import junit.framework.*;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import com.sun.research.ws.wadl.*;
+import org.jvnet.ws.wadl.*;
 import java.io.File;
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class MainTest extends TestCase {
     }
 
     /**
-     * Test of process method, of class com.sun.research.ws.wadl2java.Main.
+     * Test of process method, of class org.jvnet.ws.wadl2java.Main.
      */
 /*    public void testProcess() {
         System.out.println("process");
@@ -60,7 +60,7 @@ public class MainTest extends TestCase {
     }
 */
     /**
-     * Test of main method, of class com.sun.research.ws.wadl2java.Main.
+     * Test of main method, of class org.jvnet.ws.wadl2java.Main.
      */
     public void testMain() {
     }

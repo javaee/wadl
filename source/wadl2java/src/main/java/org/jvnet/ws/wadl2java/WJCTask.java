@@ -17,7 +17,7 @@
  *
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -37,7 +37,7 @@ import org.apache.tools.ant.types.FileSet;
  * <pre> &lt;property name="jaxws.home" value="/path/to/jax-ws/directory" /&gt;
  * &lt;property name="wadl2java.home" value="/path/to/wadl2java/directory" /&gt;
  *
- * &lt;taskdef name="wjc" classname="com.sun.research.ws.wadl2java.WJCTask"&gt;
+ * &lt;taskdef name="wjc" classname="org.jvnet.ws.wadl2java.WJCTask"&gt;
  *   &lt;classpath&gt;
  *     &lt;fileset dir="${jaxws.home}" includes="lib/*.jar" /&gt;
  *     &lt;pathelement location="${wadl2java.home}/dist/wadl2java.jar"/&gt;

@@ -17,15 +17,15 @@
  *
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
-import com.sun.research.ws.wadl.*;
-import com.sun.research.ws.wadl2java.ast.FaultNode;
-import com.sun.research.ws.wadl2java.ast.MethodNode;
-import com.sun.research.ws.wadl2java.ast.RepresentationNode;
-import com.sun.research.ws.wadl2java.ast.ResourceNode;
-import com.sun.research.ws.wadl2java.ast.ResourceTypeNode;
+import org.jvnet.ws.wadl.*;
+import org.jvnet.ws.wadl2java.ast.FaultNode;
+import org.jvnet.ws.wadl2java.ast.MethodNode;
+import org.jvnet.ws.wadl2java.ast.RepresentationNode;
+import org.jvnet.ws.wadl2java.ast.ResourceNode;
+import org.jvnet.ws.wadl2java.ast.ResourceTypeNode;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -113,7 +113,7 @@ public class Wadl2Java {
     public void process(URI rootDesc) throws JAXBException, IOException, 
             JClassAlreadyExistsException {
         // read in root WADL file
-        JAXBContext jbc = JAXBContext.newInstance( "com.sun.research.ws.wadl", 
+        JAXBContext jbc = JAXBContext.newInstance( "org.jvnet.ws.wadl", 
                 this.getClass().getClassLoader() );
         u = jbc.createUnmarshaller();
         s2j = new SchemaCompilerImpl();

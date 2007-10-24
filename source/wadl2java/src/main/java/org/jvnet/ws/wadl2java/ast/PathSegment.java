@@ -17,13 +17,13 @@
  *
  */
 
-package com.sun.research.ws.wadl2java.ast;
+package org.jvnet.ws.wadl2java.ast;
 
 
-import com.sun.research.ws.wadl.Param;
-import com.sun.research.ws.wadl.ParamStyle;
-import com.sun.research.ws.wadl.Resource;
-import com.sun.research.ws.wadl.ResourceType;
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl.ParamStyle;
+import org.jvnet.ws.wadl.Resource;
+import org.jvnet.ws.wadl.ResourceType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

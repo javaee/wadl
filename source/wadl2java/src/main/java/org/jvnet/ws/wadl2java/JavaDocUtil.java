@@ -17,25 +17,25 @@
  *
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.JCommentPart;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JEnumConstant;
 import com.sun.codemodel.JMethod;
-import com.sun.research.ws.wadl.Doc;
-import com.sun.research.ws.wadl.Option;
-import com.sun.research.ws.wadl.Param;
-import com.sun.research.ws.wadl2java.ast.MethodNode;
-import com.sun.research.ws.wadl2java.ast.RepresentationNode;
-import com.sun.research.ws.wadl2java.ast.ResourceNode;
-import com.sun.research.ws.wadl2java.ast.ResourceTypeNode;
+import org.jvnet.ws.wadl.Doc;
+import org.jvnet.ws.wadl.Option;
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl2java.ast.MethodNode;
+import org.jvnet.ws.wadl2java.ast.RepresentationNode;
+import org.jvnet.ws.wadl2java.ast.ResourceNode;
+import org.jvnet.ws.wadl2java.ast.ResourceTypeNode;
 import java.io.IOException;
 import org.w3c.dom.Element;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-import com.sun.research.ws.wadl.Application;
+import org.jvnet.ws.wadl.Application;
 import java.io.StringWriter;
 import org.w3c.dom.Attr;
 import org.w3c.dom.NamedNodeMap;

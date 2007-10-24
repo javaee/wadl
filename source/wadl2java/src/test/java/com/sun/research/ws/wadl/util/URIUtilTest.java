@@ -17,7 +17,7 @@
  * Created on August 8, 2006, 3:16 PM
  */
 
-package com.sun.research.ws.wadl.util;
+package org.jvnet.ws.wadl.util;
 
 import junit.framework.*;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class URIUtilTest extends TestCase {
     }
 
     /**
-     * Test of buildURI method, of class com.sun.research.ws.wadl.util.URIUtil.
+     * Test of buildURI method, of class org.jvnet.ws.wadl.util.URIUtil.
      */
     public void testBuildURI() {
         System.out.println("buildURI");
@@ -69,7 +69,7 @@ public class URIUtilTest extends TestCase {
     }
 
     /**
-     * Test of concatenate method, of class com.sun.research.ws.wadl.util.URIUtil.
+     * Test of concatenate method, of class org.jvnet.ws.wadl.util.URIUtil.
      */
     public void testConcatenate() {
         System.out.println("concatenate");
@@ -85,7 +85,7 @@ public class URIUtilTest extends TestCase {
     }
 
     /**
-     * Test of buildQueryString method, of class com.sun.research.ws.wadl.util.URIUtil.
+     * Test of buildQueryString method, of class org.jvnet.ws.wadl.util.URIUtil.
      */
     public void testBuildQueryString() {
         System.out.println("buildQueryString");

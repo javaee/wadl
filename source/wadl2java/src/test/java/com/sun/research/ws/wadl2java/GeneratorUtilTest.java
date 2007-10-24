@@ -5,7 +5,7 @@
  * Created on February 16, 2007, 10:02 AM
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 import junit.framework.*;
 import com.sun.codemodel.ClassType;
@@ -19,9 +19,9 @@ import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
-import com.sun.research.ws.wadl.Option;
-import com.sun.research.ws.wadl.Param;
-import com.sun.research.ws.wadl2java.ast.ResourceNode;
+import org.jvnet.ws.wadl.Option;
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl2java.ast.ResourceNode;
 import java.util.Arrays;
 import java.util.HashSet;
 import javax.xml.namespace.QName;
@@ -43,7 +43,7 @@ public class GeneratorUtilTest extends TestCase {
     }
 
     /**
-     * Test of makeConstantName method, of class com.sun.research.ws.wadl2java.GeneratorUtil.
+     * Test of makeConstantName method, of class org.jvnet.ws.wadl2java.GeneratorUtil.
      */
     public void testMakeConstantName() {
         System.out.println("makeConstantName");
@@ -56,7 +56,7 @@ public class GeneratorUtilTest extends TestCase {
     }
 
     /**
-     * Test of makeClassName method, of class com.sun.research.ws.wadl2java.GeneratorUtil.
+     * Test of makeClassName method, of class org.jvnet.ws.wadl2java.GeneratorUtil.
      */
     public void testMakeClassName() {
         System.out.println("makeClassName");
@@ -69,7 +69,7 @@ public class GeneratorUtilTest extends TestCase {
     }        
 
     /**
-     * Test of makeParamName method, of class com.sun.research.ws.wadl2java.GeneratorUtil.
+     * Test of makeParamName method, of class org.jvnet.ws.wadl2java.GeneratorUtil.
      */
     public void testMakeParamName() {
         System.out.println("makeParamName");

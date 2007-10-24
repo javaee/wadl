@@ -17,10 +17,10 @@
  * Created on February 8, 2007, 11:24 AM
  */
 
-package com.sun.research.ws.wadl.util;
+package org.jvnet.ws.wadl.util;
 
 import junit.framework.*;
-import com.sun.research.ws.wadl2java.ast.PathSegment;
+import org.jvnet.ws.wadl2java.ast.PathSegment;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +42,7 @@ public class UriBuilderTest extends TestCase {
     }
 
     /**
-     * Test of buildUri method, of class com.sun.research.ws.wadl.util.UriBuilder.
+     * Test of buildUri method, of class org.jvnet.ws.wadl.util.UriBuilder.
      */
     public void testBuildUri() {
         System.out.println("buildUri");

@@ -17,7 +17,7 @@
  * 
  */
 
-package com.sun.research.ws.wadl2java;
+package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -35,16 +35,16 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
-import com.sun.research.ws.wadl.*;
-import com.sun.research.ws.wadl.util.DSDispatcher;
-import com.sun.research.ws.wadl.util.JAXBDispatcher;
-import com.sun.research.ws.wadl.util.UriBuilder;
-import com.sun.research.ws.wadl2java.ast.FaultNode;
-import com.sun.research.ws.wadl2java.ast.MethodNode;
-import com.sun.research.ws.wadl2java.ast.PathSegment;
-import com.sun.research.ws.wadl2java.ast.RepresentationNode;
-import com.sun.research.ws.wadl2java.ast.ResourceNode;
-import com.sun.research.ws.wadl2java.ast.ResourceTypeNode;
+import org.jvnet.ws.wadl.*;
+import org.jvnet.ws.wadl.util.DSDispatcher;
+import org.jvnet.ws.wadl.util.JAXBDispatcher;
+import org.jvnet.ws.wadl.util.UriBuilder;
+import org.jvnet.ws.wadl2java.ast.FaultNode;
+import org.jvnet.ws.wadl2java.ast.MethodNode;
+import org.jvnet.ws.wadl2java.ast.PathSegment;
+import org.jvnet.ws.wadl2java.ast.RepresentationNode;
+import org.jvnet.ws.wadl2java.ast.ResourceNode;
+import org.jvnet.ws.wadl2java.ast.ResourceTypeNode;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import java.io.IOException;
