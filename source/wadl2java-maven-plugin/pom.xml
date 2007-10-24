@@ -6,7 +6,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>wadl2java-maven-plugin</artifactId>
-  <name>WADL2Java Maven Plugin</name>
+  <name>WADL Maven Plugin</name>
   <packaging>maven-plugin</packaging>
   <description>
     A Maven plugin to support working with WADL.

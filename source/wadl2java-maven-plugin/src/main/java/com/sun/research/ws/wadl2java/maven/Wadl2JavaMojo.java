@@ -8,7 +8,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
 
-import com.sun.research.ws.wadl2java.Wadl2Java;
+import org.jvnet.ws.wadl2java.Wadl2Java;
 
 /**
  * A Maven plugin to generate Java code from WADL descriptions.
