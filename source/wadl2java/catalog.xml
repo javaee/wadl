@@ -1,17 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
-  
-  <group id="W3C">
-    <!-- XLink 1.1 CR at http://www.w3.org/TR/xlink11/
-    <uri name="http://www.w3.org/1999/xlink"
-         uri="private/cache/retriever/w3c/xlink/1.1/xlink.xsd"/>
-    -->
-    <uri name="http://www.w3.org/XML/1998/namespace"
-         uri="private/cache/retriever/w3c/xml/2001/xml.xsd"/>
-    <uri name="http://www.w3.org/2001/XMLSchema"
-         uri="private/cache/retriever/w3c/xmlschema/1.0/XMLSchema.xsd"/>
-    <uri name="http://www.w3.org/2001/XInclude"
-         uri="private/cache/retriever/w3c/xinclude/1.0/XInclude.xsd"/>                  
-  </group>
-  
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">  
+    <nextCatalog catalog="private/cache/retriever/catalog.xml"/>
 </catalog>
