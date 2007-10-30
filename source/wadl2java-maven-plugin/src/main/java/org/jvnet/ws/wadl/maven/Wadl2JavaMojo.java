@@ -1,4 +1,4 @@
-package com.sun.research.ws.wadl2java.maven;
+package org.jvnet.ws.wadl.maven;
 
 import java.io.File;
 

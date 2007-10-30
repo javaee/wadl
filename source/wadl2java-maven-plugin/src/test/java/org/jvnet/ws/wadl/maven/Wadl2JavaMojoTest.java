@@ -1,4 +1,4 @@
-package org.jvnet.ws.wadl;
+package org.jvnet.ws.wadl.maven;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -11,8 +11,8 @@ import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
+import org.jvnet.ws.wadl.maven.Wadl2JavaMojo;
 
-import com.sun.research.ws.wadl2java.maven.Wadl2JavaMojo;
 
 /**
  * A bunch of tests for the {@link Wadl2JavaMojo}.
