@@ -50,14 +50,14 @@ public class Wadl2JavaMojo extends AbstractMojo {
 
     /**
      * The current project.
-     *
+     * 
      * @parameter expression="${project}"
      */
     private MavenProject project;
 
     /**
      * Autopackaging.
-     *
+     * 
      * @parameter expression="${autoPackaging}"
      */
     private boolean autoPackaging = true;
@@ -71,31 +71,34 @@ public class Wadl2JavaMojo extends AbstractMojo {
     private boolean failOnError;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        assureTargetDirExistence();
-        String[] patterns = includes.split(",");
-        DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(sourceDirectory);
-        scanner.setIncludes(patterns);
-        scanner.scan();
-        String[] matches = scanner.getIncludedFiles();
-        Wadl2Java processor = new Wadl2Java(targetDirectory, packageName, autoPackaging);
-        for (int i = matches.length - 1; i >= 0; i--) {
-            File file = new File(sourceDirectory, matches[i]);
-            try {
-                processor.process(file.toURI());
-            } catch (Exception e) {
-                if (!failOnError) {
-                    getLog().warn(
-                            "Failed to generate code from "
-                                    + file.getAbsolutePath(), e);
-                } else {
-                    throw new MojoExecutionException(
-                            "Failed to generate code from "
-                                    + file.getAbsolutePath());
+        if (sourceDirectory.exists() && sourceDirectory.canRead()) {
+            assureTargetDirExistence();
+            String[] patterns = includes.split(",");
+            DirectoryScanner scanner = new DirectoryScanner();
+            scanner.setBasedir(sourceDirectory);
+            scanner.setIncludes(patterns);
+            scanner.scan();
+            String[] matches = scanner.getIncludedFiles();
+            Wadl2Java processor = new Wadl2Java(targetDirectory, packageName,
+                    autoPackaging);
+            for (int i = matches.length - 1; i >= 0; i--) {
+                File file = new File(sourceDirectory, matches[i]);
+                try {
+                    processor.process(file.toURI());
+                } catch (Exception e) {
+                    if (!failOnError) {
+                        getLog().warn(
+                                "Failed to generate code from "
+                                        + file.getAbsolutePath(), e);
+                    } else {
+                        throw new MojoExecutionException(
+                                "Failed to generate code from "
+                                        + file.getAbsolutePath());
+                    }
                 }
             }
+            project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
         }
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
     }
 
     private void assureTargetDirExistence() throws MojoExecutionException {
