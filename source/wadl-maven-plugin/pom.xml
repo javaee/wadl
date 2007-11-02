@@ -14,7 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>org.jvnet.ws.wadl</groupId>
-            <artifactId>wadl2java</artifactId>
+            <artifactId>wadl-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
