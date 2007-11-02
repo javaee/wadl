@@ -290,6 +290,8 @@
     <modules>
         <module>wadl-core</module>
         <module>wadl-maven-plugin</module>
+        <module>wadl-ant</module>
+        <module>wadl-cmdline</module>
         <!--module>wadl2java-samples</module-->
     </modules>
     

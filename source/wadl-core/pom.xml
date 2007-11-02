@@ -7,10 +7,9 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>wadl-core</artifactId>
-  <name>WADL Ant/Commandline</name>
+  <name>WADL Core</name>
   <description>
-    A commandline- and Ant-based tool for generating Java stubs from
-    WADL files.
+      Core WADL classes and interfaces.
   </description>
   <dependencies>
     <dependency>
@@ -49,12 +48,6 @@
       <groupId>javax.xml.bind</groupId>
       <artifactId>jsr173_api</artifactId>
     </dependency-->
-    <dependency>
-      <groupId>ant</groupId>
-      <artifactId>ant</artifactId>
-      <version>1.6.5</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
   <build>
     <resources>
