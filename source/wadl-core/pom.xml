@@ -6,7 +6,7 @@
     <artifactId>wadl</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>wadl2java</artifactId>
+  <artifactId>wadl-core</artifactId>
   <name>WADL Ant/Commandline</name>
   <description>
     A commandline- and Ant-based tool for generating Java stubs from
