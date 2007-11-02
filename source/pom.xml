@@ -288,8 +288,8 @@
     
     
     <modules>
-        <module>wadl2java</module>
-        <module>wadl2java-maven-plugin</module>
+        <module>wadl-core</module>
+        <module>wadl-maven-plugin</module>
         <!--module>wadl2java-samples</module-->
     </modules>
     
