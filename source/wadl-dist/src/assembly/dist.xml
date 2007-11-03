@@ -5,6 +5,25 @@
     </formats>
     <fileSets>
         <fileSet>
+            <directory>../wadl-cmdline/target/appassembler/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+            <excludes>
+                <exclude>*.cmd</exclude>
+                <exclude>*.bat</exclude>
+            </excludes>
+            <lineEnding>unix</lineEnding>
+            <fileMode>0744</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>../wadl-cmdline/target/appassembler/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.cmd</include>
+                <include>*.bat</include>
+            </includes>
+            <lineEnding>dos</lineEnding>
+        </fileSet>
+        <fileSet>
             <directory>src/main/resources</directory>
             <outputDirectory>samples/share</outputDirectory>
             <includes>
@@ -13,17 +32,36 @@
                 <include>*.xjb</include>
             </includes>
         </fileSet>
-        <filesSet>
+        <fileSet>
             <directory>src/main/resources</directory>
-            <outputDirectory>samples/share/build.xml</outputDirectory>
+            <outputDirectory>samples/ant</outputDirectory>
             <includes>
                 <include>build.xml</include>
             </includes>
-        </filesSet>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources/scripts</directory>
+            <outputDirectory>samples/cmdline</outputDirectory>
+            <excludes>
+                <exclude>*.cmd</exclude>
+                <exclude>*.bat</exclude>
+            </excludes>
+            <lineEnding>unix</lineEnding>
+            <fileMode>0744</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources/scripts</directory>
+            <outputDirectory>samples/cmdline</outputDirectory>
+            <includes>
+                <include>*.cmd</include>
+                <include>*.bat</include>
+            </includes>
+            <lineEnding>dos</lineEnding>
+        </fileSet>
     </fileSets>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/lib</outputDirectory>
+            <outputDirectory>/repo</outputDirectory>
             <unpack>false</unpack>
             <scope>runtime</scope>
         </dependencySet>

@@ -39,6 +39,11 @@
         </dependency>
         <dependency>
             <groupId>org.jvnet.ws.wadl</groupId>
+            <artifactId>wadl-cmdline</artifactId>
+            <version>${version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jvnet.ws.wadl</groupId>
             <artifactId>wadl-ant</artifactId>
             <version>${version}</version>
         </dependency>
