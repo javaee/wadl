@@ -6,13 +6,20 @@
     <fileSets>
         <fileSet>
             <directory>src/main/resources</directory>
-            <outputDirectory>samples</outputDirectory>
+            <outputDirectory>samples/share</outputDirectory>
             <includes>
                 <include>*.wadl</include>
                 <include>*.xsd</include>
                 <include>*.xjb</include>
             </includes>
         </fileSet>
+        <filesSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>samples/share/build.xml</outputDirectory>
+            <includes>
+                <include>build.xml</include>
+            </includes>
+        </filesSet>
     </fileSets>
     <dependencySets>
         <dependencySet>
