@@ -292,6 +292,7 @@
         <module>wadl-maven-plugin</module>
         <module>wadl-ant</module>
         <module>wadl-cmdline</module>
+        <module>wadl-dist</module>
         <!--module>wadl2java-samples</module-->
     </modules>
     

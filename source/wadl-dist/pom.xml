@@ -13,6 +13,24 @@
         All WADL tools packaged in a single distribution, including
         samples on how to use them.
     </description>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>attached</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptor>${basedir}/src/assembly/dist.xml</descriptor>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <dependencies>
         <dependency>
             <groupId>org.jvnet.ws.wadl</groupId>
