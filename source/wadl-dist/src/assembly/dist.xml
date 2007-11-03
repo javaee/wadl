@@ -5,7 +5,7 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>.</directory>
+            <directory>src/main/resources</directory>
             <outputDirectory>samples</outputDirectory>
             <includes>
                 <include>*.wadl</include>
