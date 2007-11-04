@@ -3,4 +3,6 @@
 # package.
 #
 
-..\..\bin\wadl2java.cmd
+mkdir .\gen-src
+
+..\..\bin\wadl2java.cmd -o ./gen-src -p com.yahoo.search ..\share\YahooSearch.wadl
