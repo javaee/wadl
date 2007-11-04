@@ -3,6 +3,13 @@
     <formats>
         <format>zip</format>
     </formats>
+    <files>
+        <file>
+            <source>src/main/resources/pom.xml</source>
+            <outputDirectory>samples/maven</outputDirectory>
+            <filtered>true</filtered>
+        </file>
+    </files>
     <fileSets>
         <fileSet>
             <directory>../wadl-cmdline/target/appassembler/bin</directory>
