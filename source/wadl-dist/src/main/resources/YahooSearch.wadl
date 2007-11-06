@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <!--
- The contents of this file are subject to the terms
- of the Common Development and Distribution License
- (the "License").  You may not use this file except
- in compliance with the License.
- 
- You can obtain a copy of the license at
- http://www.opensource.org/licenses/cddl1.php
- See the License for the specific language governing
- permissions and limitations under the License.
+The contents of this file are subject to the terms
+of the Common Development and Distribution License
+(the "License").  You may not use this file except
+in compliance with the License.
+
+You can obtain a copy of the license at
+http://www.opensource.org/licenses/cddl1.php
+See the License for the specific language governing
+permissions and limitations under the License.
 -->
 <application xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-  xmlns:yn="urn:yahoo:yn"
-  xmlns:ya="urn:yahoo:api"
-  xmlns:html="http://www.w3.org/1999/xhtml"
-  xmlns="http://research.sun.com/wadl/2006/10">
+             xmlns:yn="urn:yahoo:yn"
+             xmlns:ya="urn:yahoo:api"
+             xmlns:html="http://www.w3.org/1999/xhtml"
+             xmlns="http://research.sun.com/wadl/2006/10">
 
   <grammars>
     <include href="NewsSearchResponse.xsd"/>
@@ -33,7 +33,7 @@
       <method href="#search"/>
     </resource>
   </resources>
-    
+  
   <method name="GET" id="search">
     <doc xml:lang="en" title="Search news stories by keyword"/>
     <request>
@@ -43,13 +43,13 @@
       <param name="type" type="xsd:string" default="all" style="query">
         <doc xml:lang="en" title="Keyword matching"/>
         <option value="all">
-            <doc>All query terms.</doc>
+          <doc>All query terms.</doc>
         </option>
         <option value="any">
-            <doc>Any query terms.</doc>
+          <doc>Any query terms.</doc>
         </option>
         <option value="phrase">
-            <doc>Query terms as a phrase.</doc>
+          <doc>Query terms as a phrase.</doc>
         </option>
       </param>
       <param name="results" type="xsd:int" default="10" style="query">
@@ -81,7 +81,7 @@
         <doc xml:lang="en" title="A list of news items matching the query"/>
       </representation>
       <fault id="SearchError" status="400" mediaType="application/xml"
-        element="ya:Error"/>
+             element="ya:Error"/>
     </response>
   </method>
   
