@@ -5,4 +5,4 @@
 
 mkdir .\gen-src
 
-..\..\bin\wadl2java.cmd -o ./gen-src -p com.yahoo.search ..\share\YahooSearch.wadl
+..\..\bin\wadl2java.cmd -o ./gen-src -p com.yahoo.search -c ..\share\binding.xjb ..\share\YahooSearch.wadl
