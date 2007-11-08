@@ -64,11 +64,6 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        if (args.length%2 != 1) {
-            printUsage();
-            System.exit(1);
-        }
-            
         try {
             int i=0;
             File outputDir = null;
@@ -93,6 +88,10 @@ public class Main {
                     printUsage();
                     System.exit(1);
                 }
+            }
+            if (i > args.length-1 || outputDir==null || pkg==null) {
+                printUsage();
+                System.exit(1);
             }
             URI wadlDesc = new URI(args[args.length-1]);
             if (wadlDesc.getScheme()==null || wadlDesc.getScheme().equals("file")) {
