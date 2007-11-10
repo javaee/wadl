@@ -5,33 +5,27 @@
   </formats>
   <files>
     <file>
-      <source>src/main/resources/pom.xml</source>
+      <source>src/main/resources/samples/maven/pom.xml</source>
       <outputDirectory>samples/maven</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+    <file>
+      <source>src/main/resources/bin/wadl2java</source>
+      <outputDirectory>bin</outputDirectory>
+      <lineEnding>unix</lineEnding>
+      <fileMode>0744</fileMode>
+      <filtered>true</filtered>
+    </file>
+    <file>
+      <source>src/main/resources/bin/wadl2java.bat</source>
+      <outputDirectory>bin</outputDirectory>
+      <lineEnding>dos</lineEnding>
       <filtered>true</filtered>
     </file>
   </files>
   <fileSets>
     <fileSet>
-      <directory>../wadl-cmdline/target/appassembler/bin</directory>
-      <outputDirectory>bin</outputDirectory>
-      <excludes>
-        <exclude>*.cmd</exclude>
-        <exclude>*.bat</exclude>
-      </excludes>
-      <lineEnding>unix</lineEnding>
-      <fileMode>0744</fileMode>
-    </fileSet>
-    <fileSet>
-      <directory>../wadl-cmdline/target/appassembler/bin</directory>
-      <outputDirectory>bin</outputDirectory>
-      <includes>
-        <include>*.cmd</include>
-        <include>*.bat</include>
-      </includes>
-      <lineEnding>dos</lineEnding>
-    </fileSet>
-    <fileSet>
-      <directory>src/main/resources</directory>
+      <directory>src/main/resources/samples/share</directory>
       <outputDirectory>samples/share</outputDirectory>
       <includes>
         <include>*.wadl</include>
@@ -40,14 +34,14 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>src/main/resources</directory>
+      <directory>src/main/resources/samples/ant</directory>
       <outputDirectory>samples/ant</outputDirectory>
       <includes>
         <include>build.xml</include>
       </includes>
     </fileSet>
     <fileSet>
-      <directory>src/main/resources/scripts</directory>
+      <directory>src/main/resources/samples/cmdline</directory>
       <outputDirectory>samples/cmdline</outputDirectory>
       <excludes>
         <exclude>*.cmd</exclude>
@@ -57,7 +51,7 @@
       <fileMode>0744</fileMode>
     </fileSet>
     <fileSet>
-      <directory>src/main/resources/scripts</directory>
+      <directory>src/main/resources/samples/cmdline</directory>
       <outputDirectory>samples/cmdline</outputDirectory>
       <includes>
         <include>*.cmd</include>
@@ -68,7 +62,7 @@
   </fileSets>
   <dependencySets>
     <dependencySet>
-      <outputDirectory>/repo</outputDirectory>
+      <outputDirectory>lib</outputDirectory>
       <unpack>false</unpack>
       <scope>runtime</scope>
     </dependencySet>

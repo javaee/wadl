@@ -18,73 +18,62 @@
     </dependency>
   </dependencies>
   <profiles>
-        <profile>
-            <id>netbeans-public</id>
-            <activation>
-                <property>
-                    <name>netbeans.execution</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathPrefix>lib</classpathPrefix>
-                                    <mainClass>org.jvnet.ws.wadl2java.Main</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.1</version>
-                        <executions>
-                            <execution>
-                                <id>nb</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>directory</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptor>${basedir}/src/main/assemblies/netbeans-run.xml</descriptor>
-                                    <finalName>executable</finalName>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <profile>
+      <id>netbeans-public</id>
+      <activation>
+        <property>
+          <name>netbeans.execution</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <archive>
+                <manifest>
+                  <addClasspath>true</addClasspath>
+                  <classpathPrefix>lib</classpathPrefix>
+                  <mainClass>org.jvnet.ws.wadl2java.Main</mainClass>
+                </manifest>
+              </archive>
+            </configuration>
+          </plugin>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.1</version>
+            <executions>
+              <execution>
+                <id>nb</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>directory</goal>
+                </goals>
+                <configuration>
+                  <descriptor>${basedir}/src/main/assemblies/netbeans-run.xml</descriptor>
+                  <finalName>executable</finalName>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <build>
+    <finalName>${artifactId}</finalName>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>appassembler-maven-plugin</artifactId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <repositoryLayout>flat</repositoryLayout>
-          <repositoryName>lib</repositoryName>
-          <!--<installArtifacts>false</installArtifacts>-->
-          <programs>
-            <program>
+          <archive>
+            <manifest>
               <mainClass>org.jvnet.ws.wadl2java.Main</mainClass>
-              <name>wadl2java</name>
-            </program>
-          </programs>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>assemble</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
