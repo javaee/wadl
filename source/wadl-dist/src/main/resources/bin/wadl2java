@@ -132,7 +132,7 @@ fi
 
 exec "$JAVACMD" \
   $WADL_OPTS \
-  -jar ${WADL_HOME}/lib/wadl-cmdline-${project.version}.jar
   "-Dwadl.home=${WADL_HOME}"  \
+  -jar ${WADL_HOME}/lib/wadl-cmdline-${project.version}.jar \
   $QUOTED_ARGS
 
