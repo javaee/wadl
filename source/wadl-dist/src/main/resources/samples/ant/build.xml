@@ -17,7 +17,7 @@ permissions and limitations under the License.
     <taskdef name="wjc" 
              classname="org.jvnet.ws.wadl2java.WJCTask">
         <classpath>
-            <fileset dir="${basedir}/../../repo" includes="*.jar" 
+            <fileset dir="${basedir}/../../lib" includes="*.jar" 
                      excludes="wadl-cmdline*.jar"/>
         </classpath>
     </taskdef>
