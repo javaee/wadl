@@ -11,14 +11,6 @@
 # permissions and limitations under the License.
 # ----------------------------------------------------------------------------
 
-QUOTED_ARGS=""
-while [ "$1" != "" ] ; do
-
-  QUOTED_ARGS="$QUOTED_ARGS \"$1\""
-  shift
-
-done
-
 if [ -f /etc/wadlrc ] ; then
   . /etc/wadlrc
 fi
@@ -133,6 +125,6 @@ fi
 exec "$JAVACMD" \
   $WADL_OPTS \
   "-Dwadl.home=${WADL_HOME}"  \
-  -jar ${WADL_HOME}/lib/wadl-cmdline-${project.version}.jar \
-  $QUOTED_ARGS
+  -jar ${WADL_HOME}/lib/wadl-cmdline-1.0-SNAPSHOT.jar \
+  "$@"
 
