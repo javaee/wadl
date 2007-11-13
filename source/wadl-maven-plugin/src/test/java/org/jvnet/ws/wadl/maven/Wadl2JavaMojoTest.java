@@ -96,6 +96,43 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
     }
 
     /**
+     * Tests the case in which a valid wadl file exists.
+     */
+    public void testValidWadlWithCustomization() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("valid-wadl-with-customizations-config.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Endpoint.java"));
+        assertThat(targetDirectory, contains("test/Output.java"));
+        assertThat(targetDirectory, contains("test/Type.java"));
+        assertThat(targetDirectory, contains("test/Sort.java"));
+        assertThat(targetDirectory, contains("yahoo/api/ObjectFactory.java"));
+        assertThat(targetDirectory, contains("yahoo/api/Error.java"));
+        assertThat(targetDirectory, contains("yahoo/yn/ImageType.java"));
+        assertThat(targetDirectory, contains("yahoo/yn/ObjectFactory.java"));
+        assertThat(targetDirectory, contains("yahoo/yn/ResultSet.java"));
+        // Because of the customizations
+        assertThat(targetDirectory, contains("yahoo/yn/Result.java"));
+    }
+
+    /**
      * A convenience method for getting a configured {@lik Wadl2JavaMojo}
      * instance.
      * 

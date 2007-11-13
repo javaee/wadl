@@ -36,6 +36,10 @@
         <configuration>
           <sourceDirectory>../share</sourceDirectory>
           <packageName>com.yahoo.search</packageName>
+          <autopackaging>true</autopackaging>
+          <customizations>
+            <customization>../share/binding.xjb</customization>
+          </customizations>
         </configuration>
       </plugin>
     </plugins>

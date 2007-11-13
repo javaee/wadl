@@ -7,6 +7,10 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
+import org.codehaus.plexus.util.FileUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jvnet.ws.wadl2java.Wadl2Java;
 
@@ -49,6 +53,13 @@ public class Wadl2JavaMojo extends AbstractMojo {
     private String includes;
 
     /**
+     * The names of customization files.
+     * 
+     * @parameter
+     */
+    private List<String> customizations;
+
+    /**
      * The current project.
      * 
      * @parameter expression="${project}"
@@ -73,14 +84,8 @@ public class Wadl2JavaMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (sourceDirectory.exists() && sourceDirectory.canRead()) {
             assureTargetDirExistence();
-            String[] patterns = includes.split(",");
-            DirectoryScanner scanner = new DirectoryScanner();
-            scanner.setBasedir(sourceDirectory);
-            scanner.setIncludes(patterns);
-            scanner.scan();
-            String[] matches = scanner.getIncludedFiles();
-            Wadl2Java processor = new Wadl2Java(targetDirectory, packageName,
-                    autoPackaging);
+            String[] matches = getWadlFileMatches();
+            Wadl2Java processor = createProcessor();
             for (int i = matches.length - 1; i >= 0; i--) {
                 File file = new File(sourceDirectory, matches[i]);
                 try {
@@ -101,6 +106,45 @@ public class Wadl2JavaMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Returns the WADL files to be processed.
+     * 
+     * @return The WADL files to be processed, based on the {@link #includes}
+     *         Mojo parameter.
+     */
+    private String[] getWadlFileMatches() {
+        String[] patterns = includes.split(",");
+        DirectoryScanner scanner = new DirectoryScanner();
+        scanner.setBasedir(sourceDirectory);
+        scanner.setIncludes(patterns);
+        scanner.scan();
+        String[] matches = scanner.getIncludedFiles();
+        return matches;
+    }
+
+    /**
+     * Create a new {@link Wadl2Java} processor, based on the Mojo parameters.
+     * 
+     * @return A new {@link Wadl2Java} instance.
+     */
+    private Wadl2Java createProcessor() {
+        List<File> customizationFiles = new ArrayList<File>(customizations
+                .size());
+        for (String customization : customizations) {
+            customizationFiles.add(new File(customization));
+        }
+        Wadl2Java processor = new Wadl2Java(targetDirectory, packageName,
+                autoPackaging, customizationFiles);
+        return processor;
+    }
+
+    /**
+     * Verifies if the target directory exists, and if it doesn't exist, creates
+     * it.
+     * 
+     * @throws MojoExecutionException
+     *             If it failed to create the target directory.
+     */
     private void assureTargetDirExistence() throws MojoExecutionException {
         if (!targetDirectory.exists()) {
             if (!targetDirectory.mkdirs()) {

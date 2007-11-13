@@ -7,6 +7,7 @@
                     <targetDirectory>${basedir}/target/test-harness/smoke-test/generated-sources/wadl</targetDirectory>
                     <sourceDirectory>${basedir}/src/test/resources/smoke-test</sourceDirectory>
                     <packageName>smoke</packageName>
+                    <customizations></customizations>
                     <includes>*.wadl</includes>
                     <autoPackaging>true</autoPackaging>
                     <failOnError>false</failOnError>
