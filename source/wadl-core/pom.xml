@@ -44,22 +44,8 @@
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
     </dependency>
-    <!--dependency> Not sure why we need this. Lets try without first.
-        <groupId>javax.xml.bind</groupId>
-        <artifactId>jsr173_api</artifactId>
-        </dependency-->
   </dependencies>
   <build>
-    <!--
-        <resources>
-        <resource>
-        <directory>${basedir}/target/resources</directory>
-        <includes>
-        <include>**/*.*</include>
-        </includes>
-        </resource>
-        </resources>      
-    -->
     <plugins>
       <plugin>
         <groupId>com.sun.tools.xjc.maven2</groupId>
@@ -75,6 +61,7 @@
         <configuration>
           <schemaDirectory>${basedir}/src/main/resources/xsd</schemaDirectory>
           <generatePackage>org.jvnet.ws.wadl</generatePackage>
+          <catalog>etc/catalog.xml</catalog>
         </configuration>
       </plugin>
       <plugin>
