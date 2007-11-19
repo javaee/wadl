@@ -5,6 +5,31 @@
   </formats>
   <files>
     <file>
+      <source>src/main/resources/LICENSE.txt</source>
+      <outputDirectory>/</outputDirectory>
+      <filtered>false</filtered>
+    </file>
+    <file>
+      <source>src/main/resources/README.txt</source>
+      <outputDirectory>/</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+    <file>
+      <source>src/main/resources/README.html</source>
+      <outputDirectory>/</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+    <file>
+      <source>src/main/resources/samples/README.html</source>
+      <outputDirectory>samples</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+    <file>
+      <source>src/main/resources/samples/README.txt</source>
+      <outputDirectory>samples</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+    <file>
       <source>src/main/resources/samples/maven/pom.xml</source>
       <outputDirectory>samples/maven</outputDirectory>
       <filtered>true</filtered>
