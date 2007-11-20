@@ -246,9 +246,9 @@
   </distributionManagement>
   
   <scm>
-    <connection>scm:svn:http://wadl.dev.java.net/svn/wadl/trunk/source</connection>
-    <developerConnection>scm:svn:https://wadl.dev.java.net/svn/wadl/trunk/source</developerConnection>
-    <url>https://wadl.dev.java.net/source/browse/wadl/trunk/source/</url>
+    <connection>scm:svn:http://wadl.dev.java.net/svn/wadl/trunk</connection>
+    <developerConnection>scm:svn:https://wadl.dev.java.net/svn/wadl/trunk</developerConnection>
+    <url>https://wadl.dev.java.net/source/browse/wadl/trunk</url>
   </scm>    
   
   <modules>
