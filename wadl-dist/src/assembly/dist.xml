@@ -5,44 +5,44 @@
   </formats>
   <files>
     <file>
-      <source>src/main/resources/LICENSE.txt</source>
+      <source>${basedir}/src/main/resources/LICENSE.txt</source>
       <outputDirectory>/</outputDirectory>
       <filtered>false</filtered>
     </file>
     <file>
-      <source>src/main/resources/README.txt</source>
+      <source>${basedir}/src/main/resources/README.txt</source>
       <outputDirectory>/</outputDirectory>
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/resources/README.html</source>
+      <source>${basedir}/src/main/resources/README.html</source>
       <outputDirectory>/</outputDirectory>
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/resources/samples/README.html</source>
+      <source>${basedir}/src/main/resources/samples/README.html</source>
       <outputDirectory>samples</outputDirectory>
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/resources/samples/README.txt</source>
+      <source>${basedir}/src/main/resources/samples/README.txt</source>
       <outputDirectory>samples</outputDirectory>
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/resources/samples/maven/pom.xml</source>
+      <source>${basedir}/src/main/resources/samples/maven/pom.xml</source>
       <outputDirectory>samples/maven</outputDirectory>
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/resources/bin/wadl2java</source>
+      <source>${basedir}/src/main/resources/bin/wadl2java</source>
       <outputDirectory>bin</outputDirectory>
       <lineEnding>unix</lineEnding>
       <fileMode>0744</fileMode>
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/resources/bin/wadl2java.bat</source>
+      <source>${basedir}/src/main/resources/bin/wadl2java.bat</source>
       <outputDirectory>bin</outputDirectory>
       <lineEnding>dos</lineEnding>
       <filtered>true</filtered>
@@ -50,7 +50,7 @@
   </files>
   <fileSets>
     <fileSet>
-      <directory>src/main/resources/samples/share</directory>
+      <directory>${basedir}/src/main/resources/samples/share</directory>
       <outputDirectory>samples/share</outputDirectory>
       <includes>
         <include>*.wadl</include>
@@ -59,14 +59,14 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>src/main/resources/samples/ant</directory>
+      <directory>${basedir}/src/main/resources/samples/ant</directory>
       <outputDirectory>samples/ant</outputDirectory>
       <includes>
         <include>build.xml</include>
       </includes>
     </fileSet>
     <fileSet>
-      <directory>src/main/resources/samples/cmdline</directory>
+      <directory>${basedir}/src/main/resources/samples/cmdline</directory>
       <outputDirectory>samples/cmdline</outputDirectory>
       <excludes>
         <exclude>*.cmd</exclude>
@@ -76,7 +76,7 @@
       <fileMode>0744</fileMode>
     </fileSet>
     <fileSet>
-      <directory>src/main/resources/samples/cmdline</directory>
+      <directory>${basedir}/src/main/resources/samples/cmdline</directory>
       <outputDirectory>samples/cmdline</outputDirectory>
       <includes>
         <include>*.cmd</include>
