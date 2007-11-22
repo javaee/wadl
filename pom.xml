@@ -8,6 +8,21 @@
   <name>WADL</name>
   <url>http://wadl.dev.java.net/</url>
 
+  <developers>
+    <developer>
+      <id>mhadley</id>
+      <name>Marc Hadley</name>
+    </developer>
+    <developer>
+      <id>najmi</id>
+      <name>Farrukh Najmi</name>
+    </developer>
+    <developer>
+      <id>wilfred</id>
+      <name>Wilfred Springer</name>
+    </developer>
+  </developers>
+
   <build>
     <plugins>
       <plugin>
