@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: lib/activation.jar lib/ant.jar lib/jaxb-api.jar lib/jaxb-impl.jar lib/jaxb-xjc.jar lib/jsr173_api.jar lib/resolver.jar lib/sjsxp.jar lib/comresrcgen.jar lib/localizer.jar
-X-COMMENT: Main-Class will be added automatically by build

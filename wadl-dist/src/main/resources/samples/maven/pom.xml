@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.yahoo.search</groupId>
+  <artifactId>search-api</artifactId>
+  <version>SNAPSHOT</version>
+  <name>Yahoo Search API</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.jvnet.ws.wadl</groupId>
+      <artifactId>wadl-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jvnet.ws.wadl</groupId>
+        <artifactId>wadl-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <sourceDirectory>../share</sourceDirectory>
+          <packageName>com.yahoo.search</packageName>
+          <autopackaging>true</autopackaging>
+          <customizations>
+            <customization>../share/binding.xjb</customization>
+          </customizations>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
