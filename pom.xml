@@ -195,15 +195,6 @@
     </repository>
 
     <!-- used to serve dependencies if not yet in jvnet maven repo temporarily-->
-    <repository>
-      <id>omar3-repository</id>
-      <name>OMAR3 Repository</name>
-      <url>http://ebxmlrr.sourceforge.net/maven2/repository/</url>
-      <layout>default</layout>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
     <!-- we're using a codehaus plugin snapshot -->
     <repository>
       <id>Maven Snapshots</id>
