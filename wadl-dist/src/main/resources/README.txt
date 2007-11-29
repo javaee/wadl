@@ -2,11 +2,11 @@ README
 
   WADL v. ${version}
 
-   WADL is designed to provide a simple alternative to WSDL for use with
-   XML/HTTP Web applications. To date such applications have been mainly
-   described using a combination of textual description and XML schema, WADL
-   aims to provide a machine process-able description of such applications in
-   a simpler format than is possible using WSDL.
+   WADL is designed to provide a machine process-able description of
+   HTTP-based Web applications. To date such applications have
+   been mainly described using a combination of textual description
+   and XML schema, WADL aims to provide a machine process-able
+   description of such applications.
 
    This distribution contains the following files:
 
