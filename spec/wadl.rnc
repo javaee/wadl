@@ -1,6 +1,6 @@
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 namespace local = ""
-namespace wadl = "http://research.sun.com/wadl/2006/10"
+namespace wadl = "http://wadl.dev.java.net/2007/12"
 
 start =
   element wadl:application {
@@ -42,7 +42,7 @@ resource_type =
   element wadl:resource_type {
     doc*,
     param*,
-    method*,
+    (method | resource)*,
     attribute id { xsd:token }?,
     foreign-element,
     foreign-attribute
@@ -142,6 +142,7 @@ option =
   element wadl:option {
     doc*,
     attribute value { xsd:string },
+    attribute mediaType { text }?,
     foreign-element,
     foreign-attribute
   }

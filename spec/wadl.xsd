@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  targetNamespace="http://research.sun.com/wadl/2006/10"
-  xmlns:tns="http://research.sun.com/wadl/2006/10"
+  targetNamespace="http://wadl.dev.java.net/2007/12"
+  xmlns:tns="http://wadl.dev.java.net/2007/12"
   xmlns:xml="http://www.w3.org/XML/1998/namespace"
   elementFormDefault="qualified">
 
@@ -92,7 +92,10 @@
       <xs:sequence>
         <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="tns:param" minOccurs="0" maxOccurs="unbounded"/>
-        <xs:element ref="tns:method" maxOccurs="unbounded"/>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="tns:method"/>
+          <xs:element ref="tns:resource"/>
+        </xs:choice>
         <xs:any minOccurs="0" maxOccurs="unbounded" namespace="##other"
           processContents="lax"/>
       </xs:sequence>
@@ -239,6 +242,7 @@
           maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="value" type="xs:string" use="required"/>
+      <xs:attribute name="mediaType" type="xs:string"/>
       <xs:anyAttribute namespace="##other" processContents="lax"/>
     </xs:complexType>
   </xs:element>
