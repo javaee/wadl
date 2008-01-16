@@ -1,18 +1,17 @@
 package org.jvnet.ws.wadl.maven;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
-import org.codehaus.plexus.util.FileUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jvnet.ws.wadl2java.Wadl2Java;
+
+import com.sun.codemodel.JClassAlreadyExistsException;
 
 /**
  * A Maven plugin to generate Java code from WADL descriptions.
@@ -82,6 +81,11 @@ public class Wadl2JavaMojo extends AbstractMojo {
     private boolean failOnError;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+        doExecute(failOnError ? new FailOnErrorPolicy()
+                : new LogOnlyErrorPolicy());
+    }
+
+    private void doExecute(ErrorPolicy policy) throws MojoExecutionException {
         if (sourceDirectory.exists() && sourceDirectory.canRead()) {
             assureTargetDirExistence();
             String[] matches = getWadlFileMatches();
@@ -90,16 +94,12 @@ public class Wadl2JavaMojo extends AbstractMojo {
                 File file = new File(sourceDirectory, matches[i]);
                 try {
                     processor.process(file.toURI());
+                } catch (JClassAlreadyExistsException jcae) {
+                    policy.process(jcae.getExistingClass().fullName()
+                            + " already exists.", jcae);
                 } catch (Exception e) {
-                    if (!failOnError) {
-                        getLog().warn(
-                                "Failed to generate code from "
-                                        + file.getAbsolutePath(), e);
-                    } else {
-                        throw new MojoExecutionException(
-                                "Failed to generate code from "
-                                        + file.getAbsolutePath());
-                    }
+                    policy.process("Failed to generate sources from "
+                            + file.getAbsolutePath() + ".", e);
                 }
             }
             project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
@@ -128,10 +128,14 @@ public class Wadl2JavaMojo extends AbstractMojo {
      * @return A new {@link Wadl2Java} instance.
      */
     private Wadl2Java createProcessor() {
-        List<File> customizationFiles = new ArrayList<File>(customizations
-                .size());
-        for (String customization : customizations) {
-            customizationFiles.add(new File(customization));
+        List<File> customizationFiles = null;
+        if (customizations != null) {
+            customizationFiles = new ArrayList<File>(customizations.size());
+            for (String customization : customizations) {
+                customizationFiles.add(new File(customization));
+            }
+        } else {
+            customizationFiles = new ArrayList<File>(0);
         }
         Wadl2Java processor = new Wadl2Java(targetDirectory, packageName,
                 autoPackaging, customizationFiles);
@@ -152,6 +156,31 @@ public class Wadl2JavaMojo extends AbstractMojo {
                         + targetDirectory.getAbsolutePath());
             }
         }
+    }
+
+    private interface ErrorPolicy {
+
+        void process(String message, Throwable cause)
+                throws MojoExecutionException;
+
+    }
+
+    private class FailOnErrorPolicy implements ErrorPolicy {
+
+        public void process(String message, Throwable cause)
+                throws MojoExecutionException {
+            throw new MojoExecutionException(message, cause);
+        }
+
+    }
+
+    private class LogOnlyErrorPolicy implements ErrorPolicy {
+
+        public void process(String message, Throwable cause)
+                throws MojoExecutionException {
+            getLog().error(message, cause);
+        }
+
     }
 
 }
