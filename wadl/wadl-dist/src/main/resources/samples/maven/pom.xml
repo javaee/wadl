@@ -3,8 +3,21 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.yahoo.search</groupId>
   <artifactId>search-api</artifactId>
-  <version>SNAPSHOT</version>
+  <version>${project.version}</version>
   <name>Yahoo Search API</name>
+  <repositories>
+    <repository>
+      <id>wadl-snapshots</id>
+      <name>WADL Snapshots Repository</name>
+      <url>http://wadl.dev.java.net/nonav/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>org.jvnet.ws.wadl</groupId>
