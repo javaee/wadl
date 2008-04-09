@@ -262,18 +262,12 @@
       <url>java-net:/wadl/trunk/www/maven/</url>
     </site>
     
-    <repository>
-      <id>jvnet-repository</id>
-      <name>Wellfleet Repository</name>
-      <url>scp://tbd/m2/repository/</url>
-    </repository>
-
     <snapshotRepository>
-      <id>jvnet-repository</id>
-      <name>Wellfleet Repository</name>
-      <url>scp://tbd/m2/repository/</url>
-    </snapshotRepository>    
-    
+      <id>wadl-snapshots</id>
+      <name>WADL Snapshot Repository</name>
+      <url>java-net:/wadl/trunk/www/snapshots/</url>
+    </snapshotRepository>
+
   </distributionManagement>
   
   <scm>
