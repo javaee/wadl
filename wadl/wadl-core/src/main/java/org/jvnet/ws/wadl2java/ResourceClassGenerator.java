@@ -49,11 +49,11 @@ import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 
@@ -595,12 +595,16 @@ public class ResourceClassGenerator {
             $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
         else
             $executeMethod.arg(JExpr._null());
-        JExpression $retVal = $methodBody.decl(codeModel.ref(Object.class), "_retVal", $executeMethod);
+        JVar $retVal = $methodBody.decl(codeModel.ref(Object.class), "_retVal", $executeMethod);
         JBlock $nullBlock = $methodBody._if($retVal.eq(JExpr._null()))._then();
         if (outputRep != null)
             $nullBlock._return(JExpr._null());
         else
             $nullBlock._return();
+        JClass jaxbElementType = codeModel.ref(JAXBElement.class);
+        $nullBlock = $methodBody._if(JExpr.invoke(JExpr.dotclass(jaxbElementType), "isInstance").arg($retVal))._then();
+        JVar $jaxbelement = $nullBlock.decl(jaxbElementType, "jaxbElement", JExpr.cast(jaxbElementType, $retVal));
+        $nullBlock.assign($retVal, $jaxbelement.invoke("getValue"));
 
         // check type of returned object and throw generated exception if
         // it matches a fault declared in the description
