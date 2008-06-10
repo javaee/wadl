@@ -666,7 +666,8 @@ public class ResourceClassGenerator {
      */
     public void generateBeanProperty(JDefinedClass $impl, Param p, boolean isAbstract) {
         JType propertyType = GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc);
-        String propertyName = p.getName().substring(0,1).toUpperCase()+p.getName().substring(1);
+        String paramName = GeneratorUtil.makeParamName(p.getName());
+        String propertyName = paramName.substring(0,1).toUpperCase()+paramName.substring(1);
         
         // getter
         JMethod $getter = $impl.method(JMod.PUBLIC, propertyType, "get"+propertyName);
@@ -684,12 +685,12 @@ public class ResourceClassGenerator {
         JMethod $setter = $impl.method(JMod.PUBLIC, codeModel.VOID, "set"+propertyName);
         jdoc = $setter.javadoc();
         jdoc.append("Set "+p.getName());
-        $setter.param(propertyType, GeneratorUtil.makeParamName(p.getName()));
+        $setter.param(propertyType, paramName);
         javaDoc.generateParamDoc(p, $setter);
         if (!isAbstract) {
             JBlock $setterBody = $setter.body();
             // codegen: templateAndMatrixParameterValues.put("name", value);
-            $setterBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(GeneratorUtil.makeParamName(p.getName())));
+            $setterBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(paramName));
         }
     }
 }

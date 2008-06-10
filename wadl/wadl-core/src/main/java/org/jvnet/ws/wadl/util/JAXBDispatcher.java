@@ -203,4 +203,38 @@ public class JAXBDispatcher {
         
         return o;
     }
+    
+    /**
+     * Perform a HTTP OPTIONS on the resource
+     * 
+     * 
+     * @return the unmarshalled resource representation.
+     * @param url the URL of the resource
+     * @param expectedMimeType the MIME type that will be used in the HTTP Accept header
+     */
+    public Object doOPTIONS(String url, Map<String, Object> httpHeaders, String expectedMimeType) throws MalformedURLException, IOException, JAXBException {
+        URL u = new URL(url);
+        URLConnection c = u.openConnection();
+        InputStream in = null;
+        String mediaType = null;
+        if (c instanceof HttpURLConnection) {
+            HttpURLConnection h = (HttpURLConnection)c;
+            h.setRequestMethod("OPTIONS");
+            h.setRequestProperty("Accept", expectedMimeType);
+            for(String key: httpHeaders.keySet())
+                h.setRequestProperty(key, httpHeaders.get(key).toString());
+            h.connect();
+            mediaType = h.getContentType();
+            if (h.getResponseCode() < 400)
+                in = h.getInputStream();
+            else
+                in = h.getErrorStream();
+        }
+        
+        Unmarshaller um = jc.createUnmarshaller();
+        Object o = um.unmarshal(in);
+        
+        return o;
+    }
+
 }
