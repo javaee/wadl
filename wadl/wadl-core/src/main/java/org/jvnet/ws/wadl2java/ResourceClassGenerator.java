@@ -591,7 +591,7 @@ public class ResourceClassGenerator {
         }
         $executeMethod.arg($url);
         $executeMethod.arg($headerParamValueMap);
-        if (outputRep != null)
+        if (outputRep != null && outputRep.getMediaType() != null)
             $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
         else
             $executeMethod.arg(JExpr._null());
@@ -646,7 +646,7 @@ public class ResourceClassGenerator {
         }
         $executeMethod.arg($url);
         $executeMethod.arg($headerParamValueMap);
-        if (outputRep != null)
+        if (outputRep != null && outputRep.getMediaType() != null)
             $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
         else
             $executeMethod.arg(JExpr._null());

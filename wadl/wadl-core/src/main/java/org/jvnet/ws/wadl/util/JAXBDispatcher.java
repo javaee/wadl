@@ -69,7 +69,7 @@ public class JAXBDispatcher {
         if (c instanceof HttpURLConnection) {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("GET");
-            h.setRequestProperty("Accept", expectedMimeType);
+            DSDispatcher.setAccept(h, expectedMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
             h.connect();
@@ -102,8 +102,7 @@ public class JAXBDispatcher {
         if (c instanceof HttpURLConnection) {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("DELETE");
-            if (expectedMimeType != null)
-                h.setRequestProperty("Accept", expectedMimeType);
+            DSDispatcher.setAccept(h, expectedMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
             h.connect();
@@ -138,7 +137,7 @@ public class JAXBDispatcher {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("POST");
             h.setChunkedStreamingMode(-1);
-            h.setRequestProperty("Accept", expectedMimeType);
+            DSDispatcher.setAccept(h, expectedMimeType);
             h.setRequestProperty("Content-Type", inputMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
@@ -180,8 +179,7 @@ public class JAXBDispatcher {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("PUT");
             h.setChunkedStreamingMode(-1);
-            if (expectedMimeType != null)
-                h.setRequestProperty("Accept", expectedMimeType);
+            DSDispatcher.setAccept(h, expectedMimeType);
             h.setRequestProperty("Content-Type", inputMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
@@ -220,7 +218,7 @@ public class JAXBDispatcher {
         if (c instanceof HttpURLConnection) {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("OPTIONS");
-            h.setRequestProperty("Accept", expectedMimeType);
+            DSDispatcher.setAccept(h, expectedMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
             h.connect();

@@ -56,7 +56,7 @@ public class DSDispatcher {
         if (c instanceof HttpURLConnection) {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("GET");
-            h.setRequestProperty("Accept", expectedMimeType);
+            setAccept(h, expectedMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
             h.connect();
@@ -117,7 +117,7 @@ public class DSDispatcher {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("POST");
             h.setChunkedStreamingMode(-1);
-            h.setRequestProperty("Accept", expectedMimeType);
+            setAccept(h, expectedMimeType);
             h.setRequestProperty("Content-Type", inputMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
@@ -159,8 +159,7 @@ public class DSDispatcher {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("PUT");
             h.setChunkedStreamingMode(-1);
-            if (expectedMimeType != null)
-                h.setRequestProperty("Accept", expectedMimeType);
+            setAccept(h, expectedMimeType);
             h.setRequestProperty("Content-Type", inputMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
@@ -198,7 +197,7 @@ public class DSDispatcher {
         if (c instanceof HttpURLConnection) {
             HttpURLConnection h = (HttpURLConnection)c;
             h.setRequestMethod("OPTIONS");
-            h.setRequestProperty("Accept", expectedMimeType);
+            setAccept(h, expectedMimeType);
             for(String key: httpHeaders.keySet())
                 h.setRequestProperty(key, httpHeaders.get(key).toString());
             h.connect();
@@ -210,6 +209,11 @@ public class DSDispatcher {
         }
         
         return new StreamDataSource(mediaType, in);
+    }
+    
+    public static void setAccept(HttpURLConnection connection, String expectedMimeType) {
+        if (expectedMimeType != null)
+            connection.setRequestProperty("Accept", expectedMimeType);
     }
 
 }
