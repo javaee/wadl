@@ -86,12 +86,12 @@ public class Main {
                 } else {
                     System.err.println(Wadl2JavaMessages.UNKNOWN_OPTION(args[i]));
                     printUsage();
-                    System.exit(1);
+                    return;
                 }
             }
             if (i > args.length-1 || outputDir==null || pkg==null) {
                 printUsage();
-                System.exit(1);
+                return;
             }
             URI wadlDesc = new URI(args[args.length-1]);
             if (wadlDesc.getScheme()==null || wadlDesc.getScheme().equals("file")) {

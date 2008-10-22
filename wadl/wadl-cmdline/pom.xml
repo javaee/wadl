@@ -78,4 +78,7 @@
       </plugin>
     </plugins>
   </build>
+  <properties>
+        <netbeans.hint.useExternalMaven>true</netbeans.hint.useExternalMaven>
+    </properties>
 </project>
