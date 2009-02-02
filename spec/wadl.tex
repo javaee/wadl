@@ -87,7 +87,7 @@ Lines 2--8 begin an application description and define the XML namespaces used e
 All WADL elements have the following XML namespace name:
 
 \begin{itemize}
-\item \code{http://wadl.dev.java.net/2007/12}
+\item \code{http://wadl.dev.java.net/2009/02}
 \end{itemize}
 
 This section describes each component of a WADL document in detail.
@@ -105,7 +105,6 @@ The \code{application} element forms the root of a WADL description and contains
 \item \code{resource\_type} elements --  see section \ref{resourcetype}.
 \item \code{method} elements --  see section \ref{method}.
 \item \code{representation}  elements -- see section \ref{representation}.
-\item \code{fault} elements -- see section \ref{fault}.
 \end{itemize}
 \end{enumerate}
 
@@ -274,7 +273,7 @@ A \code{method} element has the following child elements:
 \begin{description}
 \item[\code{doc}] Zero or more \code{doc} elements -- see section \ref{doc}.
 \item[\code{request}] Describes the input to the method as a collection of parameters and an optional resource representation -- see section \ref{request}.
-\item[\code{response}] Describes the output of the method as a collection of alternate resource representations -- see section \ref{response}.
+\item[\code{response}] Zero or more \code{response} elements that describe the possible outputs of the method -- see section \ref{response}.
 \end{description}
 
 \subsection{Request}
@@ -323,12 +322,17 @@ If the value of the \code{widgetId} parameter is \lq 123456\rq\, the value of th
 \subsection{Response}
 \label{response}
 
-A \code{response} element describes the output that results from performing an HTTP method on a resource. It may contain the following child elements:
+A \code{response} element describes the output that results from performing an HTTP method on a resource. It has the following attributes
 
+\begin{description}
+\item[\code{status}] Optionally present on responses, provides a list of HTTP status codes associated with a particular response.
+\end{description}
+
+A \code{response} element may contain the following child elements:
+ 
 \begin{itemize}
 \item Zero or more \code{doc} elements (see section \ref{doc}).
-\item Zero or more \code{representation} elements (see section \ref{representation}), each of which describes a resource representation that may result from performing the method.  Sibling \code{representation} elements indicate logically equivalent alternatives; normal HTTP mechanisms may be used to select a particular alternative.
-\item Zero or more \code{fault} elements (see section \ref{fault}), each of which describes a fault condition that may occur -- note that not all possible fault conditions are likely to be described and client applications should be prepared to handle the full range of possible HTTP error conditions.
+\item Zero or more \code{representation} elements (see section \ref{representation}), each of which describes a resource representation that may result from performing the method.  Sibling \code{representation} elements indicate logically equivalent alternatives; normal HTTP content negotiation mechanisms may be used to select a particular alternative.
 \item Zero or more \code{param} elements (see section \ref{param}) with a value of \lq header\rq\ for their \code{style} attribute, each of which specifies the details of a HTTP header for the response
 \end{itemize}
 
@@ -352,7 +356,6 @@ A \code{representation} definition element can be a child of a \code{request}, \
 \item[\code{mediaType}] Indicates the media type of the representation. Media ranges (e.g. \code{text/*}) are acceptable and indicate that any media type in the specified range is supported.
 \item[\code{element}] For XML-based representations, specifies the qualified name of the root element as described within the \code{grammars} section -- see section \ref{grammars}. 
 \item[\code{profile}] Similar to the HTML \code{profile} attribute, gives the location of one or more meta data profiles, separated by white space. The meta-data profiles define the meaning of the \code{rel} and \code{rev} attributes of descendent \code{link} elements (see section \ref{link}).
-\item[\code{status}] Optionally present on response representations, provides a list of HTTP status codes associated with a particular representation. Note that multiple sibling \code{representation} elements may share one or more HTTP status codes: such elements may provide equivalent information in different formats.
 \end{description}
 
 In addition to the attributes listed above, a \code{representation} definition element can have zero or more child \code{doc} elements (see section \ref{doc}) and \code{param} elements (see section \ref{repparam}).
@@ -367,20 +370,10 @@ A child \code{param} element (see section \ref{param}) is used to parameterize i
 \item Provide a hint to processors about items of interest within a representation. For XML based representations, representation parameters can be used to identify items of interest with the XML. The \code{path} attribute of a representation parameter indicates the path to the value of the parameter within the representation. For XML-based representations this is an XPath expression.
 \end{enumerate}
 
-\subsection{Fault}
-\label{fault}
-
-A \code{fault} element is similar to a \code{representation} element (see section \ref{representation}) in structure but differs in that it denotes an error condition. A \code{fault} element has the same attributes as a \code{representation} element. As is the case with \code{representation} elements, multiple sibling \code{fault} elements may share one or more HTTP status codes: such elements may describe more granular fault conditions or may provide equivalent information in different formats.
-
-\subsubsection{Fault Parameters}
-\label{faultparam}
-
-Fault parameters are \code{param} elements (see section \ref{param}) that are direct children of a \code{fault} element. Fault parameters perform the same function for \code{fault} elements that representation parameters (see section \ref{repparam}) perform for \code{representation} elements.
-
 \subsection{Parameter}
 \label{param}
 
-A \code{param} element describes a parameterized component of its parent element and may be a child of a \code{resource} (see section \ref{resource}), \code{request} (see section \ref{request}), \code{response} (see section \ref{response}), \code{representation} (see section \ref{representation}), or a \code{fault} (see section \ref{fault}) element. A \code{param} element has zero or more \code{doc} child elements (see section \ref{doc}), zero or more \code{option} child elements (see section \ref{option}), an optional \code{link} child element (see section \ref{link}) and has the following attributes:
+A \code{param} element describes a parameterized component of its parent element and may be a child of a \code{resource} (see section \ref{resource}), \code{request} (see section \ref{request}), \code{response} (see section \ref{response}), or a \code{representation} (see section \ref{representation}) element. A \code{param} element has zero or more \code{doc} child elements (see section \ref{doc}), zero or more \code{option} child elements (see section \ref{option}), an optional \code{link} child element (see section \ref{link}) and has the following attributes:
 
 \begin{description}
 \item[\code{id}] An optional identifier that may be used to refer to a parameter definition using a URI reference.
@@ -410,11 +403,11 @@ Note that some combinations of the above attributes might not make sense in all 
 \hline
 \code{query} & \code{resource}, \code{resource\_type} or \code{request} & \raggedright Specifies a URI query parameter represented according to the rules for the query component media type specified by the \code{queryType} attribute. \tabularnewline
 \hline
-\code{query} & \code{representation} or \code{fault} & \raggedright Specifies a component of the representation as a name value pair formatted according to the rules of the media type. Typically used with media type \lq application/x-www-form-urlencoded\rq\ or \lq multipart/form-data\rq. \tabularnewline
+\code{query} & \code{representation} & \raggedright Specifies a component of the representation as a name value pair formatted according to the rules of the media type. Typically used with media type \lq application/x-www-form-urlencoded\rq\ or \lq multipart/form-data\rq. \tabularnewline
 \hline
 \code{template} & \code{resource} & \raggedright The parameter is represented as a string encoding of the parameter value and is substituted into the value of the \code{path} attribute of the \code{resource} element as described in section \ref{genresids}. \tabularnewline
 \hline
-\code{plain} & \code{representation} or \code{fault} & \raggedright Specifies a component of the representation formatted as a string encoding of the parameter value according to the rules of the media type. \tabularnewline
+\code{plain} & \code{representation} & \raggedright Specifies a component of the representation formatted as a string encoding of the parameter value according to the rules of the media type. \tabularnewline
 \hline
 \end{tabularx}
 \end{table}
@@ -458,8 +451,8 @@ A \code{link} element contains zero or more \code{doc} elements (see section \re
 
 \begin{description}
 \item[\code{resource\_type}] An optional URI reference to a \code{resource\_type} element that defines the capabilities of the resource that the link identifies.
-\item[\code{rel}] An optional token that identifies the relationship of the resource identified by the link to the resource whose representation the link is embedded in. The value is scoped by the value of the ancestor \code{representation} (or \code{fault}) element's \code{profile} attribute.
-\item[\code{rev}] An optional token that identifies the relationship of the resource whose representation the link is embedded in to the resource identified by the link. This is the reverse relationship to that identified by  the \code{rel} attribute. The value is scoped by the value of the ancestor \code{representation} (or \code{fault}) element's \code{profile} attribute.
+\item[\code{rel}] An optional token that identifies the relationship of the resource identified by the link to the resource whose representation the link is embedded in. The value is scoped by the value of the ancestor \code{representation} element's \code{profile} attribute.
+\item[\code{rev}] An optional token that identifies the relationship of the resource whose representation the link is embedded in to the resource identified by the link. This is the reverse relationship to that identified by  the \code{rel} attribute. The value is scoped by the value of the ancestor \code{representation} element's \code{profile} attribute.
 \end{description}
 
 The following example shows an XML-based resource representation and two possible alternative WADL representation elements:
@@ -510,14 +503,14 @@ Most WADL-defined elements are extensible using either elements or attributes fr
 
 One or more legal RelaxNG schemas may be embedded within a WADL \code{grammars} element or may be included by reference using an \code{include} element. Multiple RelaxNG schemas may be combined within a single schema using the facilities provided by RelaxNG (e.g., \code{rng:include}). The default namespace for an included RelaxNG grammar is the default namespace of the WADL \code{grammars} element.
 
-The \code{element} attribute of \code{representation} and \code{fault} elements refers to a corresponding RelaxNG element pattern using the XML qualified name of the element.
+The \code{element} attribute of \code{representation} element refers to a corresponding RelaxNG element pattern using the XML qualified name of the element.
 
 \section{Use of W3C XML Schema with WADL}
 \label{usingxsd}
 
 One or more legal W3C XML Schemas may be embedded within a WADL \code{grammars} element or may be included by reference using a \code{include} element. Multiple W3C XML Schemas may be combined within a single schema using the facilities provided by W3C XML Schema (e.g., \code{xsd:include}).
 
-The \code{element} attribute of \code{representation} and \code{fault} elements refers to a corresponding W3C XML Schema global element declaration using the XML qualified name of the element.
+The \code{element} attribute of \code{representation} element refers to a corresponding W3C XML Schema global element declaration using the XML qualified name of the element.
 
 \section{WADL Media Type}
 
@@ -532,59 +525,14 @@ WADL documents should be served using the \code{application/vnd.sun.wadl+xml} me
 
 The following shows a WADL description of the Amazon item search service\cite{amazonws}:
                 
-\begin{listing}{1}
-<application xmlns="http://research.sun.com/wadl/2006/07"
-  xmlns:aws="http://webservices.amazon.com/AWSECommerceService/2005-07-26"
-  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-
-  <grammars>
-    <include href="AWSECommerceService.xsd"/>
-  </grammars>
-    
-  <resources base="http://webservices.amazon.com/onca/">
-    <resource path="xml">
-      <method href="#ItemSearch"/>
-    </resource>
-  </resources>
-  
-  <method name="GET" id="ItemSearch">
-    <request>
-      <param name="Service" style="query"
-        fixed="AWSECommerceService"/>
-      <param name="Version" style="query" fixed="2005-07-26"/>
-      <param name="Operation" style="query" fixed="ItemSearch"/>
-      <param name="SubscriptionId" style="query"
-         type="xsd:string" required="true"/>
-      <param name="SearchIndex" style="query"
-         type="aws:SearchIndexType" required="true">
-         <option value="Books"/>
-         <option value="DVD"/>
-         <option value="Music"/>
-      </param>
-      <param name="Keywords" style="query"
-        type="aws:KeywordList" required="true"/>
-      <param name="ResponseGroup" style="query"
-        type="aws:ResponseGroupType" repeating="true">
-         <option value="Small"/>
-         <option value="Medium"/>
-         <option value="Large"/>
-         <option value="Images"/>
-      </param>
-    </request>
-    <response>
-      <representation mediaType="text/xml"
-        element="aws:ItemSearchResponse"/>
-    </response>
-  </method>
-</application>
-\end{listing}
+\listinginput[1]{1}{AmazonSearch.wadl}
 
 Note the following:
 
 \begin{itemize}
 \item  The method is attached to the resource as a reference to a globally defined method rather than being embedded directly. In this instance there is no need to do this beyond illustrating the capability but this is useful where one method can be applied to multiple resources.
 \item  A number of the query parameters are marked as fixed value. The Amazon API uses query parameters to identify services and operations within those services --- use of the fixed attribute can be used to allow description of multiple logical methods on the same resource. Without the ability to fix values in this way, the Amazon API would look like one single method with many parameters.
-\item The \code{SearchIndex} and \code{RepsonseGroup} parameters both have an enumerated set of possible values. In both cases only a subset of possible values is shown to minimize the length of the example.
+\item The \code{SearchIndex} and \code{ResponseGroup} parameters both have an enumerated set of possible values. In both cases only a subset of possible values is shown to minimize the length of the example.
 \end{itemize}
 
 \subsection{Atom Publishing Protocol}
@@ -614,7 +562,7 @@ Note the similarity between the Atom service document and WADL, both describe a 
 The first step is to create a WADL document that contains the Atom protocol methods associated with feeds, associated representations and resource types. This only needs to be done once since the contents of this document can then be re-used by WADL documents specific to each site.
 
 \begin{listing}{1}
-<application xmlns="http://research.sun.com/wadl/2006/07" 
+<application xmlns="http://wadl.dev.java.net/2009/02" 
   xmlns:app="http://purl.org/atom/app#" 
   xmlns:atom="http://www.w3.org/2005/Atom"> 
 
@@ -721,18 +669,28 @@ The above document also includes an Atom-specific extension element (\code{app:m
 \bibliography{references}
 }
 
+\section{Document History}
+
+This section lists changes to the specification and grammar of WADL for each release. Changes may reference issues which may be viewed in the issue tracker at:
+\begin{quote}\code{https://wadl.dev.java.net/issues/show\_bug.cgi?id=}{\em issueNumber}\end{quote} 
+where {\em issueNumber} is the number of the issue.
+
+\subsection{Changes since November 2006 Publication}
+
+\begin{itemize}
+\item The namespace was changed to \code{http://wadl.dev.java.net/2009/02}.
+\item Resolved issue 13. The \code{status} attribute was moved from the \code{representation} element to the \code{response} element. The cardinality of the \code{response} element was changed from 0--1 to 0--many. The \code{fault} element was removed.
+\item Resolved issue 18. A \code{resource\_type} element may now contain \code{resource} child elements.
+\end{itemize}
+
 \section*{Acknowledgments}
 
-Thanks to the members of the http://lists.w3.org/\-Archives/\-Public/\-public-web-http-desc/ mailing list who provided useful feedback on several iterations of this specification. Mark Nottingham and John Nienart (Yahoo!) provided extensive feedback and helped structure the overall design. 
+Thanks to the members of the http://lists.w3.org/\-Archives/\-Public/\-public-web-http-desc/ and http://wadl.\-dev.\-java.\-net/\-servlets/\-Summarize\-List?\-listName=\-users mailing lists who provided useful feedback on several iterations of this specification. Mark Nottingham and John Nienart (Yahoo!) provided extensive feedback and helped structure the overall design. 
 
 \clearpage
-%\section*{About the Author}
-
-%Marc Hadley is a senior staff engineer in the Office of the CTO, Sun Microsystems. Marc represents Sun on the W3C XML Protocol, WS-Addressing and Web APIs working groups and is co-editor of the SOAP 1.2 and WS-Addressing 1.0 specifications. Previously he was co-specification lead for JAX-WS 2.0 (the Java\texttrademark\ API for XML-based Web Services) developed under the Java Community Process(SM) and has also served as Sun's technical lead and alternate board member at the Web Services Interoperability Organization (WS-I).
-
 \section*{Copyright Notice}
 
-Copyright © 2005, 2006 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, U.S.A. All rights reserved.
+Copyright © 2005--2009 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, California 95054, U.S.A. All rights reserved.
 
 Unlimited copying without fee is permitted provided that the copies are not made nor distributed for direct commercial advantage, and credit to the source is given. Otherwise, no part of this work covered by copyright may be reproduced in any form or by any means graphic, electronic, or mechanical, including photocopying, recording, taping, or storage in an information retrieval system, without the prior written permission of the copyright owner.
 

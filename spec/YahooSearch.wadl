@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- xsi:schemaLocation="http://research.sun.com/wadl/2006/10 wadl.xsd"
+ xsi:schemaLocation="http://wadl.dev.java.net/2009/02 wadl.xsd"
  xmlns:tns="urn:yahoo:yn"
  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
  xmlns:yn="urn:yahoo:yn"
  xmlns:ya="urn:yahoo:api"
- xmlns="http://research.sun.com/wadl/2006/10">
+ xmlns="http://wadl.dev.java.net/2009/02">
   <grammars>
     <include 
       href="NewsSearchResponse.xsd"/>
@@ -34,10 +34,12 @@
           </param>
           <param name="language" style="query" type="xsd:string"/>
         </request>
-        <response>
+        <response status="200">
           <representation mediaType="application/xml"
             element="yn:ResultSet"/>
-          <fault status="400" mediaType="application/xml"
+        </response>
+        <response status="400">
+          <representation mediaType="application/xml"
             element="ya:Error"/>
         </response>
       </method>

@@ -1,13 +1,13 @@
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 namespace local = ""
-namespace wadl = "http://wadl.dev.java.net/2007/12"
+namespace wadl = "http://wadl.dev.java.net/2009/02"
 
 start =
   element wadl:application {
     doc*,
     grammars?,
     resources?,
-    ( resource_type | method | representation | fault )*,
+    ( resource_type | method | representation )*,
     foreign-attribute,
     foreign-element
   }
@@ -67,7 +67,7 @@ method =
       ) | (
         doc*,
         request?,
-        response?,
+        response*,
         attribute id { xsd:token }?,
         attribute name {
           "DELETE" | "GET" | "HEAD" | "POST" | "PUT" | xsd:token
@@ -89,33 +89,25 @@ response =
   element wadl:response {
     doc*, 
     param*,
-    (representation | fault)*, 
+    representation*, 
+    attribute status { list { xsd:int+ } }?,
     foreign-attribute, 
     foreign-element
   }
-representation_type = 
-  (
-    (
-      attribute href { xsd:anyURI }
-    ) | (
-      doc*, 
-      param*,
-      attribute id { xsd:token }?,
-      attribute element { xsd:QName }?,
-      attribute mediaType { text }?,
-      attribute profile { list { xsd:anyURI} }?,
-      attribute status { list { xsd:int+ } }?
-    )
-  )
 representation =
   element wadl:representation {
-    representation_type,
-    foreign-attribute,
-    foreign-element
-  }
-fault =
-  element wadl:fault {
-    representation_type,
+    (
+      (
+        attribute href { xsd:anyURI }
+      ) | (
+        doc*, 
+        param*,
+        attribute id { xsd:token }?,
+        attribute element { xsd:QName }?,
+        attribute mediaType { text }?,
+        attribute profile { list { xsd:anyURI} }?
+      )
+    ),
     foreign-attribute,
     foreign-element
   }

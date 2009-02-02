@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  targetNamespace="http://wadl.dev.java.net/2007/12"
-  xmlns:tns="http://wadl.dev.java.net/2007/12"
+  targetNamespace="http://wadl.dev.java.net/2009/02"
+  xmlns:tns="http://wadl.dev.java.net/2009/02"
   xmlns:xml="http://www.w3.org/XML/1998/namespace"
   elementFormDefault="qualified">
 
@@ -18,7 +18,6 @@
           <xs:element ref="tns:resource_type"/>
           <xs:element ref="tns:method"/>
           <xs:element ref="tns:representation"/>
-          <xs:element ref="tns:fault"/>
         </xs:choice>
         <xs:any namespace="##other" processContents="lax" minOccurs="0"
           maxOccurs="unbounded"/>
@@ -109,7 +108,7 @@
       <xs:sequence>
         <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="tns:request" minOccurs="0"/>
-        <xs:element ref="tns:response" minOccurs="0"/>
+        <xs:element ref="tns:response" minOccurs="0" maxOccurs="unbounded"/>
         <xs:any namespace="##other" processContents="lax" minOccurs="0"
           maxOccurs="unbounded"/>
       </xs:sequence>
@@ -163,13 +162,11 @@
       <xs:sequence>
         <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="tns:param" minOccurs="0" maxOccurs="unbounded"/>
-        <xs:choice minOccurs="0" maxOccurs="unbounded">
-          <xs:element ref="tns:representation"/>
-          <xs:element ref="tns:fault"/>
-        </xs:choice>
+        <xs:element ref="tns:representation" minOccurs="0" maxOccurs="unbounded"/>
         <xs:any namespace="##other" processContents="lax" minOccurs="0"
           maxOccurs="unbounded"/>
       </xs:sequence>
+      <xs:attribute name="status" type="tns:statusCodeList"/>
       <xs:anyAttribute namespace="##other" processContents="lax"/>
     </xs:complexType>
   </xs:element>
@@ -178,29 +175,26 @@
     <xs:list itemType="xs:anyURI"/>
   </xs:simpleType>
 
-  <xs:complexType name="representation_type">
-    <xs:sequence>
-      <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
-      <xs:element ref="tns:param" minOccurs="0" maxOccurs="unbounded"/>
-      <xs:any namespace="##other" processContents="lax" minOccurs="0"
-        maxOccurs="unbounded"/>
-    </xs:sequence>
-    <xs:attribute name="id" type="xs:ID"/>
-    <xs:attribute name="element" type="xs:QName"/>
-    <xs:attribute name="status" type="tns:statusCodeList"/>
-    <xs:attribute name="mediaType" type="xs:string"/>
-    <xs:attribute name="href" type="xs:anyURI"/>
-    <xs:attribute name="profile" type="tns:uriList"/>
-    <xs:anyAttribute namespace="##other" processContents="lax"/>
-  </xs:complexType>
+  <xs:element name="representation">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="tns:param" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:any namespace="##other" processContents="lax" minOccurs="0"
+          maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:ID"/>
+      <xs:attribute name="element" type="xs:QName"/>
+      <xs:attribute name="mediaType" type="xs:string"/>
+      <xs:attribute name="href" type="xs:anyURI"/>
+      <xs:attribute name="profile" type="tns:uriList"/>
+      <xs:anyAttribute namespace="##other" processContents="lax"/>
+    </xs:complexType>
+  </xs:element>
 
   <xs:simpleType name="statusCodeList">
     <xs:list itemType="xs:unsignedInt"/>
   </xs:simpleType>
-
-  <xs:element name="representation" type="tns:representation_type"/>
-
-  <xs:element name="fault" type="tns:representation_type"/>
 
   <xs:simpleType name="ParamStyle">
     <xs:restriction base="xs:string">
