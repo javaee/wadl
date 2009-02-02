@@ -18,6 +18,7 @@
           <xs:element ref="tns:resource_type"/>
           <xs:element ref="tns:method"/>
           <xs:element ref="tns:representation"/>
+          <xs:element ref="tns:param"/>
         </xs:choice>
         <xs:any namespace="##other" processContents="lax" minOccurs="0"
           maxOccurs="unbounded"/>
@@ -108,7 +109,8 @@
       <xs:sequence>
         <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="tns:request" minOccurs="0"/>
-        <xs:element ref="tns:response" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="tns:response" minOccurs="0"
+          maxOccurs="unbounded"/>
         <xs:any namespace="##other" processContents="lax" minOccurs="0"
           maxOccurs="unbounded"/>
       </xs:sequence>
@@ -162,7 +164,8 @@
       <xs:sequence>
         <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="tns:param" minOccurs="0" maxOccurs="unbounded"/>
-        <xs:element ref="tns:representation" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="tns:representation" minOccurs="0"
+          maxOccurs="unbounded"/>
         <xs:any namespace="##other" processContents="lax" minOccurs="0"
           maxOccurs="unbounded"/>
       </xs:sequence>
@@ -215,6 +218,7 @@
         <xs:any namespace="##other" processContents="lax" minOccurs="0"
           maxOccurs="unbounded"/>
       </xs:sequence>
+      <xs:attribute name="href" type="xs:anyURI"/>
       <xs:attribute name="name" type="xs:NMTOKEN" use="required"/>
       <xs:attribute name="style" type="tns:ParamStyle" use="required"/>
       <xs:attribute name="id" type="xs:ID"/>

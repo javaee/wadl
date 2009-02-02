@@ -93,6 +93,7 @@ All WADL elements have the following XML namespace name:
 This section describes each component of a WADL document in detail.
 
 \subsection{Application}
+\label{application}
 
 The \code{application} element forms the root of a WADL description and contains the following:
 
@@ -104,7 +105,8 @@ The \code{application} element forms the root of a WADL description and contains
 \begin{itemize}
 \item \code{resource\_type} elements --  see section \ref{resourcetype}.
 \item \code{method} elements --  see section \ref{method}.
-\item \code{representation}  elements -- see section \ref{representation}.
+\item \code{representation} elements -- see section \ref{representation}.
+\item \code{param} elements -- see section \ref{param}.
 \end{itemize}
 \end{enumerate}
 
@@ -146,7 +148,7 @@ A \code{resource} element describes a set of resources, each identified by a URI
 \item[\code{id}] An optional attribute of type \code{xsd:ID} that identifies the \code{resource} element.
 \item[\code{path}] An optional attribute of type \code{xsd:string}. If present, it provides a relative URI template\cite{uritemplates} for the identifier of the resource. The resource's base URI is given by the \code{resource} element's parent \code{resource} or \code{resources} element.
 \item[\code{type}] An optional attribute whose type is a space-separated list of of \code{xsd:anyURI}. Each value in the list identifies a \code{resource\_type} element (see section \ref{resourcetype}) that defines a set of methods supported by the resource.
-\item[\code{queryType}] Defines the media type for the query component of the resource URI. Defaults to \lq application/x-www-form-urlencoded\rq\ if not specified which results in query strings being formatted as specified in section 17.13 of HTML 4.01\cite{html401}.
+\item[\code{queryType}] Defines the media type for the query component of the resource URI. Defaults to \lq application\-/x-www-form-urlencoded\rq\ if not specified which results in query strings being formatted as specified in section 17.13 of HTML 4.01\cite{html401}.
 \end{description}
 
 A \code{resource} element contains the following child elements:
@@ -373,7 +375,17 @@ A child \code{param} element (see section \ref{param}) is used to parameterize i
 \subsection{Parameter}
 \label{param}
 
-A \code{param} element describes a parameterized component of its parent element and may be a child of a \code{resource} (see section \ref{resource}), \code{request} (see section \ref{request}), \code{response} (see section \ref{response}), or a \code{representation} (see section \ref{representation}) element. A \code{param} element has zero or more \code{doc} child elements (see section \ref{doc}), zero or more \code{option} child elements (see section \ref{option}), an optional \code{link} child element (see section \ref{link}) and has the following attributes:
+A \code{param} element describes a parameterized component of its parent element. A \code{param} element can either be a parameter definition or a reference to a parameter defined elsewhere.
+
+\subsubsection{Parameter Reference}
+
+A \code{param} reference element is a \code{param} element that has an \code{href} attribute whose type is \code{xsd:anyURI}. The value of the \code{href} attribute is a URI reference to a \code{param} definition element. A \code{param} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
+
+This form of \code{param} element may be used to reduce duplication when the same parameter applies to more than one parent.
+
+\subsubsection{Parameter Definition}
+
+A \code{param} definition element describes a parameterized component of its parent element and may be a child of a \code{resource} (see section \ref{resource}), \code{application} (see section \ref{application}), \code{request} (see section \ref{request}), \code{response} (see section \ref{response}), or a \code{representation} (see section \ref{representation}) element. A \code{param} definition element has zero or more \code{doc} child elements (see section \ref{doc}), zero or more \code{option} child elements (see section \ref{option}), an optional \code{link} child element (see section \ref{link}) and has the following attributes:
 
 \begin{description}
 \item[\code{id}] An optional identifier that may be used to refer to a parameter definition using a URI reference.
@@ -541,33 +553,34 @@ The Atom publishing protocol\cite{atompub} defines a set of methods to
 introspect, view and update entries in an Atom feed. The publishing protocol is bootstrapped by performing a HTTP GET on a known URI for a particular set of feeds. The response consists of an XML document, of media type application/atomserv+xml, that describes the available feeds. An example of such is shown below:
 
 \begin{listing}{1}
-<service xmlns="http://purl.org/atom/app#"> 
-  <workspace title="Main Site" > 
+<service xmlns="http://www.w3.org/2007/app"
+     xmlns:atom="http://www.w3.org/2005/Atom"> 
+  <workspace> 
+    <atom:title>Main Site</atom:title>
     <collection 
-      title="My Blog Entries" 
-      href="http://example.org/reilly/main" > 
-      <member-type>entry</member-type> 
+        href="http://example.org/blog/main" > 
+      <atom:title>Main Site</atom:title>
     </collection> 
     <collection 
-      title="Pictures" 
-      href="http://example.org/reilly/pic" > 
-      <member-type>media</member-type> 
+      href="http://example.org/blog/pic" > 
+      <atom:title>Pictures</atom:title>
+      <accept>image/*</accept>
     </collection> 
   </workspace> 
 </service>
 \end{listing}
 
-Note the similarity between the Atom service document and WADL, both describe a set of resources and methods that may be applied to them. In the case of an Atom service document the applicable methods are implicit based on the member-type of a collection. An Atom service document also defines some additional metadata (the feed title) specific to the protocol domain. One could replicate the information in an Atom service document using WADL as follows.
+Note the similarity between the Atom service document and WADL, both describe a set of resources and methods that may be applied to them. In the case of an Atom service document the applicable methods are implicit as they are defined by the Atom Publishing Protocol. An Atom service document also defines some additional metadata (the feed title) specific to the protocol domain. One could replicate the information in an Atom service document using WADL as follows.
 
 The first step is to create a WADL document that contains the Atom protocol methods associated with feeds, associated representations and resource types. This only needs to be done once since the contents of this document can then be re-used by WADL documents specific to each site.
 
 \begin{listing}{1}
 <application xmlns="http://wadl.dev.java.net/2009/02" 
-  xmlns:app="http://purl.org/atom/app#" 
+  xmlns:app="http://www.w3.org/2007/app" 
   xmlns:atom="http://www.w3.org/2005/Atom"> 
 
   <grammars> 
-    <include href="http://purl.org/atom/app.xsd"/> 
+    <include href="http://www.w3.org/2007/app/app.xsd"/> 
   </grammars>
   
   <resource_type id="entry_feed"> 
@@ -577,8 +590,7 @@ The first step is to create a WADL document that contains the Atom protocol meth
 
   <resource_type id="media_feed"> 
     <method href="#getFeed"/> 
-    <method href="#addEntryCollectionMember"/> 
-    <method href="#addMediaCollectionMember"/> 
+    <method href="#addImageCollectionMember"/> 
   </resource> 
 
   <representation id="entry" mediaType="application/atom+xml" 
@@ -614,44 +626,53 @@ The first step is to create a WADL document that contains the Atom protocol meth
     <request> 
       <representation href="#entry"/> 
     </request> 
+    <response status="201"> 
+      <param name="location" style="header" type="xsd:anyURI"
+        required="true"/>
+      <representation href="#entry"/> 
+    </response> 
   </method> 
 
-  <method name="POST" id="addMediaCollectionMember"> 
+  <method name="POST" id="addImageCollectionMember"> 
     <request> 
-      <representation href="#entry"/> 
-      <representation /> 
+      <representation mediaType="image/*"/> 
     </request> 
+    <response status="201"> 
+      <param name="location" style="header" type="xsd:anyURI"
+        required="true"/>
+      <representation href="#entry"/> 
+    </response> 
   </method> 
 
 </application>
 \end{listing}
 
-Given the preceding document, one can create a WADL version of the prior Atom
-service document:
+Note that the above WADL doesn't define any concrete resources only resource types, methods and representations. Given the preceding document located at http://www.w3.org/2007/app.wadl, one can create a WADL alternative to the Atom service document as follows:
 
 \begin{listing}{1}
 <application xmlns="http://research.sun.com/wadl/2006/07" 
-  xmlns:app="http://purl.org/atom/app#"> 
+  xmlns:app="http://www.w3.org/2007/app" 
+  xmlns:atom="http://www.w3.org/2005/Atom"> 
 
   <resources base="http://example.org/"> 
-    <resource path="reilly/main"
-      type="http://purl.org/atom/app.wadl#entry_feed"
-      app:member-type="entry"/>
-    <resource path="reilly/pic"
-      type="http://purl.org/atom/app.wadl#media_feed"
-      app:member-type="media"/>
+    <resource path="blog/main"
+      type="http://www.w3.org/2007/app.wadl#entry_feed">
+      <doc title="Main Site"/>
+    </resource>
+    <resource path="blog/pic"
+      type="http://www.w3.org/2007/app.wadl#media_feed">
+      <doc title="Pictures"/>
+    </resource>
   </resources> 
 </application>
 \end{listing}
 
-The above WADL document describes the following resources:
+The above WADL document describes the following resources in terms of the resource types we defined earlier:
 
 \begin{itemize}
-\item \code{http://example.org/reilly/main}\newline This resource supports HTTP GET to retrieve an Atom feed document and HTTP POST to add a new entry to the feed.
-\item \code{http://example.org/reilly/pic}\newline This resource supports HTTP GET to retrieve an Atom feed document and HTTP POST to add a new entry or other media to the feed.
+\item \code{http://example.org/blog/main}\newline This resource supports HTTP GET to retrieve an Atom feed document and HTTP POST to add a new entry to the feed.
+\item \code{http://example.org/blog/pic}\newline This resource supports HTTP GET to retrieve an Atom feed document and HTTP POST to add a new image to the feed.
 \end{itemize}
-
-The above document also includes an Atom-specific extension element (\code{app:member-type}) to provide the same metadata as the Atom service document although that information is also implicit in the type of each resource.
 
 \cleardoublepage
 \section{RelaxNG Schema for WADL}
@@ -680,7 +701,9 @@ where {\em issueNumber} is the number of the issue.
 \begin{itemize}
 \item The namespace was changed to \code{http://wadl.dev.java.net/2009/02}.
 \item Resolved issue 13. The \code{status} attribute was moved from the \code{representation} element to the \code{response} element. The cardinality of the \code{response} element was changed from 0--1 to 0--many. The \code{fault} element was removed.
+\item Resolved issue 17. Allow parameters at top level and parameter references to prevent repetition when a parameter is used in multiple places.
 \item Resolved issue 18. A \code{resource\_type} element may now contain \code{resource} child elements.
+\item Updated the Atompub example to RFC syntax.
 \end{itemize}
 
 \section*{Acknowledgments}

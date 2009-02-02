@@ -7,7 +7,7 @@ start =
     doc*,
     grammars?,
     resources?,
-    ( resource_type | method | representation )*,
+    ( resource_type | method | representation | param )*,
     foreign-attribute,
     foreign-element
   }
@@ -113,20 +113,26 @@ representation =
   }
 param =
   element wadl:param {
-    doc*,
-    option*,
-    link?,
-    attribute name {xsd:token },
-    attribute style { 
-      "plain" | "query" | "matrix" | "header" | "template"
-    },
-    attribute id { xsd:token }?,
-    attribute type { text }?,
-    attribute default { text }?,
-    attribute path { text }?,
-    attribute required { xsd:boolean }?,
-    attribute repeating { xsd:boolean }?,
-    attribute fixed { text }?,
+    (
+      (
+        attribute href { xsd:anyURI }
+      ) | (
+        doc*,
+        option*,
+        link?,
+        attribute name {xsd:token },
+        attribute style { 
+          "plain" | "query" | "matrix" | "header" | "template"
+        },
+        attribute id { xsd:token }?,
+        attribute type { text }?,
+        attribute default { text }?,
+        attribute path { text }?,
+        attribute required { xsd:boolean }?,
+        attribute repeating { xsd:boolean }?,
+        attribute fixed { text }?
+      )
+    ),
     foreign-element,
     foreign-attribute
   }
