@@ -6,7 +6,7 @@ start =
   element wadl:application {
     doc*,
     grammars?,
-    resources?,
+    resources*,
     ( resource_type | method | representation | param )*,
     foreign-attribute,
     foreign-element

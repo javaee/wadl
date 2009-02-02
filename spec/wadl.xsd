@@ -13,7 +13,8 @@
       <xs:sequence>
         <xs:element ref="tns:doc" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="tns:grammars" minOccurs="0"/>
-        <xs:element ref="tns:resources" minOccurs="0"/>
+        <xs:element ref="tns:resources" minOccurs="0"
+          maxOccurs="unbounded"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:element ref="tns:resource_type"/>
           <xs:element ref="tns:method"/>

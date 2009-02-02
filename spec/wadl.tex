@@ -3,8 +3,8 @@
 \usepackage{moreverb}
 \usepackage{tabularx}
 \usepackage{wadl} % just fixes verbatim font style to make it smaller
-\usepackage[dvips]{graphicx}
-\usepackage[dvips,
+\usepackage[pdftex]{graphicx}
+\usepackage[pdftex,
   pdftitle={Web Application Description Language (WADL)},
   pdfauthor={Marc J. Hadley, Sun Microsystems Inc.},
   pdfsubject={Web Application Description Language (WADL)},
@@ -100,7 +100,7 @@ The \code{application} element forms the root of a WADL description and contains
 \begin{enumerate}
 \item Zero or more \code{doc} elements -- see section \ref{doc}.
 \item An optional \code{grammars} element -- see section \ref{grammars}.
-\item An optional \code{resources} element -- see section \ref{resources}.
+\item Zero or more \code{resources} elements -- see section \ref{resources}.
 \item Zero or more of the following:
 \begin{itemize}
 \item \code{resource\_type} elements --  see section \ref{resourcetype}.
@@ -146,7 +146,7 @@ A \code{resource} element describes a set of resources, each identified by a URI
 
 \begin{description}
 \item[\code{id}] An optional attribute of type \code{xsd:ID} that identifies the \code{resource} element.
-\item[\code{path}] An optional attribute of type \code{xsd:string}. If present, it provides a relative URI template\cite{uritemplates} for the identifier of the resource. The resource's base URI is given by the \code{resource} element's parent \code{resource} or \code{resources} element.
+\item[\code{path}] An optional attribute of type \code{xsd:string}. If present, it provides a relative URI template for the identifier of the resource. The resource's base URI is given by the \code{resource} element's parent \code{resource} or \code{resources} element.
 \item[\code{type}] An optional attribute whose type is a space-separated list of of \code{xsd:anyURI}. Each value in the list identifies a \code{resource\_type} element (see section \ref{resourcetype}) that defines a set of methods supported by the resource.
 \item[\code{queryType}] Defines the media type for the query component of the resource URI. Defaults to \lq application\-/x-www-form-urlencoded\rq\ if not specified which results in query strings being formatted as specified in section 17.13 of HTML 4.01\cite{html401}.
 \end{description}
@@ -166,7 +166,7 @@ A \code{resource} element contains the following child elements:
 \item Zero or more \code{resource} elements that describe sub-resources. Such sub-resources inherit matrix and template parameters from the parent resource since their URI is relative to that of the parent resource but they do not inherit query or header parameters specified globally for the parent resource.
 \end{itemize}
 
-The value of the \code{path} attribute may be static or may contain embedded template parameters, see \cite{uritemplates}. At runtime, the values of template parameters are substituted into the resource identifier when the resource is used, see section \ref{genresids} for a detailed example.
+The value of the \code{path} attribute may be static or may contain embedded template parameters. At runtime, the values of template parameters are substituted into the resource identifier when the resource is used, see section \ref{genresids} for a detailed example.
 
 Additional information about embedded template parameters can be conveyed using a child \code{param} element with a \code{style} attribute value \lq template\rq\  whose \code{name} attribute value matches the name of the parameter embedded in the template. E.g., in the following the type of the \code{widgetId} template parameter is specified by the child \code{param} element:
 
@@ -185,7 +185,7 @@ The URI for a \code{resource} element is obtained using the following rules:
 \begin{enumerate}
 \item Set \emph{identifier} equal to the URI computed (using this process) for the parent element (\code{resource} or \code{resources})
 \item If \emph{identifier} doesn't end with a \lq$/$\rq\ then append a \lq$/$\rq\ character to \emph{identifier}
-\item Substitute the values of any URI template parameters into the value of the \code{path} attribute according to \cite{uritemplates}
+\item Substitute the values of any URI template parameters into the value of the \code{path} attribute
 \item Append the value obtained in the previous step to \emph{identifier}
 \item For each child \code{param} element (see section \ref{param}), in document order, that has a value of \lq matrix\rq\ for its \code{style} attribute, append a representation of the parameter value to \emph{identifier} according to the following rules:
       \begin{itemize}
@@ -703,6 +703,7 @@ where {\em issueNumber} is the number of the issue.
 \item Resolved issue 13. The \code{status} attribute was moved from the \code{representation} element to the \code{response} element. The cardinality of the \code{response} element was changed from 0--1 to 0--many. The \code{fault} element was removed.
 \item Resolved issue 17. Allow parameters at top level and parameter references to prevent repetition when a parameter is used in multiple places.
 \item Resolved issue 18. A \code{resource\_type} element may now contain \code{resource} child elements.
+\item Resolved issue 20. Allow multiple resources elements within an application.
 \item Updated the Atompub example to RFC syntax.
 \end{itemize}
 
