@@ -92,6 +92,11 @@ All WADL elements have the following XML namespace name:
 
 This section describes each component of a WADL document in detail.
 
+\subsection{Cross Referencing}
+\label{xrefs}
+
+Several WADL components support references to other components. Note that references are URI references, {\em not} ID references, and therefore support both intra- and inter-document cross referencing. Intra-document references are made using fragment identifiers, e.g. \code{\#someid}. Inter-document references are made using a URI to identify the document and a fragment identifier to identify the component within the referenced document, e.g. \code{somefile.wadl\#someid}. Absolute or relative URIs are allowed.
+
 \subsection{Application}
 \label{application}
 
@@ -147,7 +152,7 @@ A \code{resource} element describes a set of resources, each identified by a URI
 \begin{description}
 \item[\code{id}] An optional attribute of type \code{xsd:ID} that identifies the \code{resource} element.
 \item[\code{path}] An optional attribute of type \code{xsd:string}. If present, it provides a relative URI template for the identifier of the resource. The resource's base URI is given by the \code{resource} element's parent \code{resource} or \code{resources} element.
-\item[\code{type}] An optional attribute whose type is a space-separated list of of \code{xsd:anyURI}. Each value in the list identifies a \code{resource\_type} element (see section \ref{resourcetype}) that defines a set of methods supported by the resource.
+\item[\code{type}] An optional attribute whose type is a space-separated list of of \code{xsd:anyURI}. Each value in the list is a cross reference (see section \ref{xrefs}) that identifies a \code{resource\_type} element (see section \ref{resourcetype}) that defines a set of methods supported by the resource.
 \item[\code{queryType}] Defines the media type for the query component of the resource URI. Defaults to \lq application\-/x-www-form-urlencoded\rq\ if not specified which results in query strings being formatted as specified in section 17.13 of HTML 4.01\cite{html401}.
 \end{description}
 
@@ -246,7 +251,7 @@ A \code{resource\_type} element contains the following child elements:
   \item[\code{header}] Specifies a HTTP header for use in the request part of all child \code{method} elements of the resource type.
   \end{description}
 \item Zero or more \code{method} (see section \ref{method}) elements, each of which describes an HTTP protocol method that can be applied to a resource of this type.
-\item Zero or more \code{resource} elements that describe sub-resources of resources of this type. The URI of such sub-resources provided by the \code{path} attribute of the \code{resource} element and is relative to that of the parent resource.
+\item Zero or more \code{resource} elements that describe sub-resources of resources of this type. The URI of such sub-resources is provided by the \code{path} attribute of the \code{resource} element and is relative to that of the parent resource.
 \end{itemize}
 
 \subsection{Method}
@@ -256,7 +261,7 @@ A \code{method} element describes the input to and output from an HTTP protocol 
 
 \subsubsection{Method Reference}
 
-A \code{method} reference element is a child of a \code{resource} element that has an \code{href} attribute whose type is \code{xsd:anyURI}. The value of the \code{href} attribute is a URI reference to a \code{method} definition element. A \code{method} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
+A \code{method} reference element is a child of a \code{resource} element that has an \code{href} attribute whose type is \code{xsd:anyURI}. The value of the \code{href} attribute is a cross reference (see section \ref{xrefs}) to a \code{method} definition element. A \code{method} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
 
 This form of \code{method} element may be used to reduce duplication when the same method applies to more than one resource.
 
@@ -345,7 +350,7 @@ A \code{representation} element describes a representation of a resource's state
 
 \subsubsection{Representation Reference}
 
-A \code{representation} reference element can be a child of a \code{request} or \code{response} element. It has a \code{href} attribute of type \code{xsd:anyURI}. The value of the \code{href} attribute is a URI reference to a \code{representation} definition element. A \code{representation} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
+A \code{representation} reference element can be a child of a \code{request} or \code{response} element. It has a \code{href} attribute of type \code{xsd:anyURI}. The value of the \code{href} attribute is a cross reference (see section \ref{xrefs}) to a \code{representation} definition element. A \code{representation} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
 
 This form of \code{representation} element may be used to reduce duplication when the same representation is used in multiple locations.
 
@@ -379,7 +384,7 @@ A \code{param} element describes a parameterized component of its parent element
 
 \subsubsection{Parameter Reference}
 
-A \code{param} reference element is a \code{param} element that has an \code{href} attribute whose type is \code{xsd:anyURI}. The value of the \code{href} attribute is a URI reference to a \code{param} definition element. A \code{param} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
+A \code{param} reference element is a \code{param} element that has an \code{href} attribute whose type is \code{xsd:anyURI}. The value of the \code{href} attribute is a cross reference (see section \ref{xrefs}) to a \code{param} definition element. A \code{param} reference element MUST NOT have any other WADL-defined attributes or contain any WADL-defined child elements.
 
 This form of \code{param} element may be used to reduce duplication when the same parameter applies to more than one parent.
 
@@ -462,7 +467,7 @@ A \code{link} element is used to identify links to resources within representati
 A \code{link} element contains zero or more \code{doc} elements (see section \ref{doc}) and has the following attributes:
 
 \begin{description}
-\item[\code{resource\_type}] An optional URI reference to a \code{resource\_type} element that defines the capabilities of the resource that the link identifies.
+\item[\code{resource\_type}] An optional cross reference (see section \ref{xrefs}) to a \code{resource\_type} element that defines the capabilities of the resource that the link identifies.
 \item[\code{rel}] An optional token that identifies the relationship of the resource identified by the link to the resource whose representation the link is embedded in. The value is scoped by the value of the ancestor \code{representation} element's \code{profile} attribute.
 \item[\code{rev}] An optional token that identifies the relationship of the resource whose representation the link is embedded in to the resource identified by the link. This is the reverse relationship to that identified by  the \code{rel} attribute. The value is scoped by the value of the ancestor \code{representation} element's \code{profile} attribute.
 \end{description}
@@ -592,6 +597,10 @@ The first step is to create a WADL document that contains the Atom protocol meth
     <method href="#getFeed"/> 
     <method href="#addImageCollectionMember"/> 
   </resource> 
+  
+  <resource_type id="entry">
+    ...
+  </resource_type>
 
   <representation id="entry" mediaType="application/atom+xml" 
     element="atom:entry"/>
@@ -628,7 +637,9 @@ The first step is to create a WADL document that contains the Atom protocol meth
     </request> 
     <response status="201"> 
       <param name="location" style="header" type="xsd:anyURI"
-        required="true"/>
+        required="true">
+        <link resource_type="#entry" rel="self"/>
+      </param>
       <representation href="#entry"/> 
     </response> 
   </method> 
@@ -639,7 +650,9 @@ The first step is to create a WADL document that contains the Atom protocol meth
     </request> 
     <response status="201"> 
       <param name="location" style="header" type="xsd:anyURI"
-        required="true"/>
+        required="true">
+        <link resource_type="#entry" rel="self"/>
+      </param>
       <representation href="#entry"/> 
     </response> 
   </method> 
