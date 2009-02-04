@@ -42,7 +42,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.JAXBElement;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
@@ -222,15 +221,15 @@ public class Wadl2Java {
             else if (child instanceof ResourceType)
                 extractResourceTypeIds((ResourceType)child, desc);
             else {
-                JAXBElement<RepresentationType> repOrFault = (JAXBElement<RepresentationType>)child;
-                extractRepresentationId(repOrFault.getValue(), desc);
+                extractRepresentationId((Representation)child, desc);
             }
         }
         
         // process resource hierarchy
         if (a.getResources() != null)
-            for (Resource r: a.getResources().getResource())
-                extractResourceIds(r, desc);
+            for (Resources rs: a.getResources())
+                for (Resource r: rs.getResource())
+                    extractResourceIds(r, desc);
     }
     
     /**
@@ -271,7 +270,7 @@ public class Wadl2Java {
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
      */
-    protected void extractRepresentationId(RepresentationType r, URI file) throws JAXBException, IOException {
+    protected void extractRepresentationId(Representation r, URI file) throws JAXBException, IOException {
         processIDHref(file, r.getId(), r.getHref(), r);
     }
     
@@ -289,12 +288,12 @@ public class Wadl2Java {
         processIDHref(file, m.getId(), m.getHref(), m);
 
         if (m.getRequest() != null) {
-            for (RepresentationType r: m.getRequest().getRepresentation())
+            for (Representation r: m.getRequest().getRepresentation())
                 extractRepresentationId(r, file);
         }
-        if (m.getResponse() != null) {
-            for (JAXBElement<RepresentationType> child: m.getResponse().getRepresentationOrFault()) {
-                extractRepresentationId(child.getValue(), file);
+        for (Response resp: m.getResponse()) {
+            for (Representation r: resp.getRepresentation()) {
+                extractRepresentationId(r, file);
             }
         }
     }
@@ -338,8 +337,9 @@ public class Wadl2Java {
         String id = processIDHref(file, r.getId(), null, r);
         if (id != null)
             ifaceMap.put(id, null);
-        for (Method child: r.getMethod()) {
-            extractMethodIds((Method)child, file);
+        for (Object child: r.getMethodOrResource()) {
+            if (child instanceof Method)
+                extractMethodIds((Method)child, file);
         }
     }
     
@@ -428,11 +428,14 @@ public class Wadl2Java {
             buildResourceTypes(ifaceId, a);
         }
         
-        Resources r = a.getResources();
-        ResourceNode n = new ResourceNode(a, r);
-        if (r != null) {
-            for (Resource child: r.getResource()) {
-                buildResourceTree(n, child, rootFile);
+        List<Resources> rs = a.getResources();
+        ResourceNode n = null;
+        for (Resources r: rs) {
+            n = new ResourceNode(a, r); // TODO this needs to add to a list rather than overwrite
+            if (r != null) {
+                for (Resource child: r.getResource()) {
+                    buildResourceTree(n, child, rootFile);
+                }
             }
         }
         
@@ -449,8 +452,9 @@ public class Wadl2Java {
             URI file = new URI(ifaceId.substring(0,ifaceId.indexOf('#')));
             ResourceType type = (ResourceType)idMap.get(ifaceId);
             ResourceTypeNode node = new ResourceTypeNode(type);
-            for (Method m: type.getMethod()) {
-                addMethodToResourceType(node, m, file);
+            for (Object child: type.getMethodOrResource()) {
+                if (child instanceof Method)
+                    addMethodToResourceType(node, (Method)child, file);
             }
             ifaceMap.put(ifaceId, node);
         } catch (URISyntaxException ex) {
@@ -532,23 +536,40 @@ public class Wadl2Java {
                 for (Param p: request.getParam()) {
                     n.getQueryParameters().add(p);
                 }
-                for (RepresentationType r: request.getRepresentation()) {
+                for (Representation r: request.getRepresentation()) {
                     addRepresentation(n.getSupportedInputs(), r, file);
                 }
             }
-            Response response = method.getResponse();
-            if (response != null) {
-                for (JAXBElement<RepresentationType> o: response.getRepresentationOrFault()) {
-                    if (o.getName().getLocalPart().equals("representation")) {
-                        addRepresentation(n.getSupportedOutputs(), o.getValue(), file);
-                    }
-                    else if (o.getName().getLocalPart().equals("fault")) {
-                        FaultNode fn = new FaultNode(o.getValue());
+            for (Response response: method.getResponse()) {
+                boolean isFault = isFaultResponse(response);
+                for (Representation o: response.getRepresentation()) {
+                    if (isFault) {
+                        FaultNode fn = new FaultNode(o);
                         n.getFaults().add(fn);
+                    } else {
+                        addRepresentation(n.getSupportedOutputs(), o, file);
                     }
                 }
             }
         }        
+    }
+    
+    /**
+     * Check if the supplied Response represents an error or not. If any
+     * of the possible HTTP status values is >= 400 the Response is considered
+     * to represent a fault.
+     * @param response the response to check
+     * @return true if the response represents a fault, false otherwise.
+     */
+    boolean isFaultResponse(Response response) {
+        boolean isFault = false;
+        for (long status: response.getStatus()) {
+            if (status >= 400) {
+                isFault = true;
+                break;
+            }
+        }
+        return isFault;
     }
     
     /**
@@ -576,19 +597,18 @@ public class Wadl2Java {
                 for (Param p: request.getParam()) {
                     n.getQueryParameters().add(p);
                 }
-                for (RepresentationType r: request.getRepresentation()) {
+                for (Representation r: request.getRepresentation()) {
                     addRepresentation(n.getSupportedInputs(), r, file);
                 }
             }
-            Response response = method.getResponse();
-            if (response != null) {
-                for (JAXBElement<RepresentationType> o: response.getRepresentationOrFault()) {
-                    if (o.getName().getLocalPart().equals("representation")) {
-                        addRepresentation(n.getSupportedOutputs(), o.getValue(), file);
-                    }
-                    else if (o.getName().getLocalPart().equals("fault")) {
-                        FaultNode fn = new FaultNode(o.getValue());
+            for (Response response: method.getResponse()) {
+                boolean isFault = isFaultResponse(response);
+                for (Representation o: response.getRepresentation()) {
+                    if (isFault) {
+                        FaultNode fn = new FaultNode(o);
                         n.getFaults().add(fn);
+                    } else {
+                        addRepresentation(n.getSupportedOutputs(), o, file);
                     }
                 }
             }
@@ -602,7 +622,7 @@ public class Wadl2Java {
      * @param representation the WADL representation element to process
      * @param file the URI of the current WADL file being processed
      */
-    protected void addRepresentation(List<RepresentationNode> list, RepresentationType representation, 
+    protected void addRepresentation(List<RepresentationNode> list, Representation representation, 
             URI file) {
         String href = representation.getHref();
         if (href != null && href.length() > 0) {
@@ -611,7 +631,7 @@ public class Wadl2Java {
                 // referecnce to element in another document
                 file = getReferencedFile(file, href);
             }
-            representation = dereferenceLocalHref(file, href, RepresentationType.class);
+            representation = dereferenceLocalHref(file, href, Representation.class);
         }
         if (representation != null) {
             RepresentationNode n = new RepresentationNode(representation);

@@ -21,7 +21,7 @@ package org.jvnet.ws.wadl2java.ast;
 
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
-import org.jvnet.ws.wadl.RepresentationType;
+import org.jvnet.ws.wadl.Representation;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.List;
 import javax.xml.namespace.QName;
@@ -32,13 +32,13 @@ import javax.xml.namespace.QName;
  */
 public class RepresentationNode {
     
-    RepresentationType rep;
+    Representation rep;
     
     /**
      * Creates a new instance of RepresentationNode
      * @param r the unmarshalled JAXB-generated representation object
      */
-    public RepresentationNode(RepresentationType r) {
+    public RepresentationNode(Representation r) {
         rep = r;
     }
     
