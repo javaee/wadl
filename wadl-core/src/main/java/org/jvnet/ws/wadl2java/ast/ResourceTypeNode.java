@@ -26,6 +26,7 @@ import org.jvnet.ws.wadl.ResourceType;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
+import org.jvnet.ws.wadl.Resource;
 
 /**
  * Represents a WADL resource_type
@@ -35,6 +36,7 @@ public class ResourceTypeNode {
     
     private String interfaceName;
     private List<MethodNode> methods;
+    private List<ResourceNode> resources;
     private PathSegment pathSegment;
     private List<Doc> doc;
     private JDefinedClass generatedInterface;
@@ -48,9 +50,20 @@ public class ResourceTypeNode {
         pathSegment = new PathSegment(resourceType);
         interfaceName = GeneratorUtil.makeClassName(resourceType.getId());
         methods = new ArrayList<MethodNode>();
+        resources = new ArrayList<ResourceNode>();
         generatedInterface = null;
     }
     
+    /**
+     * Create a new resource and add it as a child
+     * @param r the unmarshalled JAXB resource element
+     * @return the new resource element
+     */
+    public ResourceNode addChild(Resource r) {
+        ResourceNode n = new ResourceNode(r, this);
+        resources.add(n);
+        return n;
+    }
     /**
      * Convenience function for generating a suitable Java class name for this WADL
      * resource
@@ -61,11 +74,19 @@ public class ResourceTypeNode {
     }
     
     /**
-     * Get the methods for this resource
+     * Get the methods for this resource type
      * @return a list of methods
      */
     public List<MethodNode> getMethods() {
         return methods;
+    }
+    
+    /**
+     * Get the resources for this resource type
+     * @return a list of resources
+     */
+    public List<ResourceNode> getResources() {
+        return resources;
     }
     
     public List<Param> getQueryParams() {

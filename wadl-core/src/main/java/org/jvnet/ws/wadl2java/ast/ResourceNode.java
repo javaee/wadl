@@ -75,6 +75,22 @@ public class ResourceNode {
     }
     
     /**
+     * Create a new instance of ResourceNode and attach it as a child of an existing
+     * resource type
+     * @param resource the unmarshalled JAXB-generated resource object
+     * @param parent the parent resource to attach the new resource to
+     */
+    public ResourceNode(Resource resource, ResourceTypeNode parent) {
+        doc = resource.getDoc();
+        parentResource = null;
+        pathSegment = new PathSegment(resource);
+        className = GeneratorUtil.makeClassName(pathSegment.getTemplate());
+        childResources = new ArrayList<ResourceNode>();
+        methods = new ArrayList<MethodNode>();        
+        types = new ArrayList<ResourceTypeNode>();
+    }
+    
+    /**
      * Create a new resource and add it as a child
      * @param r the unmarshalled JAXB resource element
      * @return the new resource element
@@ -127,6 +143,7 @@ public class ResourceNode {
     public void addResourceType(ResourceTypeNode n) {
         types.add(n);
         methods.addAll(n.getMethods());
+        childResources.addAll(n.getResources());
         pathSegment.getQueryParameters().addAll(n.getQueryParams());
         pathSegment.getMatrixParameters().addAll(n.getMatrixParams());
     }

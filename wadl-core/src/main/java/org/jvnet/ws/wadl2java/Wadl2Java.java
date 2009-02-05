@@ -336,11 +336,13 @@ public class Wadl2Java {
      */
     protected void extractResourceTypeIds(ResourceType r, URI file) throws JAXBException, IOException {
         String id = processIDHref(file, r.getId(), null, r);
-        if (id != null)
+        if (id != null && !ifaceMap.containsKey(id))
             ifaceMap.put(id, null);
         for (Object child: r.getMethodOrResource()) {
             if (child instanceof Method)
                 extractMethodIds((Method)child, file);
+            else if (child instanceof Resource)
+                extractResourceIds((Resource)child, file);
         }
     }
     
@@ -390,9 +392,8 @@ public class Wadl2Java {
      * Creates an inner static class that represents a resource and its 
      * methods. Recurses the tree of child resources.
      * @param parent the outer class for the static inner class being 
-     * generated. This can either be
-     * the top level <code>Endpoint</code> class or a nested static inner class 
-     * for a parent resource.
+     * generated. This can either be a top level class or a nested static 
+     * inner class for a parent resource.
      * @param resource the WADL <code>resource</code> element being processed.
      * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
      * generation, the WADL processor attempts to create a duplicate
@@ -425,29 +426,36 @@ public class Wadl2Java {
      * @return the resource elements that correspond to the roots of the resource trees
      */
     protected List<ResourceNode> buildAst(Application a, URI rootFile) {
+        // process resource types in two steps:
+        // (i) process resource types in terms of methods
         for (String ifaceId: ifaceMap.keySet()) {
-            buildResourceTypes(ifaceId, a);
+            buildResourceType(ifaceId, a);
+        }
+        // (ii) process resource type child resources (which may reference
+        // resource types located in (i)
+        for (String ifaceId: ifaceMap.keySet()) {
+            buildResourceTypeTree(ifaceId, a);
         }
         
         List<Resources> rs = a.getResources();
         List<ResourceNode> ns = new ArrayList<ResourceNode>();
         for (Resources r: rs) {
-            ResourceNode n = new ResourceNode(a, r); // TODO this needs to add to a list rather than overwrite
+            ResourceNode rootResourcesNode = new ResourceNode(a, r);
             for (Resource child: r.getResource()) {
-                buildResourceTree(n, child, rootFile);
+                buildResourceTree(rootResourcesNode, child, rootFile);
             }
-            ns.add(n);
+            ns.add(rootResourcesNode);
         }
         
         return ns;
     }
     
     /**
-     * Build an abstract tree for a resource types in a WADL file
+     * Build an abstract tree for a resource type in a WADL file
      * @param ifaceId the identifier of the resource type
      * @param a the application element of the root WADL file
      */
-    protected void buildResourceTypes(String ifaceId, Application a) {
+    protected void buildResourceType(String ifaceId, Application a) {
         try {
             URI file = new URI(ifaceId.substring(0,ifaceId.indexOf('#')));
             ResourceType type = (ResourceType)idMap.get(ifaceId);
@@ -457,6 +465,25 @@ public class Wadl2Java {
                     addMethodToResourceType(node, (Method)child, file);
             }
             ifaceMap.put(ifaceId, node);
+        } catch (URISyntaxException ex) {
+            ex.printStackTrace();
+        }        
+    }
+    
+    /**
+     * Build an abstract tree for a resource type in a WADL file
+     * @param ifaceId the identifier of the resource type
+     * @param a the application element of the root WADL file
+     */
+    protected void buildResourceTypeTree(String ifaceId, Application a) {
+        try {
+            URI file = new URI(ifaceId.substring(0,ifaceId.indexOf('#')));
+            ResourceType type = (ResourceType)idMap.get(ifaceId);
+            ResourceTypeNode node = ifaceMap.get(ifaceId);
+            for (Object child: type.getMethodOrResource()) {
+                if (child instanceof Resource)
+                    addResourceToResourceType(node, (Resource)child, file);
+            }
         } catch (URISyntaxException ex) {
             ex.printStackTrace();
         }        
@@ -552,6 +579,25 @@ public class Wadl2Java {
                 }
             }
         }        
+    }
+    
+    protected void addResourceToResourceType(ResourceTypeNode type, Resource resource, 
+            URI file) {
+        if (resource != null) {
+            ResourceNode n = type.addChild(resource);
+            for (String resourceType: resource.getType()) {
+                addTypeToResource(n, resourceType, file);
+            }
+            for (Object child: resource.getMethodOrResource()) {
+                if (child instanceof Resource) {
+                    Resource childResource = (Resource)child;
+                    buildResourceTree(n, childResource, file);
+                } else if (child instanceof Method) {
+                    Method m = (Method)child;
+                    addMethodToResource(n, m, file);
+                }
+            }
+        }
     }
     
     /**
