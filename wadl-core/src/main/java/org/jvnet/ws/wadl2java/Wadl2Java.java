@@ -123,7 +123,7 @@ public class Wadl2Java {
         idMap = new HashMap<String, Object>();
         ifaceMap = new HashMap<String, ResourceTypeNode>();
         Application a = processDescription(rootDesc);
-        ResourceNode r = buildAst(a, rootDesc);
+        List<ResourceNode> rs = buildAst(a, rootDesc);
         
         // generate code
         s2jModel = s2j.bind();
@@ -142,7 +142,8 @@ public class Wadl2Java {
             generatedPackages = buf.toString();
             jPkg = codeModel._package(pkg);
             generateResourceTypeInterfaces();
-            generateEndpointClass(r);
+            for (ResourceNode r: rs)
+                generateEndpointClass(r);
             codeModel.build(outputDir);
         }
     }
@@ -421,25 +422,24 @@ public class Wadl2Java {
      * @param a the application element of the root WADL file
      * @param rootFile the URI of the root WADL file. Other WADL files might be
      * included by reference.
-     * @return the resource element that corresponds to the root of the resource tree
+     * @return the resource elements that correspond to the roots of the resource trees
      */
-    protected ResourceNode buildAst(Application a, URI rootFile) {
+    protected List<ResourceNode> buildAst(Application a, URI rootFile) {
         for (String ifaceId: ifaceMap.keySet()) {
             buildResourceTypes(ifaceId, a);
         }
         
         List<Resources> rs = a.getResources();
-        ResourceNode n = null;
+        List<ResourceNode> ns = new ArrayList<ResourceNode>();
         for (Resources r: rs) {
-            n = new ResourceNode(a, r); // TODO this needs to add to a list rather than overwrite
-            if (r != null) {
-                for (Resource child: r.getResource()) {
-                    buildResourceTree(n, child, rootFile);
-                }
+            ResourceNode n = new ResourceNode(a, r); // TODO this needs to add to a list rather than overwrite
+            for (Resource child: r.getResource()) {
+                buildResourceTree(n, child, rootFile);
             }
+            ns.add(n);
         }
         
-        return n;
+        return ns;
     }
     
     /**

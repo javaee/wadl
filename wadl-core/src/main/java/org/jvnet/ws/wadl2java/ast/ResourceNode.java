@@ -50,7 +50,7 @@ public class ResourceNode {
     public ResourceNode(Application app, Resources resources) {
         doc = app.getDoc();
         parentResource = null;
-        className = "Endpoint";
+        className = GeneratorUtil.makeClassName(resources.getBase());
         pathSegment = new PathSegment(
                 resources==null ? "" : resources.getBase());
         childResources = new ArrayList<ResourceNode>();
