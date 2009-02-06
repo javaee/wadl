@@ -20,12 +20,14 @@
 package org.jvnet.ws.wadl2java.ast;
 
 import com.sun.codemodel.JDefinedClass;
+import java.net.URI;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ResourceType;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.jvnet.ws.wadl.Resource;
 
 /**
@@ -44,10 +46,12 @@ public class ResourceTypeNode {
     /**
      * Create a new instance of ResourceTypeNode
      * @param resourceType the unmarshalled JAXB-generated object
+     * @param file the URI of the WADL file that contains the resource type element
+     * @param idMap a map of URI reference to WADL definition element
      */
-    public ResourceTypeNode(ResourceType resourceType) {
+    public ResourceTypeNode(ResourceType resourceType, URI file, Map<String, Object> idMap) {
         doc = resourceType.getDoc();
-        pathSegment = new PathSegment(resourceType);
+        pathSegment = new PathSegment(resourceType, file, idMap);
         interfaceName = GeneratorUtil.makeClassName(resourceType.getId());
         methods = new ArrayList<MethodNode>();
         resources = new ArrayList<ResourceNode>();
@@ -57,10 +61,12 @@ public class ResourceTypeNode {
     /**
      * Create a new resource and add it as a child
      * @param r the unmarshalled JAXB resource element
+     * @param file the URI of the WADL file that contains the resource type element
+     * @param idMap a map of URI reference to WADL definition element
      * @return the new resource element
      */
-    public ResourceNode addChild(Resource r) {
-        ResourceNode n = new ResourceNode(r, this);
+    public ResourceNode addChild(Resource r, URI file, Map<String, Object> idMap) {
+        ResourceNode n = new ResourceNode(r, this, file, idMap);
         resources.add(n);
         return n;
     }

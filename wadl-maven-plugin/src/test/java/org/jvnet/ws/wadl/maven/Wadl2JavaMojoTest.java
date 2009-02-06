@@ -83,7 +83,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/Endpoint.java"));
+        assertThat(targetDirectory, contains("test/HttpApiSearchYahooComNewsSearchServiceV1.java"));
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));
@@ -119,7 +119,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/Endpoint.java"));
+        assertThat(targetDirectory, contains("test/HttpApiSearchYahooComNewsSearchServiceV1.java"));
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));
