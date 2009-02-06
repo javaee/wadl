@@ -82,7 +82,7 @@ permissions and limitations under the License.
       </representation>
     </response>
     <response status="400">
-      <representation id="SearchError" status="400" mediaType="application/xml"
+      <representation id="SearchError" mediaType="application/xml"
              element="ya:Error"/>
     </response>
   </method>
