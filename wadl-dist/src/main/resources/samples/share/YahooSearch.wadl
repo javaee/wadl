@@ -14,7 +14,7 @@ permissions and limitations under the License.
              xmlns:yn="urn:yahoo:yn"
              xmlns:ya="urn:yahoo:api"
              xmlns:html="http://www.w3.org/1999/xhtml"
-             xmlns="http://research.sun.com/wadl/2006/10">
+             xmlns="http://wadl.dev.java.net/2009/02">
 
   <grammars>
     <include href="NewsSearchResponse.xsd"/>
@@ -76,11 +76,13 @@ permissions and limitations under the License.
         <doc>The name of the callback function to wrap around the JSON data. The following characters are allowed: A-Z a-z 0-9 . [] and _. If output=json has not been requested, this parameter has no effect. More information on the callback can be found in the <html:a href="http://developer.yahoo.com/common/json.html#callbackparam">Yahoo! Developer Network JSON Documentation</html:a>.</doc>
       </param>
     </request>
-    <response>
+    <response status="200">
       <representation mediaType="application/xml" element="yn:ResultSet">
         <doc xml:lang="en" title="A list of news items matching the query"/>
       </representation>
-      <fault id="SearchError" status="400" mediaType="application/xml"
+    </response>
+    <response status="400">
+      <representation id="SearchError" status="400" mediaType="application/xml"
              element="ya:Error"/>
     </response>
   </method>
