@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import org.jvnet.ws.wadl2java.ElementResolver;
 import org.jvnet.ws.wadl2java.Wadl2Java;
 
 /**
@@ -97,7 +98,7 @@ public class PathSegment {
      * @param file the URI of the WADL file that contains the resource element
      * @param idMap a map of URI reference to WADL definition element
      */
-    public PathSegment(Resource resource, URI file, Map<String, Object> idMap) {
+    public PathSegment(Resource resource, URI file, ElementResolver idMap) {
         template = resource.getPath() == null ? "" : resource.getPath();
         this.templateParameters = new ArrayList<Param>();
         this.matrixParameters = new ArrayList<Param>();
@@ -144,7 +145,7 @@ public class PathSegment {
      * @param file the URI of the WADL file that contains the resource type element
      * @param idMap a map of URI reference to WADL definition element
      */
-    public PathSegment(ResourceType resource, URI file, Map<String, Object> idMap) {
+    public PathSegment(ResourceType resource, URI file, ElementResolver idMap) {
         template = null;
         templateParameters = new ArrayList<Param>();
         matrixParameters = new ArrayList<Param>();
@@ -174,10 +175,10 @@ public class PathSegment {
      * @param idMap a map of URI reference to WADL definition element
      * @return the param definition element
      */
-    protected static Param derefIfRequired(Param p, URI file, Map<String, Object> idMap) {
+    protected static Param derefIfRequired(Param p, URI file, ElementResolver idMap) {
         String href = p.getHref();
         if (href!=null && href.length()>0)
-            return Wadl2Java.dereferenceLocalHref(file, href, Param.class, idMap);
+            return idMap.resolve(file, href, Param.class);
         else
             return p;
     }

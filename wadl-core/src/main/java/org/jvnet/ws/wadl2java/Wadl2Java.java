@@ -59,7 +59,7 @@ public class Wadl2Java {
     private JPackage jPkg;
     private S2JJAXBModel s2jModel;
     private JCodeModel codeModel;
-    private Map<String, Object> idMap;
+    private ElementResolver idMap;
     private Map<String, ResourceTypeNode> ifaceMap;
     private List<String> processedDocs;
     private JavaDocUtil javaDoc;
@@ -123,7 +123,7 @@ public class Wadl2Java {
         if (!autoPackage)
             s2j.setDefaultPackageName(pkg);
         s2j.setErrorListener(errorListener);
-        idMap = new HashMap<String, Object>();
+        idMap = new ElementResolver();
         ifaceMap = new HashMap<String, ResourceTypeNode>();
         Application a = processDescription(rootDesc);
         List<ResourceNode> rs = buildAst(a, rootDesc);
@@ -252,13 +252,8 @@ public class Wadl2Java {
      */
     protected String processIDHref(URI desc, String id, String href, Object o)
             throws JAXBException, IOException {
-        String uniqueId = null;
-        if (id != null && id.length()>0) {
-            // if the element has an ID then add it to the id map
-            uniqueId = desc.toString()+"#"+id;
-            idMap.put(uniqueId, o);
-        }
-        else if (href != null && href.startsWith("#") == false) {
+        String uniqueId = idMap.addReference(desc, id, o);
+        if (href != null && href.startsWith("#") == false) {
             // if the href references another document then unmarshall it
             // and recursively scan it for id and idrefs
             processDescription(getReferencedFile(desc, href));
@@ -554,10 +549,7 @@ public class Wadl2Java {
     protected void addTypeToResource(ResourceNode resource, String href, 
             URI file) {
         // dereference resource
-        if (!href.startsWith("#")) {
-            // referecnce to element in another document
-            file = getReferencedFile(file, href);
-        }
+        file = getReferencedFile(file, href);
         ResourceTypeNode n = ifaceMap.get(file.toString()+href.substring(href.indexOf('#')));
         
         if (n != null) {
@@ -579,11 +571,8 @@ public class Wadl2Java {
         String href = method.getHref();
         if (href != null && href.length() > 0) {
             // dereference resource
-            if (!href.startsWith("#")) {
-                // referecnce to element in another document
-                file = getReferencedFile(file, href);
-            }
-            method = dereferenceLocalHref(file, href, Method.class, idMap);
+            file = getReferencedFile(file, href);
+            method = idMap.resolve(file, href, Method.class);
         }
         if (method != null) {
             MethodNode n = new MethodNode(method, resource);
@@ -593,11 +582,8 @@ public class Wadl2Java {
                     href=p.getHref();
                     if (href != null && href.length() > 0) {
                         // dereference param
-                        if (!href.startsWith("#")) {
-                            // referecnce to element in another document
-                            file = getReferencedFile(file, href);
-                        }
-                        p = dereferenceLocalHref(file, href, Param.class, idMap);
+                        file = getReferencedFile(file, href);
+                        p = idMap.resolve(file, href, Param.class);
                     }
                     if (p != null)
                         n.getQueryParameters().add(p);
@@ -676,11 +662,8 @@ public class Wadl2Java {
         String href = method.getHref();
         if (href != null && href.length() > 0) {
             // dereference resource
-            if (!href.startsWith("#")) {
-                // referecnce to element in another document
-                file = getReferencedFile(file, href);
-            }
-            method = dereferenceLocalHref(file, href, Method.class, idMap);
+            file = getReferencedFile(file, href);
+            method = idMap.resolve(file, href, Method.class);
         }
         if (method != null) {
             MethodNode n = new MethodNode(method, resource);
@@ -690,11 +673,8 @@ public class Wadl2Java {
                     href=p.getHref();
                     if (href != null && href.length() > 0) {
                         // dereference param
-                        if (!href.startsWith("#")) {
-                            // referecnce to element in another document
-                            file = getReferencedFile(file, href);
-                        }
-                        p = dereferenceLocalHref(file, href, Param.class, idMap);
+                        file = getReferencedFile(file, href);
+                        p = idMap.resolve(file, href, Param.class);
                     }
                     if (p != null)
                         n.getQueryParameters().add(p);
@@ -729,11 +709,8 @@ public class Wadl2Java {
         String href = representation.getHref();
         if (href != null && href.length() > 0) {
             // dereference resource
-            if (!href.startsWith("#")) {
-                // referecnce to element in another document
-                file = getReferencedFile(file, href);
-            }
-            representation = dereferenceLocalHref(file, href, Representation.class, idMap);
+            file = getReferencedFile(file, href);
+            representation = idMap.resolve(file, href, Representation.class);
         }
         if (representation != null) {
             RepresentationNode n = new RepresentationNode(representation);
@@ -742,7 +719,8 @@ public class Wadl2Java {
     }
     
     /**
-     * Get the referenced file
+     * Get the referenced file, currentFile will be returned if href is a
+     * fragment identifier, otherwise href is resolved against currentFile.
      * @param currentFile the uri of the file that contains the reference, used 
      * to provide a base for relative paths
      * @param href the reference
@@ -751,36 +729,11 @@ public class Wadl2Java {
     protected static URI getReferencedFile(URI currentFile, String href) {
         if (href.startsWith("#"))
             return currentFile;
+        // href references another file
         URI ref = currentFile.resolve(href.substring(0, href.indexOf('#')));
         return ref;
     }
     
-    /**
-     * Dereference a href and return the object if it is of the expected type.
-     * @return the resolved object
-     * @param file the URI of the file in which the referenced element is located, used
-     * to absolutize references
-     * @param href the reference to resolve
-     * @param clazz the class of object expected
-     * @param idMap a map of URI references to definition elements
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> T dereferenceLocalHref(URI file, String href, Class<T> clazz, Map<String, Object> idMap) {
-        Object o = null;
-        String id = file.toString()+href.substring(href.indexOf('#'));
-        o = idMap.get(id);
-        if (o == null) {
-            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
-            return null;
-        }
-        else if (!clazz.isInstance(o)) {
-            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href, file.toString()));
-            return null;
-        }
-        return (T)o;
-    }
-    
-
     /**
      * Inner class implementing the JAXB <code>ErrorListener</code> interface to
      * support error reporting from the JAXB infrastructure.

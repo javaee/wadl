@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.jvnet.ws.wadl.Resource;
+import org.jvnet.ws.wadl2java.ElementResolver;
 
 /**
  * Represents a WADL resource_type
@@ -49,7 +50,7 @@ public class ResourceTypeNode {
      * @param file the URI of the WADL file that contains the resource type element
      * @param idMap a map of URI reference to WADL definition element
      */
-    public ResourceTypeNode(ResourceType resourceType, URI file, Map<String, Object> idMap) {
+    public ResourceTypeNode(ResourceType resourceType, URI file, ElementResolver idMap) {
         doc = resourceType.getDoc();
         pathSegment = new PathSegment(resourceType, file, idMap);
         interfaceName = GeneratorUtil.makeClassName(resourceType.getId());
@@ -65,7 +66,7 @@ public class ResourceTypeNode {
      * @param idMap a map of URI reference to WADL definition element
      * @return the new resource element
      */
-    public ResourceNode addChild(Resource r, URI file, Map<String, Object> idMap) {
+    public ResourceNode addChild(Resource r, URI file, ElementResolver idMap) {
         ResourceNode n = new ResourceNode(r, this, file, idMap);
         resources.add(n);
         return n;
