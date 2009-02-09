@@ -1,6 +1,13 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * The contents of this file are subject to the terms
+ * of the Common Development and Distribution License
+ * (the "License").  You may not use this file except
+ * in compliance with the License.
+ * 
+ * You can obtain a copy of the license at
+ * http://www.opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 
 package org.jvnet.ws.wadl2java;
@@ -10,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * Maintains a map of file+ref to element.
  * @author mh124079
  */
 public class ElementResolver {
@@ -22,12 +29,12 @@ public class ElementResolver {
     }
     
     /**
-     * Get the element for an id
-     * @param id the element identifier as returned by {@link #addReference}.
+     * Get the element for a ref
+     * @param ref the element reference as returned by {@link #addReference}.
      * @return the corresponding element or null if not found
      */
-    public Object get(String id) {
-        return map.get(id);
+    public Object get(String ref) {
+        return map.get(ref);
     }
     
     /**
@@ -61,7 +68,7 @@ public class ElementResolver {
     public String addReference(URI file, String id, Object o) {
         String uniqueId = null;
         if (id != null && id.length()>0) {
-            // if the element has an ID then add it to the id map
+            // if the element has an ID then add it to the ref map
             uniqueId = file.toString()+"#"+id;
             map.put(uniqueId, o);
         }
