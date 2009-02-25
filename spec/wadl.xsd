@@ -220,8 +220,8 @@
           maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="href" type="xs:anyURI"/>
-      <xs:attribute name="name" type="xs:NMTOKEN" use="required"/>
-      <xs:attribute name="style" type="tns:ParamStyle" use="required"/>
+      <xs:attribute name="name" type="xs:NMTOKEN"/>
+      <xs:attribute name="style" type="tns:ParamStyle"/>
       <xs:attribute name="id" type="xs:ID"/>
       <xs:attribute name="type" type="xs:QName" default="xs:string"/>
       <xs:attribute name="default" type="xs:string"/>
