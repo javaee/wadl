@@ -125,6 +125,6 @@ fi
 exec "$JAVACMD" \
   $WADL_OPTS \
   "-Dwadl.home=${WADL_HOME}"  \
-  -jar ${WADL_HOME}/lib/wadl-cmdline-1.0-SNAPSHOT.jar \
+  -jar ${WADL_HOME}/lib/wadl-cmdline-1.1-SNAPSHOT.jar \
   "$@"
 
