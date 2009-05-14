@@ -79,7 +79,9 @@ public class JAXBDispatcher {
             else
                 in = h.getErrorStream();
         }
-        
+
+        if (expectedMimeType==null)
+            return null;
         Unmarshaller um = jc.createUnmarshaller();
         Object o = um.unmarshal(in);
         
@@ -113,6 +115,8 @@ public class JAXBDispatcher {
                 in = h.getErrorStream();
         }
         
+        if (expectedMimeType==null)
+            return null;
         Unmarshaller um = jc.createUnmarshaller();
         Object o = um.unmarshal(in);
         
@@ -154,6 +158,8 @@ public class JAXBDispatcher {
                 in = h.getErrorStream();
         }
 
+        if (expectedMimeType==null)
+            return null;
         Unmarshaller um = jc.createUnmarshaller();
         Object o = um.unmarshal(in);
         
@@ -196,6 +202,8 @@ public class JAXBDispatcher {
                 in = h.getErrorStream();
         }
 
+        if (expectedMimeType==null)
+            return null;
         Unmarshaller um = jc.createUnmarshaller();
         Object o = um.unmarshal(in);
         
@@ -229,6 +237,8 @@ public class JAXBDispatcher {
                 in = h.getErrorStream();
         }
         
+        if (expectedMimeType==null)
+            return null;
         Unmarshaller um = jc.createUnmarshaller();
         Object o = um.unmarshal(in);
         
