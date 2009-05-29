@@ -168,7 +168,11 @@ public class ResourceNode {
      * @return list of query parameters
      */
     public List<Param> getQueryParams() {
-        return getPathSegment().getQueryParameters();
+        ArrayList<Param> completeList = new ArrayList<Param>();
+        completeList.addAll(getPathSegment().getQueryParameters());
+        if (getParentResource() != null)
+            completeList.addAll(getParentResource().getQueryParams());
+        return completeList;
     }
     
     /**
@@ -176,7 +180,11 @@ public class ResourceNode {
      * @return list of header parameters
      */
     public List<Param> getHeaderParams() {
-        return getPathSegment().getHeaderParameters();
+        ArrayList<Param> completeList = new ArrayList<Param>();
+        completeList.addAll(getPathSegment().getHeaderParameters());
+        if (getParentResource() != null)
+            completeList.addAll(getParentResource().getHeaderParams());
+        return completeList;
     }
     
     /**
