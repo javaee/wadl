@@ -70,7 +70,7 @@ public class Main {
             String pkg = null;
             boolean autoPackage = false;
             List<File> customizations = new ArrayList<File>();
-            while (i<args.length-2) {
+            while (i<args.length-1) {
                 if (args[i].equals("-o")) {
                     outputDir = new File(args[i+1]);
                     i+=2;
