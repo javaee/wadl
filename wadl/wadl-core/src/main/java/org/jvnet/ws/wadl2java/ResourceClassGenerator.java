@@ -347,10 +347,12 @@ public class ResourceClassGenerator {
     /**
      * Generate a name for the method
      * @param method the WADL <code>method</code> element for the Java method being generated.
+     * @param inputRep the WADL <code>representation</code> element for the request format.
      * @param outputRep the WADL <code>representation</code> element for the response format.
      * @param returnType a reference to the Java return type
+     * @return a suitable method name
      */
-    protected String getMethodName(MethodNode method, RepresentationNode outputRep,
+    protected String getMethodName(MethodNode method, RepresentationNode inputRep, RepresentationNode outputRep,
             JType returnType) {
         StringBuilder buf = new StringBuilder();
         buf.append(method.getName().toLowerCase());
@@ -364,6 +366,8 @@ public class ResourceClassGenerator {
         } else if (outputRep != null) {
             buf.append("As");
             buf.append(outputRep.getMediaTypeAsClassName());
+        } else if (inputRep != null) {
+            buf.append(inputRep.getMediaTypeAsClassName());
         }
         return buf.toString();
     }
@@ -405,7 +409,7 @@ public class ResourceClassGenerator {
             returnType = codeModel.VOID;
         
         // generate a name for the method 
-        String methodName = getMethodName(method, outputRep, returnType);
+        String methodName = getMethodName(method, inputRep, outputRep, returnType);
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);
@@ -500,7 +504,7 @@ public class ResourceClassGenerator {
             returnType = codeModel.VOID;
         
         // generate a name for the method 
-        String methodName = getMethodName(method, outputRep, null);
+        String methodName = getMethodName(method, inputRep, outputRep, null);
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);
