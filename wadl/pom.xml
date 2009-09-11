@@ -282,6 +282,7 @@
     <module>wadl-ant</module>
     <module>wadl-cmdline</module>
     <module>wadl-dist</module>
+    <module>wadl-xslt</module>
   </modules>
   
 </project>
