@@ -356,9 +356,13 @@ public class ResourceClassGenerator {
             JType returnType) {
         StringBuilder buf = new StringBuilder();
         buf.append(method.getName().toLowerCase());
-        if (outputRep != null && outputRep.getId() != null) {
-            buf.append(outputRep.getId().substring(0,1).toUpperCase());
-            buf.append(outputRep.getId().substring(1).toLowerCase());
+        if (inputRep != null) {
+            if (inputRep.getId() != null) {
+                buf.append(inputRep.getId().substring(0,1).toUpperCase());
+                buf.append(inputRep.getId().substring(1).toLowerCase());
+            } else {
+                buf.append(inputRep.getMediaTypeAsClassName());
+            }
         }
         if (returnType != null) {
             buf.append("As");
