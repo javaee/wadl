@@ -19,6 +19,7 @@
 
 package org.jvnet.ws.wadl2java.ast;
 
+import java.net.URI;
 import org.jvnet.ws.wadl.Application;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
@@ -27,6 +28,7 @@ import org.jvnet.ws.wadl.Resources;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
+import org.jvnet.ws.wadl2java.ElementResolver;
 
 /**
  * Represents a WADL resource
@@ -50,7 +52,7 @@ public class ResourceNode {
     public ResourceNode(Application app, Resources resources) {
         doc = app.getDoc();
         parentResource = null;
-        className = "Endpoint";
+        className = GeneratorUtil.makeClassName(resources.getBase());
         pathSegment = new PathSegment(
                 resources==null ? "" : resources.getBase());
         childResources = new ArrayList<ResourceNode>();
@@ -63,11 +65,31 @@ public class ResourceNode {
      * resource
      * @param resource the unmarshalled JAXB-generated resource object
      * @param parent the parent resource to attach the new resource to
+     * @param file the URI of the WADL file that contains the resource element
+     * @param idMap a map of URI reference to WADL definition element
      */
-    public ResourceNode(Resource resource, ResourceNode parent) {
+    public ResourceNode(Resource resource, ResourceNode parent, URI file, ElementResolver idMap) {
         doc = resource.getDoc();
         parentResource = parent;
-        pathSegment = new PathSegment(resource);
+        pathSegment = new PathSegment(resource, file, idMap);
+        className = GeneratorUtil.makeClassName(pathSegment.getTemplate());
+        childResources = new ArrayList<ResourceNode>();
+        methods = new ArrayList<MethodNode>();        
+        types = new ArrayList<ResourceTypeNode>();
+    }
+    
+    /**
+     * Create a new instance of ResourceNode and attach it as a child of an existing
+     * resource type
+     * @param resource the unmarshalled JAXB-generated resource object
+     * @param parent the parent resource to attach the new resource to
+     * @param file the URI of the WADL file that contains the resource element
+     * @param idMap a map of URI reference to WADL definition element
+     */
+    public ResourceNode(Resource resource, ResourceTypeNode parent, URI file, ElementResolver idMap) {
+        doc = resource.getDoc();
+        parentResource = null;
+        pathSegment = new PathSegment(resource, file, idMap);
         className = GeneratorUtil.makeClassName(pathSegment.getTemplate());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();        
@@ -77,10 +99,12 @@ public class ResourceNode {
     /**
      * Create a new resource and add it as a child
      * @param r the unmarshalled JAXB resource element
+     * @param file the URI of the WADL file that contains the resource element
+     * @param idMap a map of URI reference to WADL definition element
      * @return the new resource element
      */
-    public ResourceNode addChild(Resource r) {
-        ResourceNode n = new ResourceNode(r, this);
+    public ResourceNode addChild(Resource r, URI file, ElementResolver idMap) {
+        ResourceNode n = new ResourceNode(r, this, file, idMap);
         childResources.add(n);
         return n;
     }
@@ -127,6 +151,7 @@ public class ResourceNode {
     public void addResourceType(ResourceTypeNode n) {
         types.add(n);
         methods.addAll(n.getMethods());
+        childResources.addAll(n.getResources());
         pathSegment.getQueryParameters().addAll(n.getQueryParams());
         pathSegment.getMatrixParameters().addAll(n.getMatrixParams());
     }

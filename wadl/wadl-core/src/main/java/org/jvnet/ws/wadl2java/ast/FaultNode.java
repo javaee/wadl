@@ -19,7 +19,7 @@
 
 package org.jvnet.ws.wadl2java.ast;
 
-import org.jvnet.ws.wadl.RepresentationType;
+import org.jvnet.ws.wadl.Representation;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
@@ -32,14 +32,14 @@ import javax.xml.namespace.QName;
  */
 public class FaultNode {
     
-    private RepresentationType fault;
+    private Representation fault;
     String className;
     
     /**
      * Creates a new instance of FaultNode
      * @param f the unmarshalled JAXB-generated fault object
      */
-    public FaultNode(RepresentationType f) {
+    public FaultNode(Representation f) {
         fault = f;
         if (f.getId()!=null)
             className = GeneratorUtil.makeClassName(f.getId());

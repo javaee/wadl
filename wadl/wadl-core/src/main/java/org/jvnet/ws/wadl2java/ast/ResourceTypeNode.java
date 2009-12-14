@@ -20,12 +20,15 @@
 package org.jvnet.ws.wadl2java.ast;
 
 import com.sun.codemodel.JDefinedClass;
+import java.net.URI;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ResourceType;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
+import org.jvnet.ws.wadl.Resource;
+import org.jvnet.ws.wadl2java.ElementResolver;
 
 /**
  * Represents a WADL resource_type
@@ -35,6 +38,7 @@ public class ResourceTypeNode {
     
     private String interfaceName;
     private List<MethodNode> methods;
+    private List<ResourceNode> resources;
     private PathSegment pathSegment;
     private List<Doc> doc;
     private JDefinedClass generatedInterface;
@@ -42,15 +46,30 @@ public class ResourceTypeNode {
     /**
      * Create a new instance of ResourceTypeNode
      * @param resourceType the unmarshalled JAXB-generated object
+     * @param file the URI of the WADL file that contains the resource type element
+     * @param idMap a map of URI reference to WADL definition element
      */
-    public ResourceTypeNode(ResourceType resourceType) {
+    public ResourceTypeNode(ResourceType resourceType, URI file, ElementResolver idMap) {
         doc = resourceType.getDoc();
-        pathSegment = new PathSegment(resourceType);
+        pathSegment = new PathSegment(resourceType, file, idMap);
         interfaceName = GeneratorUtil.makeClassName(resourceType.getId());
         methods = new ArrayList<MethodNode>();
+        resources = new ArrayList<ResourceNode>();
         generatedInterface = null;
     }
     
+    /**
+     * Create a new resource and add it as a child
+     * @param r the unmarshalled JAXB resource element
+     * @param file the URI of the WADL file that contains the resource type element
+     * @param idMap a map of URI reference to WADL definition element
+     * @return the new resource element
+     */
+    public ResourceNode addChild(Resource r, URI file, ElementResolver idMap) {
+        ResourceNode n = new ResourceNode(r, this, file, idMap);
+        resources.add(n);
+        return n;
+    }
     /**
      * Convenience function for generating a suitable Java class name for this WADL
      * resource
@@ -61,11 +80,19 @@ public class ResourceTypeNode {
     }
     
     /**
-     * Get the methods for this resource
+     * Get the methods for this resource type
      * @return a list of methods
      */
     public List<MethodNode> getMethods() {
         return methods;
+    }
+    
+    /**
+     * Get the resources for this resource type
+     * @return a list of resources
+     */
+    public List<ResourceNode> getResources() {
+        return resources;
     }
     
     public List<Param> getQueryParams() {

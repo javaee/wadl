@@ -42,7 +42,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.JAXBElement;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
@@ -60,7 +59,7 @@ public class Wadl2Java {
     private JPackage jPkg;
     private S2JJAXBModel s2jModel;
     private JCodeModel codeModel;
-    private Map<String, Object> idMap;
+    private ElementResolver idMap;
     private Map<String, ResourceTypeNode> ifaceMap;
     private List<String> processedDocs;
     private JavaDocUtil javaDoc;
@@ -74,6 +73,7 @@ public class Wadl2Java {
      * Creates a new instance of a Wadl2Java processor.
      * @param outputDir the directory in which to generate code.
      * @param pkg the Java package in which to generate code.
+     * @param autoPackage whether to use JAXB auto package name generation
      */
     public Wadl2Java(File outputDir, String pkg, boolean autoPackage) {
         this.outputDir = outputDir;
@@ -88,6 +88,8 @@ public class Wadl2Java {
      * Creates a new instance of a Wadl2Java processor.
      * @param outputDir the directory in which to generate code.
      * @param pkg the Java package in which to generate code.
+     * @param autoPackage whether to use JAXB auto package name generation
+     * @param customizations a list of JAXB customization files
      */
     public Wadl2Java(File outputDir, String pkg, boolean autoPackage, List<File> customizations) {
         this.outputDir = outputDir;
@@ -121,10 +123,10 @@ public class Wadl2Java {
         if (!autoPackage)
             s2j.setDefaultPackageName(pkg);
         s2j.setErrorListener(errorListener);
-        idMap = new HashMap<String, Object>();
+        idMap = new ElementResolver();
         ifaceMap = new HashMap<String, ResourceTypeNode>();
         Application a = processDescription(rootDesc);
-        ResourceNode r = buildAst(a, rootDesc);
+        List<ResourceNode> rs = buildAst(a, rootDesc);
         
         // generate code
         s2jModel = s2j.bind();
@@ -143,7 +145,8 @@ public class Wadl2Java {
             generatedPackages = buf.toString();
             jPkg = codeModel._package(pkg);
             generateResourceTypeInterfaces();
-            generateEndpointClass(r);
+            for (ResourceNode r: rs)
+                generateEndpointClass(r);
             codeModel.build(outputDir);
         }
     }
@@ -204,7 +207,7 @@ public class Wadl2Java {
     }
 
     /**
-     * Build a map of all method, representation, fault and resource
+     * Build a map of all method, param, representation, fault and resource_type
      * elements that have an ID. These are used to dereference href values
      * when building the ast.
      * @param desc the URI of the WADL file being processed
@@ -221,16 +224,17 @@ public class Wadl2Java {
                 extractMethodIds((Method)child, desc);
             else if (child instanceof ResourceType)
                 extractResourceTypeIds((ResourceType)child, desc);
-            else {
-                JAXBElement<RepresentationType> repOrFault = (JAXBElement<RepresentationType>)child;
-                extractRepresentationId(repOrFault.getValue(), desc);
-            }
+            else if (child instanceof Representation)
+                extractRepresentationId((Representation)child, desc);
+            else
+                extractParamId((Param)child, desc);
         }
         
         // process resource hierarchy
         if (a.getResources() != null)
-            for (Resource r: a.getResources().getResource())
-                extractResourceIds(r, desc);
+            for (Resources rs: a.getResources())
+                for (Resource r: rs.getResource())
+                    extractResourceIds(r, desc);
     }
     
     /**
@@ -248,13 +252,8 @@ public class Wadl2Java {
      */
     protected String processIDHref(URI desc, String id, String href, Object o)
             throws JAXBException, IOException {
-        String uniqueId = null;
-        if (id != null && id.length()>0) {
-            // if the element has an ID then add it to the id map
-            uniqueId = desc.toString()+"#"+id;
-            idMap.put(uniqueId, o);
-        }
-        else if (href != null && href.startsWith("#") == false) {
+        String uniqueId = idMap.addReference(desc, id, o);
+        if (href != null && href.startsWith("#") == false) {
             // if the href references another document then unmarshall it
             // and recursively scan it for id and idrefs
             processDescription(getReferencedFile(desc, href));
@@ -271,8 +270,23 @@ public class Wadl2Java {
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
      */
-    protected void extractRepresentationId(RepresentationType r, URI file) throws JAXBException, IOException {
+    protected void extractRepresentationId(Representation r, URI file) throws JAXBException, IOException {
         processIDHref(file, r.getId(), r.getHref(), r);
+        for (Param p: r.getParam())
+            extractParamId(p, file);
+    }
+    
+    /**
+     * Extract the id from a param element and add to the
+     * representation map.
+     * @param file the URI of the current WADL file being processed
+     * @param p the param element
+     * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
+     * the code generator encounters a problem.
+     * @throws java.io.IOException if the specified WADL file cannot be read.
+     */
+    protected void extractParamId(Param p, URI file) throws JAXBException, IOException {
+        processIDHref(file, p.getId(), p.getHref(), p);
     }
     
     /**
@@ -289,12 +303,16 @@ public class Wadl2Java {
         processIDHref(file, m.getId(), m.getHref(), m);
 
         if (m.getRequest() != null) {
-            for (RepresentationType r: m.getRequest().getRepresentation())
+            for (Param p: m.getRequest().getParam())
+                extractParamId(p, file);
+            for (Representation r: m.getRequest().getRepresentation())
                 extractRepresentationId(r, file);
         }
-        if (m.getResponse() != null) {
-            for (JAXBElement<RepresentationType> child: m.getResponse().getRepresentationOrFault()) {
-                extractRepresentationId(child.getValue(), file);
+        for (Response resp: m.getResponse()) {
+            for (Param p: resp.getParam())
+                extractParamId(p, file);
+            for (Representation r: resp.getRepresentation()) {
+                extractRepresentationId(r, file);
             }
         }
     }
@@ -302,7 +320,7 @@ public class Wadl2Java {
     /**
      * Extract the id from a resource element and add to the
      * resource map then recurse into any contained resources.
-     * Also extract the ids from any contained method and its
+     * Also extract the ids from any contained param, method and its
      * representation or fault elements.
      * @param file the URI of the current WADL file being processed
      * @param r the resource element
@@ -315,6 +333,8 @@ public class Wadl2Java {
         for (String type: r.getType()) {
             processIDHref(file, null, type, r);
         }
+        for (Param p: r.getParam())
+            extractParamId(p, file);
         for (Object child: r.getMethodOrResource()) {
             if (child instanceof Method)
                 extractMethodIds((Method)child, file);
@@ -326,7 +346,7 @@ public class Wadl2Java {
     /**
      * Extract the id from a resource_type element and add to the
      * resource map.
-     * Also extract the ids from any contained method and its
+     * Also extract the ids from any contained method and its param,
      * representation or fault elements.
      * @param file the URI of the current WADL file being processed
      * @param r the resource_type element
@@ -338,8 +358,13 @@ public class Wadl2Java {
         String id = processIDHref(file, r.getId(), null, r);
         if (id != null)
             ifaceMap.put(id, null);
-        for (Method child: r.getMethod()) {
-            extractMethodIds((Method)child, file);
+        for (Param p: r.getParam())
+            extractParamId(p, file);
+        for (Object child: r.getMethodOrResource()) {
+            if (child instanceof Method)
+                extractMethodIds((Method)child, file);
+            else if (child instanceof Resource)
+                extractResourceIds((Resource)child, file);
         }
     }
     
@@ -389,9 +414,8 @@ public class Wadl2Java {
      * Creates an inner static class that represents a resource and its 
      * methods. Recurses the tree of child resources.
      * @param parent the outer class for the static inner class being 
-     * generated. This can either be
-     * the top level <code>Endpoint</code> class or a nested static inner class 
-     * for a parent resource.
+     * generated. This can either be a top level class or a nested static 
+     * inner class for a parent resource.
      * @param resource the WADL <code>resource</code> element being processed.
      * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
      * generation, the WADL processor attempts to create a duplicate
@@ -421,38 +445,69 @@ public class Wadl2Java {
      * @param a the application element of the root WADL file
      * @param rootFile the URI of the root WADL file. Other WADL files might be
      * included by reference.
-     * @return the resource element that corresponds to the root of the resource tree
+     * @return the resource elements that correspond to the roots of the resource trees
      */
-    protected ResourceNode buildAst(Application a, URI rootFile) {
+    protected List<ResourceNode> buildAst(Application a, URI rootFile) {
+        // process resource types in two steps:
+        // (i) process resource types in terms of methods
         for (String ifaceId: ifaceMap.keySet()) {
-            buildResourceTypes(ifaceId, a);
+            buildResourceType(ifaceId, a);
+        }
+        // (ii) process resource type child resources (which may reference
+        // resource types located in (i)
+        for (String ifaceId: ifaceMap.keySet()) {
+            buildResourceTypeTree(ifaceId, a);
         }
         
-        Resources r = a.getResources();
-        ResourceNode n = new ResourceNode(a, r);
-        if (r != null) {
+        List<Resources> rs = a.getResources();
+        List<ResourceNode> ns = new ArrayList<ResourceNode>();
+        for (Resources r: rs) {
+            ResourceNode rootResourcesNode = new ResourceNode(a, r);
             for (Resource child: r.getResource()) {
-                buildResourceTree(n, child, rootFile);
+                buildResourceTree(rootResourcesNode, child, rootFile);
             }
+            ns.add(rootResourcesNode);
         }
         
-        return n;
+        return ns;
     }
     
     /**
-     * Build an abstract tree for a resource types in a WADL file
+     * Build an abstract resource type based on the methods of a resource type 
+     * in a WADL file
      * @param ifaceId the identifier of the resource type
      * @param a the application element of the root WADL file
      */
-    protected void buildResourceTypes(String ifaceId, Application a) {
+    protected void buildResourceType(String ifaceId, Application a) {
         try {
             URI file = new URI(ifaceId.substring(0,ifaceId.indexOf('#')));
             ResourceType type = (ResourceType)idMap.get(ifaceId);
-            ResourceTypeNode node = new ResourceTypeNode(type);
-            for (Method m: type.getMethod()) {
-                addMethodToResourceType(node, m, file);
+            ResourceTypeNode node = new ResourceTypeNode(type, file, idMap);
+            for (Object child: type.getMethodOrResource()) {
+                if (child instanceof Method)
+                    addMethodToResourceType(node, (Method)child, file);
             }
             ifaceMap.put(ifaceId, node);
+        } catch (URISyntaxException ex) {
+            ex.printStackTrace();
+        }        
+    }
+    
+    /**
+     * Build an abstract resource type tree based on the child resources of a 
+     * resource type in a WADL file
+     * @param ifaceId the identifier of the resource type
+     * @param a the application element of the root WADL file
+     */
+    protected void buildResourceTypeTree(String ifaceId, Application a) {
+        try {
+            URI file = new URI(ifaceId.substring(0,ifaceId.indexOf('#')));
+            ResourceType type = (ResourceType)idMap.get(ifaceId);
+            ResourceTypeNode node = ifaceMap.get(ifaceId);
+            for (Object child: type.getMethodOrResource()) {
+                if (child instanceof Resource)
+                    addResourceToResourceType(node, (Resource)child, file);
+            }
         } catch (URISyntaxException ex) {
             ex.printStackTrace();
         }        
@@ -468,7 +523,7 @@ public class Wadl2Java {
     protected void buildResourceTree(ResourceNode parent, 
             Resource resource, URI file) {
         if (resource != null) {
-            ResourceNode n = parent.addChild(resource);
+            ResourceNode n = parent.addChild(resource, file, idMap);
             for (String type: resource.getType()) {
                 addTypeToResource(n, type, file);
             }
@@ -494,10 +549,7 @@ public class Wadl2Java {
     protected void addTypeToResource(ResourceNode resource, String href, 
             URI file) {
         // dereference resource
-        if (!href.startsWith("#")) {
-            // referecnce to element in another document
-            file = getReferencedFile(file, href);
-        }
+        file = getReferencedFile(file, href);
         ResourceTypeNode n = ifaceMap.get(file.toString()+href.substring(href.indexOf('#')));
         
         if (n != null) {
@@ -519,36 +571,83 @@ public class Wadl2Java {
         String href = method.getHref();
         if (href != null && href.length() > 0) {
             // dereference resource
-            if (!href.startsWith("#")) {
-                // referecnce to element in another document
-                file = getReferencedFile(file, href);
-            }
-            method = dereferenceLocalHref(file, href, Method.class);
+            file = getReferencedFile(file, href);
+            method = idMap.resolve(file, href, Method.class);
         }
         if (method != null) {
             MethodNode n = new MethodNode(method, resource);
             Request request = method.getRequest();
             if (request != null) {
                 for (Param p: request.getParam()) {
-                    n.getQueryParameters().add(p);
+                    href=p.getHref();
+                    if (href != null && href.length() > 0) {
+                        // dereference param
+                        file = getReferencedFile(file, href);
+                        p = idMap.resolve(file, href, Param.class);
+                    }
+                    if (p != null)
+                        n.getQueryParameters().add(p);
                 }
-                for (RepresentationType r: request.getRepresentation()) {
+                for (Representation r: request.getRepresentation()) {
                     addRepresentation(n.getSupportedInputs(), r, file);
                 }
             }
-            Response response = method.getResponse();
-            if (response != null) {
-                for (JAXBElement<RepresentationType> o: response.getRepresentationOrFault()) {
-                    if (o.getName().getLocalPart().equals("representation")) {
-                        addRepresentation(n.getSupportedOutputs(), o.getValue(), file);
-                    }
-                    else if (o.getName().getLocalPart().equals("fault")) {
-                        FaultNode fn = new FaultNode(o.getValue());
+            for (Response response: method.getResponse()) {
+                boolean isFault = isFaultResponse(response);
+                for (Representation o: response.getRepresentation()) {
+                    if (isFault) {
+                        FaultNode fn = new FaultNode(o);
                         n.getFaults().add(fn);
+                    } else {
+                        addRepresentation(n.getSupportedOutputs(), o, file);
                     }
                 }
             }
         }        
+    }
+    
+    /**
+     * Add a child resource to a resource type.
+     * Follow references to resources across WADL file boundaries
+     * @param resource the WADL resource element to process
+     * @param type the parent resource type
+     * @param file the URI of the current WADL file being processed
+     */
+    protected void addResourceToResourceType(ResourceTypeNode type, Resource resource, 
+            URI file) {
+        if (resource != null) {
+            ResourceNode n = type.addChild(resource, file, idMap);
+            for (String resourceType: resource.getType()) {
+                addTypeToResource(n, resourceType, file);
+            }
+            for (Object child: resource.getMethodOrResource()) {
+                if (child instanceof Resource) {
+                    Resource childResource = (Resource)child;
+                    buildResourceTree(n, childResource, file);
+                } else if (child instanceof Method) {
+                    Method m = (Method)child;
+                    addMethodToResource(n, m, file);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Check if the supplied Response represents an error or not. If any
+     * of the possible HTTP status values is >= 400 the Response is considered
+     * to represent a fault.
+     * @param response the response to check
+     * @return true if the response represents a fault, false otherwise.
+     */
+    boolean isFaultResponse(Response response) {
+        boolean isFault = false;
+        for (long status: response.getStatus()) {
+            if (status >= 400) {
+                isFault = true;
+                break;
+            }
+        }
+        return isFault;
     }
     
     /**
@@ -563,32 +662,35 @@ public class Wadl2Java {
         String href = method.getHref();
         if (href != null && href.length() > 0) {
             // dereference resource
-            if (!href.startsWith("#")) {
-                // referecnce to element in another document
-                file = getReferencedFile(file, href);
-            }
-            method = dereferenceLocalHref(file, href, Method.class);
+            file = getReferencedFile(file, href);
+            method = idMap.resolve(file, href, Method.class);
         }
         if (method != null) {
             MethodNode n = new MethodNode(method, resource);
             Request request = method.getRequest();
             if (request != null) {
                 for (Param p: request.getParam()) {
-                    n.getQueryParameters().add(p);
+                    href=p.getHref();
+                    if (href != null && href.length() > 0) {
+                        // dereference param
+                        file = getReferencedFile(file, href);
+                        p = idMap.resolve(file, href, Param.class);
+                    }
+                    if (p != null)
+                        n.getQueryParameters().add(p);
                 }
-                for (RepresentationType r: request.getRepresentation()) {
+                for (Representation r: request.getRepresentation()) {
                     addRepresentation(n.getSupportedInputs(), r, file);
                 }
             }
-            Response response = method.getResponse();
-            if (response != null) {
-                for (JAXBElement<RepresentationType> o: response.getRepresentationOrFault()) {
-                    if (o.getName().getLocalPart().equals("representation")) {
-                        addRepresentation(n.getSupportedOutputs(), o.getValue(), file);
-                    }
-                    else if (o.getName().getLocalPart().equals("fault")) {
-                        FaultNode fn = new FaultNode(o.getValue());
+            for (Response response: method.getResponse()) {
+                boolean isFault = isFaultResponse(response);
+                for (Representation o: response.getRepresentation()) {
+                    if (isFault) {
+                        FaultNode fn = new FaultNode(o);
                         n.getFaults().add(fn);
+                    } else {
+                        addRepresentation(n.getSupportedOutputs(), o, file);
                     }
                 }
             }
@@ -602,16 +704,13 @@ public class Wadl2Java {
      * @param representation the WADL representation element to process
      * @param file the URI of the current WADL file being processed
      */
-    protected void addRepresentation(List<RepresentationNode> list, RepresentationType representation, 
+    protected void addRepresentation(List<RepresentationNode> list, Representation representation, 
             URI file) {
         String href = representation.getHref();
         if (href != null && href.length() > 0) {
             // dereference resource
-            if (!href.startsWith("#")) {
-                // referecnce to element in another document
-                file = getReferencedFile(file, href);
-            }
-            representation = dereferenceLocalHref(file, href, RepresentationType.class);
+            file = getReferencedFile(file, href);
+            representation = idMap.resolve(file, href, Representation.class);
         }
         if (representation != null) {
             RepresentationNode n = new RepresentationNode(representation);
@@ -620,7 +719,8 @@ public class Wadl2Java {
     }
     
     /**
-     * Get the referenced file
+     * Get the referenced file, currentFile will be returned if href is a
+     * fragment identifier, otherwise href is resolved against currentFile.
      * @param currentFile the uri of the file that contains the reference, used 
      * to provide a base for relative paths
      * @param href the reference
@@ -629,35 +729,11 @@ public class Wadl2Java {
     protected static URI getReferencedFile(URI currentFile, String href) {
         if (href.startsWith("#"))
             return currentFile;
+        // href references another file
         URI ref = currentFile.resolve(href.substring(0, href.indexOf('#')));
         return ref;
     }
     
-    /**
-     * Dereference a href and return the object if it is of the expected type.
-     * @return the resolved object
-     * @param file the URI of the file in which the referenced element is located, used
-     * to absolutize references
-     * @param href the reference to resolve
-     * @param clazz the class of object expected
-     */
-    @SuppressWarnings("unchecked")
-    protected <T> T dereferenceLocalHref(URI file, String href, Class<T> clazz) {
-        Object o = null;
-        String id = file.toString()+href.substring(href.indexOf('#'));
-        o = idMap.get(id);
-        if (o == null) {
-            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
-            return null;
-        }
-        else if (!clazz.isInstance(o)) {
-            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href, file.toString()));
-            return null;
-        }
-        return (T)o;
-    }
-    
-
     /**
      * Inner class implementing the JAXB <code>ErrorListener</code> interface to
      * support error reporting from the JAXB infrastructure.

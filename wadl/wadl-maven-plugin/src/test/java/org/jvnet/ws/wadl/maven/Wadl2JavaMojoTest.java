@@ -11,7 +11,6 @@ import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
-import org.jvnet.ws.wadl.maven.Wadl2JavaMojo;
 
 
 /**
@@ -28,6 +27,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
     private MavenProject project;
 
     // JavaDoc inherited
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         project = EasyMock.createMock(MavenProject.class);
@@ -83,7 +83,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/Endpoint.java"));
+        assertThat(targetDirectory, contains("test/HttpApiSearchYahooComNewsSearchServiceV1.java"));
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));
@@ -119,7 +119,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/Endpoint.java"));
+        assertThat(targetDirectory, contains("test/HttpApiSearchYahooComNewsSearchServiceV1.java"));
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));

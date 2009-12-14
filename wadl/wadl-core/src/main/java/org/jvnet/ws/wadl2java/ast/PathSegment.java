@@ -20,6 +20,7 @@
 package org.jvnet.ws.wadl2java.ast;
 
 
+import java.net.URI;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ParamStyle;
 import org.jvnet.ws.wadl.Resource;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import org.jvnet.ws.wadl2java.ElementResolver;
 
 /**
  * Represents a segment of a URI with zero or more embedded parameters as found
@@ -92,8 +94,10 @@ public class PathSegment {
     /**
      * Creates a new instance of PathSegment from a WADL resource element
      * @param resource the WADL resource element
+     * @param file the URI of the WADL file that contains the resource element
+     * @param idMap a map of URI reference to WADL definition element
      */
-    public PathSegment(Resource resource) {
+    public PathSegment(Resource resource, URI file, ElementResolver idMap) {
         template = resource.getPath() == null ? "" : resource.getPath();
         this.templateParameters = new ArrayList<Param>();
         this.matrixParameters = new ArrayList<Param>();
@@ -103,7 +107,10 @@ public class PathSegment {
         // iterate through child param elements to extract params
         Map<String, Param> pathParameters = new HashMap<String, Param>();
         for (Param p: resource.getParam()) {
-            if (p.getStyle() == null || p.getStyle() == ParamStyle.TEMPLATE)
+            p = derefIfRequired(p, file, idMap);
+            if (p==null)
+                continue;
+            else if (p.getStyle() == null || p.getStyle() == ParamStyle.TEMPLATE)
                 pathParameters.put(p.getName(), p);
             else if (p.getStyle() == ParamStyle.MATRIX)
                 matrixParameters.add(p);
@@ -134,8 +141,10 @@ public class PathSegment {
     /**
      * Creates a new instance of PathSegment from a WADL resource type element
      * @param resource the WADL resource type element
+     * @param file the URI of the WADL file that contains the resource type element
+     * @param idMap a map of URI reference to WADL definition element
      */
-    public PathSegment(ResourceType resource) {
+    public PathSegment(ResourceType resource, URI file, ElementResolver idMap) {
         template = null;
         templateParameters = new ArrayList<Param>();
         matrixParameters = new ArrayList<Param>();
@@ -145,7 +154,10 @@ public class PathSegment {
         // iterate through child param elements to extract params
         Map<String, Param> pathParameters = new HashMap<String, Param>();
         for (Param p: resource.getParam()) {
-            if (p.getStyle() == ParamStyle.QUERY)
+            p = derefIfRequired(p, file, idMap);
+            if (p==null)
+                continue;
+            else if (p.getStyle() == ParamStyle.QUERY)
                 queryParameters.add(p);
             else if (p.getStyle() == ParamStyle.MATRIX)
                 matrixParameters.add(p);
@@ -153,6 +165,21 @@ public class PathSegment {
                 headerParameters.add(p);
         }
         
+    }
+    
+    /**
+     * Dereference a param reference element if required.
+     * @param p the param reference or definition
+     * @param file the URI of the WADL file containing the param reference or definition
+     * @param idMap a map of URI reference to WADL definition element
+     * @return the param definition element
+     */
+    protected static Param derefIfRequired(Param p, URI file, ElementResolver idMap) {
+        String href = p.getHref();
+        if (href!=null && href.length()>0)
+            return idMap.resolve(file, href, Param.class);
+        else
+            return p;
     }
     
     /**
