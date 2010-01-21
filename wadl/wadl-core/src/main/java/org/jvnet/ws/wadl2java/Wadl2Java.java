@@ -585,8 +585,12 @@ public class Wadl2Java {
                         file = getReferencedFile(file, href);
                         p = idMap.resolve(file, href, Param.class);
                     }
-                    if (p != null)
-                        n.getQueryParameters().add(p);
+                    if (p != null) {
+                        if (p.getStyle()==ParamStyle.HEADER)
+                            n.getHeaderParameters().add(p);
+                        else
+                            n.getQueryParameters().add(p);
+                    }
                 }
                 for (Representation r: request.getRepresentation()) {
                     addRepresentation(n.getSupportedInputs(), r, file);
@@ -676,8 +680,12 @@ public class Wadl2Java {
                         file = getReferencedFile(file, href);
                         p = idMap.resolve(file, href, Param.class);
                     }
-                    if (p != null)
-                        n.getQueryParameters().add(p);
+                    if (p != null) {
+                        if (p.getStyle()==ParamStyle.HEADER)
+                            n.getHeaderParameters().add(p);
+                        else
+                            n.getQueryParameters().add(p);
+                    }
                 }
                 for (Representation r: request.getRepresentation()) {
                     addRepresentation(n.getSupportedInputs(), r, file);
