@@ -50,7 +50,7 @@
       <plugin>
         <groupId>com.sun.tools.xjc.maven2</groupId>
         <artifactId>maven-jaxb-plugin</artifactId>
-        <version>1.1</version>
+        <version>1.1.1</version>
         <executions>
           <execution>
             <goals>
@@ -63,6 +63,13 @@
           <generatePackage>org.jvnet.ws.wadl</generatePackage>
           <catalog>etc/catalog.xml</catalog>
         </configuration>
+	<dependencies>
+	  <dependency>
+	    <groupId>ant</groupId>
+	    <artifactId>ant</artifactId>
+	    <version>${ant.version}</version>
+	  </dependency>
+	</dependencies>
       </plugin>
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
