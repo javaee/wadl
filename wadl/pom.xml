@@ -262,6 +262,7 @@
   </pluginRepositories>
   
   <distributionManagement>
+<!--
     <site>
       <id>wadl-site</id>
       <url>java-net:/wadl/trunk/www/maven/</url>
@@ -272,7 +273,13 @@
       <name>WADL Snapshot Repository</name>
       <url>java-net:/wadl/trunk/www/snapshots/</url>
     </snapshotRepository>
-
+-->
+    <repository>
+        <uniqueVersion>false</uniqueVersion>
+        <id>java.net-m2-repository</id>
+        <url>
+        java-net:/maven2-repository/trunk/repository/</url>
+    </repository>
   </distributionManagement>
   
   <scm>
