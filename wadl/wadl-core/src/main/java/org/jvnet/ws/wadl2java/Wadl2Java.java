@@ -20,6 +20,7 @@
 package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
+import javax.xml.transform.TransformerException;
 import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl2java.ast.FaultNode;
 import org.jvnet.ws.wadl2java.ast.MethodNode;
@@ -33,15 +34,21 @@ import java.util.Iterator;
 import java.util.Map;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import com.sun.tools.xjc.api.ErrorListener;
 import com.sun.tools.xjc.api.SchemaCompiler;
 import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.bind.util.JAXBResult;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
@@ -63,7 +70,7 @@ public class Wadl2Java {
     private Map<String, ResourceTypeNode> ifaceMap;
     private List<String> processedDocs;
     private JavaDocUtil javaDoc;
-    private Unmarshaller u;
+    private JAXBContext jbc;
     private SchemaCompiler s2j;
     private ErrorListener errorListener;
     private String generatedPackages = "";
@@ -91,13 +98,10 @@ public class Wadl2Java {
      * @param autoPackage whether to use JAXB auto package name generation
      * @param customizations a list of JAXB customization files
      */
-    public Wadl2Java(File outputDir, String pkg, boolean autoPackage, List<File> customizations) {
-        this.outputDir = outputDir;
-        this.pkg = pkg;
-        this.javaDoc = new JavaDocUtil();
-        this.processedDocs = new ArrayList<String>();
+    public Wadl2Java(File outputDir, String pkg, boolean autoPackage, 
+            List<File> customizations) {
+        this(outputDir, pkg, autoPackage);
         this.customizations = customizations;
-        this.autoPackage = autoPackage;
     }
     
     /**
@@ -114,10 +118,13 @@ public class Wadl2Java {
      */
     public void process(URI rootDesc) throws JAXBException, IOException, 
             JClassAlreadyExistsException {
-        // read in root WADL file
-        JAXBContext jbc = JAXBContext.newInstance( "org.jvnet.ws.wadl", 
+        // initialize JAXB runtime
+        if (jbc == null) {
+            this.jbc = JAXBContext.newInstance( "org.jvnet.ws.wadl",
                 this.getClass().getClassLoader() );
-        u = jbc.createUnmarshaller();
+        }
+
+        // read in root WADL file
         s2j = new SchemaCompilerImpl();
         errorListener = new SchemaCompilerErrorListener();
         if (!autoPackage)
@@ -155,7 +162,10 @@ public class Wadl2Java {
      * Unmarshall a WADL file, process any schemas referenced in the WADL file, add 
      * any items with an ID to a global ID map, and follow any references to additional
      * WADL files.
-     * @param desc the URI of the description file
+     * @param desc the URI of the description file, the description is fetched by
+     * converting the URI into a URL and then using a HTTP GET. Use
+     * {@link #processDescription(java.net.URI, java.io.InputStream)} to
+     * supply the InputStream directly
      * @return the unmarshalled WADL application element
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
@@ -163,14 +173,44 @@ public class Wadl2Java {
      */
     public Application processDescription(URI desc) 
             throws JAXBException, IOException {
+        InputStream is = desc.toURL().openStream();
+        return processDescription(desc, is);
+    }
+
+    /**
+     * Unmarshall a WADL file, process any schemas referenced in the WADL file, add
+     * any items with an ID to a global ID map, and follow any references to additional
+     * WADL files.
+     * @param desc the URI of the description file
+     * @param is an input stream from which the description can be read
+     * @return the unmarshalled WADL application element
+     * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if
+     * the code generator encounters a problem.
+     * @throws java.io.IOException if the specified WADL file cannot be read.
+     */
+    public Application processDescription(URI desc, InputStream is)
+            throws JAXBException, IOException {
+
         // check for files that have already been processed to prevent loops
         if (processedDocs.contains(desc.toString()))
             return null;
         processedDocs.add(desc.toString());
         
-        // read in WADL file
+        // read in WADL file, process with stylesheet to upgrade older versions
+        // and then unmarshall the result using JAXB
         System.out.println(Wadl2JavaMessages.PROCESSING(desc.toString()));
-        Application a = (Application)u.unmarshal(desc.toURL());
+
+        JAXBResult result = new JAXBResult(jbc);
+        try {
+            TransformerFactory tf = TransformerFactory.newInstance();
+            StreamSource stylesheet = new StreamSource(
+                this.getClass().getResourceAsStream("upgrade.xsl"));
+            Transformer t = tf.newTransformer(stylesheet);
+            t.transform(new StreamSource(is), result);
+        } catch (Exception ex) {
+            throw new IOException(ex.getMessage(),ex);
+        }
+        Application a = (Application)result.getResult();
         
         // process embedded schemas
         Grammars g = a.getGrammars();
