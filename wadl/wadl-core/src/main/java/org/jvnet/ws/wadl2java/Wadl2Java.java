@@ -89,6 +89,8 @@ public class Wadl2Java {
         this.processedDocs = new ArrayList<String>();
         this.customizations = new ArrayList<File>();
         this.autoPackage = autoPackage;
+        this.idMap = new ElementResolver();
+        this.ifaceMap = new HashMap<String, ResourceTypeNode>();
     }
     
     /**
@@ -102,6 +104,15 @@ public class Wadl2Java {
             List<File> customizations) {
         this(outputDir, pkg, autoPackage);
         this.customizations = customizations;
+    }
+
+    private JAXBContext getJAXBContext() throws JAXBException {
+        // initialize JAXB runtime
+        if (jbc == null) {
+            this.jbc = JAXBContext.newInstance( "org.jvnet.ws.wadl",
+                this.getClass().getClassLoader() );
+        }
+        return jbc;
     }
     
     /**
@@ -118,11 +129,6 @@ public class Wadl2Java {
      */
     public void process(URI rootDesc) throws JAXBException, IOException, 
             JClassAlreadyExistsException {
-        // initialize JAXB runtime
-        if (jbc == null) {
-            this.jbc = JAXBContext.newInstance( "org.jvnet.ws.wadl",
-                this.getClass().getClassLoader() );
-        }
 
         // read in root WADL file
         s2j = new SchemaCompilerImpl();
@@ -130,8 +136,6 @@ public class Wadl2Java {
         if (!autoPackage)
             s2j.setDefaultPackageName(pkg);
         s2j.setErrorListener(errorListener);
-        idMap = new ElementResolver();
-        ifaceMap = new HashMap<String, ResourceTypeNode>();
         Application a = processDescription(rootDesc);
         List<ResourceNode> rs = buildAst(a, rootDesc);
         
@@ -200,7 +204,7 @@ public class Wadl2Java {
         // and then unmarshall the result using JAXB
         System.out.println(Wadl2JavaMessages.PROCESSING(desc.toString()));
 
-        JAXBResult result = new JAXBResult(jbc);
+        JAXBResult result = new JAXBResult(getJAXBContext());
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             StreamSource stylesheet = new StreamSource(
@@ -487,7 +491,7 @@ public class Wadl2Java {
      * included by reference.
      * @return the resource elements that correspond to the roots of the resource trees
      */
-    protected List<ResourceNode> buildAst(Application a, URI rootFile) {
+    public List<ResourceNode> buildAst(Application a, URI rootFile) {
         // process resource types in two steps:
         // (i) process resource types in terms of methods
         for (String ifaceId: ifaceMap.keySet()) {
