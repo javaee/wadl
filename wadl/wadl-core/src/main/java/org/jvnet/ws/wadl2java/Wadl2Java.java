@@ -20,7 +20,6 @@
 package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
-import javax.xml.transform.TransformerException;
 import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl2java.ast.FaultNode;
 import org.jvnet.ws.wadl2java.ast.MethodNode;
@@ -46,9 +45,7 @@ import java.util.List;
 import javax.xml.bind.util.JAXBResult;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
