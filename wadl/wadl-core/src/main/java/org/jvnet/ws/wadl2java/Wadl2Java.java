@@ -208,7 +208,7 @@ public class Wadl2Java {
             Transformer t = tf.newTransformer(stylesheet);
             t.transform(new StreamSource(is), result);
         } catch (Exception ex) {
-            throw new IOException(ex.getMessage(),ex);
+            throw new IOException(ex);
         }
         Application a = (Application)result.getResult();
         
