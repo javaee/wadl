@@ -13,15 +13,11 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
     xmlns:wadl200610="http://research.sun.com/wadl/2006/10">
 
-    <xsl:template match="wadl200610:response">
-        <xsl:apply-templates select="node()"/>
-    </xsl:template>
-
-    <xsl:template match="wadl200610:representation[@status]">
+    <xsl:template match="wadl200610:response/wadl200610:representation[@status]">
         <xsl:call-template name="response-with-status"/>
     </xsl:template>
 
-    <xsl:template match="wadl200610:representation">
+    <xsl:template match="wadl200610:response/wadl200610:representation">
         <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="response">
             <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="representation">
                 <xsl:copy-of select="namespace::*"/>
@@ -30,7 +26,7 @@
         </xsl:element>
     </xsl:template>
 
-    <xsl:template match="wadl200610:fault">
+    <xsl:template match="wadl200610:response/wadl200610:fault">
         <xsl:call-template name="response-with-status"/>
     </xsl:template>
 
@@ -64,4 +60,3 @@
         </xsl:copy>
     </xsl:template>
 </xsl:stylesheet>
-
