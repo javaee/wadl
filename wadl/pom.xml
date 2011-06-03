@@ -283,9 +283,9 @@
   </distributionManagement>
   
   <scm>
-    <connection>scm:svn:http://wadl.dev.java.net/svn/wadl/trunk/wadl</connection>
-    <developerConnection>scm:svn:https://wadl.dev.java.net/svn/wadl/trunk/wadl</developerConnection>
-    <url>https://wadl.dev.java.net/source/browse/wadl/trunk/wadl</url>
+    <connection>scm:svn:https://svn.java.net/svn/wadl~svn/trunk/wadl</connection>
+    <developerConnection>scm:svn:https://svn.java.net/svn/wadl~svn/trunk/wadl</developerConnection>
+    <url>http://java.net/projects/wadl/sources/svn/show/trunk/wadl</url>
   </scm>    
   
   <modules>
