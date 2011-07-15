@@ -20,6 +20,7 @@
 package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
+import com.sun.codemodel.writer.FileCodeWriter;
 import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl2java.ast.FaultNode;
 import org.jvnet.ws.wadl2java.ast.MethodNode;
@@ -57,8 +58,8 @@ import org.xml.sax.SAXParseException;
  */
 public class Wadl2Java {
     
-    private File outputDir;
-    private List<File> customizations;
+    private CodeWriter codeWriter;
+    private List<URI> customizations;
     private String pkg;
     private JPackage jPkg;
     private S2JJAXBModel s2jModel;
@@ -75,21 +76,22 @@ public class Wadl2Java {
 
     /**
      * Creates a new instance of a Wadl2Java processor.
-     * @param outputDir the directory in which to generate code.
+     * @param writer the writer to use to write out the java files
      * @param pkg the Java package in which to generate code.
      * @param autoPackage whether to use JAXB auto package name generation
      */
-    public Wadl2Java(File outputDir, String pkg, boolean autoPackage) {
-        this.outputDir = outputDir;
+    public Wadl2Java(CodeWriter writer, String pkg, boolean autoPackage) {
+        this.codeWriter = writer;
         this.pkg = pkg;
         this.javaDoc = new JavaDocUtil();
         this.processedDocs = new ArrayList<String>();
-        this.customizations = new ArrayList<File>();
+        this.customizations = new ArrayList<URI>();
         this.autoPackage = autoPackage;
         this.idMap = new ElementResolver();
         this.ifaceMap = new HashMap<String, ResourceTypeNode>();
     }
     
+
     /**
      * Creates a new instance of a Wadl2Java processor.
      * @param outputDir the directory in which to generate code.
@@ -98,11 +100,39 @@ public class Wadl2Java {
      * @param customizations a list of JAXB customization files
      */
     public Wadl2Java(File outputDir, String pkg, boolean autoPackage, 
-            List<File> customizations) {
-        this(outputDir, pkg, autoPackage);
+            List<File> customizations) throws IOException {
+        this(new FileCodeWriter(outputDir), pkg, autoPackage, 
+                convertToURIList(customizations));
+    }
+    
+    /**
+     * Creates a new instance of a Wadl2Java processor.
+     * @param writer the writer to use to write out the java files
+     * @param pkg the Java package in which to generate code.
+     * @param autoPackage whether to use JAXB auto package name generation
+     * @param customizations a list of JAXB customization files
+     */
+    public Wadl2Java(CodeWriter writer, String pkg, boolean autoPackage, 
+            List<URI> customizations) {
+        this(writer, pkg, autoPackage);
         this.customizations = customizations;
     }
 
+
+    /**
+     * @param files A list of files
+     * @return A list of URI for those files
+     */
+    private static List<URI> convertToURIList(List<File> files) {
+        List<URI> copy = new ArrayList<URI>();
+        for (File file : files) {
+            copy.add(file.toURI());
+        }
+        return copy;
+    }
+    
+    
+    
     private JAXBContext getJAXBContext() throws JAXBException {
         // initialize JAXB runtime
         if (jbc == null) {
@@ -129,6 +159,7 @@ public class Wadl2Java {
 
         // read in root WADL file
         s2j = new SchemaCompilerImpl();
+        
         errorListener = new SchemaCompilerErrorListener();
         if (!autoPackage)
             s2j.setDefaultPackageName(pkg);
@@ -155,7 +186,7 @@ public class Wadl2Java {
             generateResourceTypeInterfaces();
             for (ResourceNode r: rs)
                 generateEndpointClass(r);
-            codeModel.build(outputDir);
+            codeModel.build(codeWriter);
         }
     }
     
@@ -236,8 +267,8 @@ public class Wadl2Java {
                 }
             }
         }
-        for (File customization: customizations) {
-            URI incl = desc.resolve(customization.toURI());
+        for (URI customization: customizations) {
+            URI incl = desc.resolve(customization);
             System.out.println(Wadl2JavaMessages.PROCESSING(incl.toString()));
             InputSource input = new InputSource(incl.toURL().openStream());
             input.setSystemId(incl.toString());
