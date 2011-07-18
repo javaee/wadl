@@ -43,6 +43,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Generated;
 import javax.xml.bind.util.JAXBResult;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -185,7 +186,7 @@ public class Wadl2Java {
             jPkg = codeModel._package(pkg);
             generateResourceTypeInterfaces();
             for (ResourceNode r: rs)
-                generateEndpointClass(r);
+                generateEndpointClass(rootDesc, r);
             codeModel.build(codeWriter);
         }
     }
@@ -467,16 +468,31 @@ public class Wadl2Java {
     /**
      * Create a class that acts as a container for a hierarchy
      * of static inner classes, one for each resource described by the WADL file.
+     * @param the root URI to the WADL so we can generate the required annotations
      * @param root the resource element that corresponds to the root of the resource tree
      * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
      * generation, the WADL processor attempts to create a duplicate
      * class. This indicates a structural problem with the WADL file, e.g. duplicate
      * peer resource entries.
      */
-    protected void generateEndpointClass(ResourceNode root) 
+    protected void generateEndpointClass(
+            URI rootResource, ResourceNode root) 
             throws JClassAlreadyExistsException {
         JDefinedClass impl = jPkg._class(JMod.PUBLIC, root.getClassName());
         javaDoc.generateClassDoc(root, impl);
+        
+        
+        // Put a Generated annotation on the class for later regeneration
+        // by tooling
+        if (rootResource!=null) {
+            JAnnotationUse annUse = impl.annotate(Generated.class); 
+            annUse.param("value",
+                    rootResource.toString()); 
+            annUse.param("comments",
+                    "wadl2java");
+        }
+        
+        
         for (ResourceNode r: root.getChildResources()) {
             generateSubClass(impl, r);
         }

@@ -79,9 +79,9 @@ public class Wadl2JavaMojo extends AbstractMojo {
      * A boolean, indicating if the mojo should fail entirely if it fails to
      * generate code from a single WADL file.
      * 
-     * @parameter default="false"
+     * @parameter default="true"
      */
-    private boolean failOnError;
+    private boolean failOnError = true;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         doExecute(failOnError ? new FailOnErrorPolicy()

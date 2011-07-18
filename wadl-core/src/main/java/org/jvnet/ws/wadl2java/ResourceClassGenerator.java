@@ -19,6 +19,7 @@
 
 package org.jvnet.ws.wadl2java;
 
+import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
@@ -33,12 +34,14 @@ import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
+import com.sun.codemodel.JPrimitiveType;
 import com.sun.codemodel.JType;
+import com.sun.codemodel.JTypeVar;
 import com.sun.codemodel.JVar;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
 import org.jvnet.ws.wadl.*;
-import org.jvnet.ws.wadl.util.DSDispatcher;
-import org.jvnet.ws.wadl.util.JAXBDispatcher;
-import org.jvnet.ws.wadl.util.UriBuilder;
 import org.jvnet.ws.wadl2java.ast.FaultNode;
 import org.jvnet.ws.wadl2java.ast.MethodNode;
 import org.jvnet.ws.wadl2java.ast.PathSegment;
@@ -47,30 +50,36 @@ import org.jvnet.ws.wadl2java.ast.ResourceNode;
 import org.jvnet.ws.wadl2java.ast.ResourceTypeNode;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.S2JJAXBModel;
-import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
+import javax.annotation.Generated;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
+
+import javax.ws.rs.core.UriBuilder;
 
 /**
  * Generator class for nested static classes used to represent web resources
  * @author mh124079
  */
 public class ResourceClassGenerator {
+
+    
+    private static enum MethodType
+    {
+        JAXB, CLASS, GENERIC_TYPE
+    };
+    
+    
     
     private ResourceNode resource;
     private JPackage pkg;
     private S2JJAXBModel s2jModel;
     private JCodeModel codeModel;
-    private JFieldVar $jaxbDispatcher;
-    private JFieldVar $dsDispatcher;
+    private JFieldVar $clientReference;
     private JFieldVar $uriBuilder;
-    private JFieldVar $jaxbContext;
     private JFieldVar $templateMatrixParamValMap;
     private JDefinedClass $class = null;
     private JavaDocUtil javaDoc;
@@ -134,17 +143,28 @@ public class ResourceClassGenerator {
             $impl._implements(t.getGeneratedInterface());
         }
         javaDoc.generateClassDoc(resource, $impl);
-        $jaxbDispatcher = $impl.field(JMod.PRIVATE, JAXBDispatcher.class, "_jaxbDispatcher");
-        $dsDispatcher = $impl.field(JMod.PRIVATE, DSDispatcher.class, "_dsDispatcher");
-        $uriBuilder = $impl.field(JMod.PRIVATE, UriBuilder.class, "_uriBuilder");
-        $jaxbContext = $impl.field(JMod.PRIVATE, JAXBContext.class, "_jc");
+        
+        
+        // We are going to use Client for this
+        
+        $clientReference = $impl.field(JMod.PRIVATE, Client.class, "_client"); 
+        JClass uriBuilderClass = codeModel.ref(UriBuilder.class);
+        $uriBuilder = $impl.field(JMod.PRIVATE, uriBuilderClass, "_uriBuilder");        
+        
+        
         JClass mapOfStringObject = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
         $templateMatrixParamValMap = $impl.field(JMod.PRIVATE, mapOfStringObject, "_templateAndMatrixParameterValues");
                 
-        // generate constructor with parameters for each WADL defined path parameter
+        // generate constructor with parameters 
+        // for the client and each WADL defined path parameter
         JMethod $ctor = $impl.constructor(JMod.PUBLIC);
         JDocComment jdoc = $ctor.javadoc();
         jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE());
+        
+        // Client reference
+        JVar $clientParam = $ctor.param($clientReference.type(), "client");
+        
+        // Path segments
         for (PathSegment segment: resource.getPathSegments()) {
             for (Param p: segment.getTemplateParameters()) {
                 $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc),
@@ -161,29 +181,54 @@ public class ResourceClassGenerator {
                 generateBeanProperty($impl, p, false);
             }
         }
-        $ctor._throws(JAXBException.class);
+//        $ctor._throws(JAXBException.class);
         JBlock $ctorBody = $ctor.body();
-        if (generatedPackages.length() > 0) {
-            // codegen: jc = JAXBContext.newInstance("com.example.test");
-            $ctorBody.assign($jaxbContext, codeModel.ref(JAXBContext.class).staticInvoke("newInstance").arg(JExpr.lit(generatedPackages)));
-            // codegen: jaxbDispatcher = new JAXBDispatcher(jc);
-            $ctorBody.assign($jaxbDispatcher, JExpr._new(codeModel.ref(JAXBDispatcher.class)).arg($jaxbContext));
-        }
-        // codegen: dsDispatcher = new DSDispatcher();
-        $ctorBody.assign($dsDispatcher, JExpr._new(codeModel.ref(DSDispatcher.class)));
-        // codegen: uriBuilder = new UriBuilder();
-        $ctorBody.assign($uriBuilder, JExpr._new(codeModel.ref(UriBuilder.class)));
 
-        // codegen: java.util.List<String> matrixParamSet;
-        JClass listOfString = codeModel.ref(List.class).narrow(String.class);
-        JVar $matrixParamSet = $ctorBody.decl(listOfString, "_matrixParamSet");
-        for (PathSegment segment: resource.getPathSegments()) {
-            // codegen: matrixParamSet = uriBuilder.addPathSegment(...)
-            $ctorBody.assign($matrixParamSet, $uriBuilder.invoke("addPathSegment").arg(JExpr.lit(segment.getTemplate())));
-            for (Param p: segment.getMatrixParameters()) {
-                // codegen: matrixParamSet.add(...)
-                $ctorBody.invoke($matrixParamSet, "add").arg(JExpr.lit(p.getName()));
+//        if (generatedPackages.length() > 0) {
+//            // codegen: jc = JAXBContext.newInstance("com.example.test");
+//            $ctorBody.assign($jaxbContext, codeModel.ref(JAXBContext.class).staticInvoke("newInstance").arg(JExpr.lit(generatedPackages)));
+//            // codegen: jaxbDispatcher = new JAXBDispatcher(jc);
+//            $ctorBody.assign($jaxbDispatcher, JExpr._new(codeModel.ref(JAXBDispatcher.class)).arg($jaxbContext));
+//        }
+//        // codegen: dsDispatcher = new DSDispatcher();
+//        $ctorBody.assign($dsDispatcher, JExpr._new(codeModel.ref(DSDispatcher.class)));
+//        // codegen: uriBuilder = new UriBuilder();
+//        $ctorBody.assign($uriBuilder, JExpr._new(codeModel.ref(UriBuilder.class)));
+        
+        // code gen _client = client
+        //
+        $ctorBody.assign($clientReference, $clientParam); 
+
+        // This value was never set in the original code, so removing
+        // just in case
+//        // codegen: java.util.List<String> matrixParamSet;
+//        JClass listOfString = codeModel.ref(List.class).narrow(String.class);
+//        JVar $matrixParamSet = $ctorBody.decl(listOfString, "_matrixParamSet");
+        
+        
+        final List<PathSegment> pathSegments = resource.getPathSegments();
+        for (int i=0; i < pathSegments.size(); i++) {
+            PathSegment segment = pathSegments.get(i); 
+            
+            // If this is the first path segment then we need to create
+            // the resource from the class
+            if (i==0) {
+                // codegen : _webResource = client.resource(...)
+                $ctorBody.assign($uriBuilder,
+                     uriBuilderClass.staticInvoke("fromPath").arg(segment.getTemplate()));
             }
+            else {
+                // codegen : _webResource = _webResource.path(...)
+                $ctorBody.assign($uriBuilder, 
+                        $uriBuilder.invoke("path").arg(JExpr.lit(segment.getTemplate())));
+            }
+            
+            // codegen: matrixParamSet = uriBuilder.addPathSegment(...)
+
+//            for (Param p: segment.getMatrixParameters()) {
+//                // codegen: matrixParamSet.add(...)
+//                $ctorBody.invoke($matrixParamSet, "add").arg(JExpr.lit(p.getName()));
+//            }
         }
         
         // codegen: templateAndMatrixParameterValues = new HashMap<String, Object>();
@@ -340,8 +385,9 @@ public class ResourceClassGenerator {
     protected void generateMethodVariants(Map<JType, JDefinedClass> exceptionMap,
             MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
             RepresentationNode outputRep, boolean isAbstract) {
-        generateDSMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, isAbstract);
-        generateJAXBMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, isAbstract);
+        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.JAXB, isAbstract);
+        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.GENERIC_TYPE, isAbstract);
+        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.CLASS, isAbstract);
     }
     
     /**
@@ -390,27 +436,48 @@ public class ResourceClassGenerator {
      * @param inputRep the WADL <code>representation</code> element for the request format.
      * @param outputRep the WADL <code>representation</code> element for the response format.
      */
-    protected void generateJAXBMethodDecl(Map<JType, JDefinedClass> exceptionMap,
+    protected void generateMethodDecl(Map<JType, JDefinedClass> exceptionMap,
             MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
-            RepresentationNode outputRep, boolean isAbstract) {
+            RepresentationNode outputRep, 
+            MethodType methodType,
+            boolean isAbstract) {
         // check if JAXB can be used with available information
         if ((outputRep != null && outputRep.getElement() == null) || (inputRep != null && inputRep.getElement() == null))
             return;
 
         // work out the method return type and the type of any input representation
         JType inputType=null, returnType=null;
-        if (inputRep != null) {
-            inputType = getTypeFromElement(inputRep.getElement());
-            if (inputType == null)
-                return;
+        boolean genericReturnType = false;
+        if (methodType == MethodType.JAXB) {
+            if (inputRep != null) {
+                inputType = getTypeFromElement(inputRep.getElement());
+                if (inputType == null)
+                    return;
+            }
+            if (outputRep != null) {
+                returnType = getTypeFromElement(outputRep.getElement());
+                if (returnType == null)
+                    return;
+            }
+            else
+                returnType = codeModel.VOID;
         }
-        if (outputRep != null) {
-            returnType = getTypeFromElement(outputRep.getElement());
-            if (returnType == null)
-                return;
+        else {
+            
+            // We need to map to a generic return type, but we have to
+            // create the method first
+            //
+            
+            if (inputRep != null) {
+                inputType = codeModel.ref(Object.class);
+            }
+            if (outputRep != null) {
+                genericReturnType = true;
+                returnType =codeModel.ref(Object.class);
+            }
+            else
+                returnType = codeModel.VOID;
         }
-        else
-            returnType = codeModel.VOID;
         
         // generate a name for the method 
         String methodName = getMethodName(method, inputRep, outputRep, returnType);
@@ -420,11 +487,9 @@ public class ResourceClassGenerator {
         javaDoc.generateMethodDoc(method, $genMethod);
         if (outputRep != null)
             javaDoc.generateReturnDoc(outputRep, $genMethod);
+
         
-        // add throws for any required exceptions
-        $genMethod._throws(JAXBException.class);
-        $genMethod._throws(MalformedURLException.class);
-        $genMethod._throws(IOException.class);
+        // add throws for any required exceptions, Client throws far fewer exception
         for (JDefinedClass $ex: exceptionMap.values()) {
             $genMethod._throws($ex);
         }
@@ -453,217 +518,194 @@ public class ResourceClassGenerator {
                 $genMethod.param(javaType, GeneratorUtil.makeParamName(q.getName()));
         }
         
-        if (!isAbstract) {
-            // add the method body
-            JBlock $methodBody = $genMethod.body();
-            JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-            JVar $queryParamMap = $methodBody.decl(mapOfString, "_queryParameterValues", JExpr._new(mapOfString));
-            JVar $headerParamMap = $methodBody.decl(mapOfString, "_headerParameterValues", JExpr._new(mapOfString));
-            for (Param q: params) {
-                if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
-                    continue;
-                JFieldRef $paramArg = JExpr.ref(GeneratorUtil.makeParamName(q.getName()));
-                // check that required variables aren't null
-                if (q.isRequired() && q.getFixed()==null) {
-                    JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
-                    $throwBlock._throw(JExpr._new(codeModel.ref(
-                            IllegalArgumentException.class)).arg(
-                            JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
-                }
-                JVar $paramMap = q.getStyle() == ParamStyle.QUERY ? $queryParamMap : $headerParamMap;
-                JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
-                if (q.getFixed()!=null)
-                    addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
-                else
-                    addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
-            }
-            generateJAXBDBody(method, exceptionMap, outputRep, returnType, $queryParamMap, $headerParamMap, inputRep, $methodBody);
-        }
-    }
-
-    /**
-     * Generate a Java method for a specified combination of WADL <code>method</code>,
-     * input <code>representation</code> and output <code>representation</code>
-     * elements.
-     * @param isAbstract controls whether the generated methods will have a body (false)
-     * or not (true)
-     * @param exceptionMap maps generated types to the corresponding exception class. Used to generate the
-     * throws clause for the method and the code to map output types to exceptions when
-     * the output type is designated as a fault.
-     * @param method the WADL <code>method</code> element for the Java method being generated.
-     * @param includeOptionalParams whether to include optional parameters in the method signature or not.
-     * @param inputRep the WADL <code>representation</code> element for the request format.
-     * @param outputRep the WADL <code>representation</code> element for the response format.
-     */
-    protected void generateDSMethodDecl(Map<JType, JDefinedClass> exceptionMap,
-            MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
-            RepresentationNode outputRep, boolean isAbstract) {
-        // work out the method return type and the type of any input representation
-        JType inputType=null, returnType=null;
-        if (inputRep != null)
-            inputType = codeModel._ref(javax.activation.DataSource.class);
-        if (outputRep != null)
-            returnType = codeModel._ref(javax.activation.DataSource.class);
-        else
-            returnType = codeModel.VOID;
+        // Update the return type with a generic parameter if required
+        // then add another method parameter
+        //
         
-        // generate a name for the method 
-        String methodName = getMethodName(method, inputRep, outputRep, null);
-        
-        // create the method
-        JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);
-        javaDoc.generateMethodDoc(method, $genMethod);
-        if (outputRep != null)
-            javaDoc.generateReturnDoc(outputRep, $genMethod);
-
-        // add throws for any required exceptions
-        $genMethod._throws(MalformedURLException.class);
-        $genMethod._throws(IOException.class);
-        
-        // add a parameter for the input representation (if required)
-        if (inputType != null) {
-            $genMethod.param(inputType, "input");
-            javaDoc.generateParamDoc(inputRep, $genMethod);
+        JVar $genericMethodParameter = null;
+        if (genericReturnType) {
+            JTypeVar $genericParameter = $genMethod.generify("T");
+            $genMethod.type($genericParameter);
+            JClass baseParameter = methodType == MethodType.CLASS ? codeModel.ref(Class.class)
+                        : codeModel.ref(GenericType.class);
+            JClass specificParameter = baseParameter.narrow($genericParameter);
+            $genericMethodParameter = $genMethod.param(
+                    specificParameter, 
+                    "returnType");
         }
         
-        // add a parameter for each query parameter
-        List<Param> params = method.getRequiredParameters();
-        if (includeOptionalParams)
-            params.addAll(method.getOptionalParameters());
-        for (Param q: params) {
-            // skip fixed value query parameters in the method arguments
-            if (q.getFixed() != null)
-                continue;
-            JClass javaType = GeneratorUtil.getJavaType(q, codeModel, $class, javaDoc);
-            String paramName = q.getName().equals("input") ? "queryInput" : q.getName();
-            q.setName(paramName);
-            javaDoc.generateParamDoc(q, $genMethod);
-            if (q.isRepeating())
-                $genMethod.param(codeModel.ref(List.class).narrow(javaType), GeneratorUtil.makeParamName(q.getName()));
-            else
-                $genMethod.param(javaType, GeneratorUtil.makeParamName(q.getName()));
-        }
+        
+        // Top part of the method body
         
         if (!isAbstract) {
             // add the method body
             JBlock $methodBody = $genMethod.body();
             JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-            JVar $queryParamMap = $methodBody.decl(mapOfString, "_queryParameterValues", JExpr._new(mapOfString));
-            JVar $headerParamMap = $methodBody.decl(mapOfString, "_headerParameterValues", JExpr._new(mapOfString));
+            
+            // codegen : UriBuilder localUriBuilder = $uriBuilder.clone();
+            JVar $localUriBuilder = $methodBody.decl(
+                    $uriBuilder.type(),
+                    "localUriBuilder", 
+                    $uriBuilder.invoke("clone"));
+
+            // Process query parmaeters
+            // codegen : localUriBuilder = localUriBuilder.queryParam(...);
             for (Param q: params) {
                 if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
                     continue;
-                JFieldRef $paramArg = JExpr.ref(GeneratorUtil.makeParamName(q.getName()));
-                // check that required variables aren't null
-                if (q.isRequired() && q.getFixed()==null) {
-                    JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
-                    $throwBlock._throw(JExpr._new(codeModel.ref(
-                            IllegalArgumentException.class)).arg(
-                            JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
+                if (q.getStyle() == ParamStyle.QUERY)
+                {
+                    JFieldRef $paramArg = JExpr.ref(GeneratorUtil.makeParamName(q.getName()));
+                    // check that required variables aren't null
+                    if (q.isRequired() && q.getFixed()==null) {
+                        JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
+                        $throwBlock._throw(JExpr._new(codeModel.ref(
+                                IllegalArgumentException.class)).arg(
+                                JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
+                    }
+                    
+                    JExpression toSet;
+                    if (q.getFixed()!=null)
+                        toSet = JExpr.lit(q.getFixed());
+                    else
+                        toSet = $paramArg;
+
+                    // codegen localUriBuilder = localUriBuilder.queryParam(...)
+                    $methodBody.assign($localUriBuilder, 
+                            $localUriBuilder.invoke("queryParam")
+                            .arg(q.getName())
+                            .arg(toSet));
                 }
-                JVar $paramMap = q.getStyle() == ParamStyle.QUERY ? $queryParamMap : $headerParamMap;
-                JInvocation addParamToMap = $methodBody.invoke($paramMap, "put");
-                if (q.getFixed()!=null)
-                    addParamToMap.arg(JExpr.lit(q.getName())).arg(JExpr.lit(q.getFixed()));
-                else
-                    addParamToMap.arg(JExpr.lit(q.getName())).arg($paramArg);
             }
-            generateDSDBody(method, outputRep, returnType, $queryParamMap, $headerParamMap, inputRep, $methodBody);
+            
+            // Build the resource from the client, TODO extract path parameters
+            //
+            
+            // codegen WebResource resource = uriBuilder.buildFromMap(_templateMatrixParameterValue);
+            JVar $resource = $methodBody.decl(
+                    codeModel.ref(WebResource.class),
+                    "resource", 
+                    $clientReference.invoke("resource").arg(
+                    $localUriBuilder.invoke("buildFromMap").
+                       arg($templateMatrixParamValMap)));
+            
+            
+            // 
+            
+            // codegen WebResource.Builder resourceBuilder = resource.getRequestBuilder();
+            JVar $resourceBuilder = $methodBody.decl(
+                    codeModel.ref(WebResource.Builder.class),
+                    "resourceBuilder", 
+                    $resource.invoke("getRequestBuilder"));
+            
+
+            for (Param q: params) {
+                if (!includeOptionalParams && !q.isRequired() && q.getFixed()==null)
+                    continue;
+                if (q.getStyle() == ParamStyle.HEADER)
+                {
+
+                    JFieldRef $paramArg = JExpr.ref(GeneratorUtil.makeParamName(q.getName()));
+                    // check that required variables aren't null
+                    if (q.isRequired() && q.getFixed()==null) {
+                        JBlock $throwBlock = $methodBody._if($paramArg.eq(JExpr._null()))._then();
+                        $throwBlock._throw(JExpr._new(codeModel.ref(
+                                IllegalArgumentException.class)).arg(
+                                JExpr.lit(Wadl2JavaMessages.PARAMETER_REQUIRED(q.getName(), methodName))));
+                    }
+
+                    JExpression toSet;
+                    if (q.getFixed()!=null)
+                        toSet = JExpr.lit(q.getFixed());
+                    else
+                        toSet = $paramArg;
+                    
+                    // resourceBuilder = resourceBuilder.header(...);
+                    $methodBody.assign($resourceBuilder,
+                            $resourceBuilder.invoke("header")
+                            .arg(q.getName())
+                            .arg(toSet));
+                    
+                }
+            }
+            
+            
+            // Now deal with the method body
+            
+            generateBody(method, exceptionMap, outputRep, 
+                    $genericMethodParameter, returnType, $resourceBuilder, inputRep, $methodBody);
         }
     }
 
+    
     /**
      * Generate a method body that uses a JAXBDispatcher, used when the payloads are XML
      * @param method the method to generate a body for
      * @param exceptionMap the generated exceptions that the method can raise
      * @param outputRep the output representation
      * @param returnType the type of the method return
-     * @param $queryParamValueMap a reference to the parameterMap variable in the generated code
      * @param inputRep the input representation
      * @param $methodBody a reference to the method body in which to generate code
      */
-    protected void generateJAXBDBody(final MethodNode method, final Map<JType, 
+    protected void generateBody(final MethodNode method, final Map<JType, 
             JDefinedClass> exceptionMap, final RepresentationNode outputRep, 
-            final JType returnType, final JVar $queryParamValueMap, final JVar $headerParamValueMap, 
-            final RepresentationNode inputRep, final JBlock $methodBody) {
-        JExpression $url = $methodBody.decl(codeModel.ref(String.class), "_url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
-        JInvocation $executeMethod = $jaxbDispatcher.invoke("do"+method.getName());
-        if (method.getName().equals("POST") || method.getName().equals("PUT")) {
-            if (inputRep == null) {
-                $executeMethod.arg(JExpr._null());
-                $executeMethod.arg(JExpr._null());
-            } else {
-                $executeMethod.arg(JExpr.ref("input"));
-                $executeMethod.arg(JExpr.lit(inputRep.getMediaType()));
+            final JVar $genericMethodParameter,
+            final JType returnType, 
+            final JVar $resourceBuilder, 
+            final RepresentationNode inputRep, final JBlock $methodBody)
+    {
+        // Content type
+        //
+        
+        
+        JInvocation $execute = $resourceBuilder.invoke("method");
+        $execute.arg(method.getName());
+        
+        // Return type if required
+        
+        if ($genericMethodParameter!=null) {
+            $execute.arg(JExpr.ref("returnType"));
+        }
+        else if (returnType!=null) {
+            if (returnType instanceof JClass) {
+                $execute.arg(JExpr.dotclass((JClass)returnType));
+            }
+            else if (returnType instanceof JPrimitiveType) {
+                $execute.arg(JExpr.dotclass(
+                        (((JPrimitiveType)returnType)).boxify()));                
             }
         }
-        $executeMethod.arg($url);
-        $executeMethod.arg($headerParamValueMap);
-        if (outputRep != null && outputRep.getMediaType() != null)
-            $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
-        else
-            $executeMethod.arg(JExpr._null());
-        JVar $retVal = $methodBody.decl(codeModel.ref(Object.class), "_retVal", $executeMethod);
-        JBlock $nullBlock = $methodBody._if($retVal.eq(JExpr._null()))._then();
-        if (outputRep != null)
-            $nullBlock._return(JExpr._null());
-        else
-            $nullBlock._return();
-        JClass jaxbElementType = codeModel.ref(JAXBElement.class);
-        $nullBlock = $methodBody._if(JExpr.invoke(JExpr.dotclass(jaxbElementType), "isInstance").arg($retVal))._then();
-        JVar $jaxbelement = $nullBlock.decl(jaxbElementType, "jaxbElement", JExpr.cast(jaxbElementType, $retVal));
-        $nullBlock.assign($retVal, $jaxbelement.invoke("getValue"));
 
-        // check type of returned object and throw generated exception if
-        // it matches a fault declared in the description
-        for (JType faultType: exceptionMap.keySet()) {
-            JDefinedClass matchingException = exceptionMap.get(faultType);
-            JBlock $throwBlock = $methodBody._if(JExpr.invoke(JExpr.dotclass(faultType.boxify()), "isInstance").arg($retVal))._then();
-            $throwBlock._throw(JExpr._new(matchingException).arg(JExpr.lit(Wadl2JavaMessages.INVOCATION_FAILED())).arg(JExpr.cast(faultType,$retVal)));
+        //
+
+        if (method.getName().equals("POST") || method.getName().equals("PUT")) {
+            if (inputRep == null) {
+                // Do nothing
+                //
+            } else {
+                
+                $resourceBuilder.assign(
+                        $resourceBuilder.invoke("type")
+                        .arg(JExpr.lit(inputRep.getMediaType())));
+                
+                $execute.arg(JExpr.ref("input"));
+            }
         }
         
+        
+        if (outputRep != null && outputRep.getMediaType() != null) {
+            $resourceBuilder.assign(
+                    $resourceBuilder.invoke("accept")
+                    .arg(JExpr.lit(outputRep.getMediaType())));
+        }
+
         if (outputRep != null)
-            $methodBody._return(JExpr.cast(returnType,$retVal));
+            $methodBody._return(
+                    $execute);
         else
             $methodBody._return();
     }
 
-    /**
-     * Generate a method body that uses a DSDispatcher, used when the payloads are not XML
-     * @param method the method to generate a body for
-     * @param outputRep the output representation
-     * @param returnType the type of the method return
-     * @param $queryParamValueMap a reference to the parameterMap variable in the generated code
-     * @param inputRep the input representation
-     * @param $methodBody a reference to the method body in which to generate code
-     */
-    protected void generateDSDBody(final MethodNode method, 
-            final RepresentationNode outputRep, final JType returnType, 
-            final JVar $queryParamValueMap, final JVar $headerParamValueMap, final RepresentationNode inputRep, 
-            final JBlock $methodBody) {
-        JExpression $url = $methodBody.decl(codeModel.ref(String.class), "_url", $uriBuilder.invoke("buildUri").arg($templateMatrixParamValMap).arg($queryParamValueMap));
-        JInvocation $executeMethod = $dsDispatcher.invoke("do"+method.getName());
-        if (method.getName().equals("POST") || method.getName().equals("PUT")) {
-            if (inputRep == null) {
-                $executeMethod.arg(JExpr._null());
-                $executeMethod.arg(JExpr._null());
-            } else {
-                $executeMethod.arg(JExpr.ref("input"));
-                $executeMethod.arg(JExpr.lit(inputRep.getMediaType()));
-            }
-        }
-        $executeMethod.arg($url);
-        $executeMethod.arg($headerParamValueMap);
-        if (outputRep != null && outputRep.getMediaType() != null)
-            $executeMethod.arg(JExpr.lit(outputRep.getMediaType()));
-        else
-            $executeMethod.arg(JExpr._null());
-        JExpression $retVal = $methodBody.decl(codeModel.ref(javax.activation.DataSource.class), "_retVal", $executeMethod);
-        if (outputRep != null)
-            $methodBody._return($retVal);
-        else
-            $methodBody._return();
-    }
 
     /**
      * Generate a bean setter and getter for a parameter
@@ -690,7 +732,7 @@ public class ResourceClassGenerator {
 
         
         // setter
-        JMethod $setter = $impl.method(JMod.PUBLIC, codeModel.VOID, "set"+propertyName);
+        JMethod $setter = $impl.method(JMod.PUBLIC, $impl, "set"+propertyName);
         jdoc = $setter.javadoc();
         jdoc.append("Set "+p.getName());
         $setter.param(propertyType, paramName);
@@ -699,6 +741,9 @@ public class ResourceClassGenerator {
             JBlock $setterBody = $setter.body();
             // codegen: templateAndMatrixParameterValues.put("name", value);
             $setterBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(paramName));
+            // Allows chained method settings
+            // codegen: return this;
+            $setterBody._return(JExpr._this());
         }
     }
 }
