@@ -234,7 +234,8 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
         Iterable<? extends JavaFileObject> compilationUnits1 =
            fileManager.getJavaFileObjectsFromFiles(files);
-        compiler.getTask(null, fileManager, null, null, null, compilationUnits1).call();    
+        boolean success = compiler.getTask(null, fileManager, null, null, null, compilationUnits1).call();     
+        assertTrue("Compilation failed for some reason", success);
        
         assertThat(diagnosticCollector.getDiagnostics().size(), equalTo(0));
     }

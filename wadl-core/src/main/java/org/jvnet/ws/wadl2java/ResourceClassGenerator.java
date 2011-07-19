@@ -154,12 +154,14 @@ public class ResourceClassGenerator {
         
         JClass mapOfStringObject = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
         $templateMatrixParamValMap = $impl.field(JMod.PRIVATE, mapOfStringObject, "_templateAndMatrixParameterValues");
+        
+        
                 
         // generate constructor with parameters 
         // for the client and each WADL defined path parameter
         JMethod $ctor = $impl.constructor(JMod.PUBLIC);
         JDocComment jdoc = $ctor.javadoc();
-        jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE());
+        jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE_CLIENT());
         
         // Client reference
         JVar $clientParam = $ctor.param($clientReference.type(), "client");
@@ -181,7 +183,28 @@ public class ResourceClassGenerator {
                 generateBeanProperty($impl, p, false);
             }
         }
-//        $ctor._throws(JAXBException.class);
+        
+        // generate constructor without client parameters
+        //
+        
+        JVar params[] = $ctor.listParams();
+        JMethod $ctorNoParam = $impl.constructor(JMod.PUBLIC);
+        JDocComment jdocNoParam = $ctorNoParam.javadoc();
+        jdocNoParam.append(Wadl2JavaMessages.CREATE_INSTANCE());
+        JBlock $ctorNoParamBody = $ctorNoParam.body();
+        JInvocation $thisCall = $ctorNoParamBody.invoke("this").arg(
+                codeModel.ref(Client.class).staticInvoke("create"));
+        
+        for (int  i = 1; i < params.length; i++ )
+        {
+            JVar nextParam = params[i];
+            $ctorNoParam.param(nextParam.type(), nextParam.name());
+            $thisCall.arg(nextParam);
+        }
+        
+        
+        // Create a body for the primary constructor
+        
         JBlock $ctorBody = $ctor.body();
 
 //        if (generatedPackages.length() > 0) {
@@ -684,7 +707,7 @@ public class ResourceClassGenerator {
                 //
             } else {
                 
-                $resourceBuilder.assign(
+                $methodBody.assign($resourceBuilder,
                         $resourceBuilder.invoke("type")
                         .arg(JExpr.lit(inputRep.getMediaType())));
                 
@@ -694,7 +717,7 @@ public class ResourceClassGenerator {
         
         
         if (outputRep != null && outputRep.getMediaType() != null) {
-            $resourceBuilder.assign(
+            $methodBody.assign($resourceBuilder,
                     $resourceBuilder.invoke("accept")
                     .arg(JExpr.lit(outputRep.getMediaType())));
         }
