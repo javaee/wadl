@@ -218,6 +218,61 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", GenericType.class));
     }
     
+   /**
+     * Tests the case in which a method has multiple representations
+     */
+    public void testValidMutlipleContentTypes() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("multiple-contenttypes-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+
+        // Verify the files are in place
+        
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/HttpLocalhost9998.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+        
+        
+        
+        // Check that we have the expected number of methods
+        Class $Helloworld = cl.loadClass("test.HttpLocalhost9998$Helloworld");
+        assertNotNull($Helloworld);
+        
+        // Constructors
+        assertNotNull($Helloworld.getConstructor());
+        assertNotNull($Helloworld.getConstructor(Client.class));
+
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($Helloworld.getDeclaredMethod("getSomeClassAsApplicationXml"));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", GenericType.class));
+
+        assertNotNull($Helloworld.getDeclaredMethod("getSomeClassAsApplicationJson"));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationJson", Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationJson", GenericType.class));
+
+    }
     
     /**
      * Tests the case in which a valid wadl file exists.

@@ -434,8 +434,20 @@ public class ResourceClassGenerator {
             }
         }
         if (returnType != null) {
-            buf.append("As");
-            buf.append(returnType.name());
+
+            // If we have mutliple supported content types, then we need to
+            // differential by content type
+            if (method.getSupportedOutputs().size() > 1 && outputRep!=null) {
+                buf.append(returnType.name());
+                buf.append("As");
+                buf.append(outputRep.getMediaTypeAsClassName());
+            }
+            else {
+                buf.append("As");
+                buf.append(returnType.name());
+            }
+            
+            
         } else if (outputRep != null) {
             buf.append("As");
             buf.append(outputRep.getMediaTypeAsClassName());

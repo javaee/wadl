@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="someClass" type="someClass"/>
+    <xs:complexType name="someClass">
+        <xs:sequence>
+            <xs:element name="string" type="xs:string" minOccurs="0"/>
+            <xs:element name="integer" type="xs:int" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
