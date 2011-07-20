@@ -1,5 +1,8 @@
 package org.jvnet.ws.wadl.maven;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.GenericType;
+import java.net.MalformedURLException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -8,6 +11,7 @@ import static org.jvnet.ws.wadl.matchers.Matchers.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.lang.Iterable;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -138,9 +142,83 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertThat(targetDirectory, contains("yahoo/yn/ResultType.java"));
 
         // Check that the generated code compiles
-        compile(targetDirectory);
+        ClassLoader cl = compile(targetDirectory);
+        
+        // Check that we have the expected number of methods
+        Class $NewsSearch = cl.loadClass("test.HttpApiSearchYahooComNewsSearchServiceV1$NewsSearch");
+        assertNotNull($NewsSearch);
+        
+        Class $Type = cl.loadClass("test.Type"); 
+        Class $Sort = cl.loadClass("test.Sort"); 
+        Class $Output = cl.loadClass("test.Output"); 
+        
+        // Constructors
+        assertNotNull($NewsSearch.getConstructor());
+        assertNotNull($NewsSearch.getConstructor(Client.class));
+        
+        
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsResultSet", String.class, String.class));
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class, Class.class));
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class, GenericType.class));
+
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsResultSet", String.class, String.class,
+           $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class));
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class,
+           $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, Class.class));
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class,
+           $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, GenericType.class));
+
+        
     }
 
+    
+    /**
+     * Tests the case in which a valid wadl file exists, and it it contains
+     * a method that returns just text/plain
+     */
+    public void testNonJAXBWadlFiles() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("nonjaxb-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/HttpLocalhost9998.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+        
+        
+        
+        // Check that we have the expected number of methods
+        Class $Helloworld = cl.loadClass("test.HttpLocalhost9998$Helloworld");
+        assertNotNull($Helloworld);
+        
+        // Constructors
+        assertNotNull($Helloworld.getConstructor());
+        assertNotNull($Helloworld.getConstructor(Client.class));
+
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", GenericType.class));
+    }
+    
+    
     /**
      * Tests the case in which a valid wadl file exists.
      */
@@ -175,8 +253,43 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertThat(targetDirectory, contains("example/SimpleParam.java"));
         assertThat(targetDirectory, contains("example/SimpleReturn.java"));
 
+
+        
         // Check that the generated code compiles
-        compile(targetDirectory);
+        ClassLoader cl = compile(targetDirectory);
+        
+        // Check that we have the expected number of methods
+        Class $PathParam1 = cl.loadClass("test.HttpLocalhost7101JerseySchemaGenExamplesContextRootJersey$PathParam1");
+        assertNotNull($PathParam1);
+
+        // Constructors
+        assertNotNull($PathParam1.getConstructor(String.class));
+        assertNotNull($PathParam1.getConstructor(Client.class, String.class));
+
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($PathParam1.getDeclaredMethod("getParam1"));
+        assertNotNull($PathParam1.getDeclaredMethod("setParam1", String.class));
+
+        // Go on level down
+        Class $PathParam2 = $PathParam1.getDeclaredClasses()[0];
+        assertThat($PathParam2.getSimpleName(), equalTo("Param2"));
+        assertNotNull($PathParam2);
+
+        // Constructors
+        assertNotNull($PathParam2.getConstructor(String.class, String.class));
+        assertNotNull($PathParam2.getConstructor(Client.class, String.class, String.class));
+
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($PathParam2.getDeclaredMethod("getParam1"));
+        assertNotNull($PathParam2.getDeclaredMethod("setParam1", String.class));
+        assertNotNull($PathParam2.getDeclaredMethod("getParam2"));
+        assertNotNull($PathParam2.getDeclaredMethod("setParam2", String.class));
+
+        
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($PathParam2.getDeclaredMethod("getAsSimpleReturn"));
+        assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", Class.class));
+        assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", GenericType.class));
     }
 
     /**
@@ -221,7 +334,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
     
     
-    private void compile(File targetDirectory) {
+    private ClassLoader compile(File targetDirectory) throws MalformedURLException {
         // Compile the source
         
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -238,6 +351,11 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertTrue("Compilation failed for some reason", success);
        
         assertThat(diagnosticCollector.getDiagnostics().size(), equalTo(0));
+        
+        // Create an return a stuitable class loader
+        //
+        
+        return new URLClassLoader(new java.net.URL[] { targetDirectory.toURI().toURL() });
     }
     /**
      * @return a list of all java files under the given directory

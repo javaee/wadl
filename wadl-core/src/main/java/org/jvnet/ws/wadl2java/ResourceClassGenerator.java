@@ -464,14 +464,18 @@ public class ResourceClassGenerator {
             RepresentationNode outputRep, 
             MethodType methodType,
             boolean isAbstract) {
+        
+        boolean isJAXB = methodType == MethodType.JAXB;
         // check if JAXB can be used with available information
-        if ((outputRep != null && outputRep.getElement() == null) || (inputRep != null && inputRep.getElement() == null))
-            return;
+        if (isJAXB) {
+            if ((outputRep != null && outputRep.getElement() == null) || (inputRep != null && inputRep.getElement() == null))
+                return;
+        }
 
         // work out the method return type and the type of any input representation
         JType inputType=null, returnType=null;
         boolean genericReturnType = false;
-        if (methodType == MethodType.JAXB) {
+        if (isJAXB) {
             if (inputRep != null) {
                 inputType = getTypeFromElement(inputRep.getElement());
                 if (inputType == null)
@@ -503,7 +507,7 @@ public class ResourceClassGenerator {
         }
         
         // generate a name for the method 
-        String methodName = getMethodName(method, inputRep, outputRep, returnType);
+        String methodName = getMethodName(method, inputRep, outputRep, isJAXB ? returnType : null);
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);
