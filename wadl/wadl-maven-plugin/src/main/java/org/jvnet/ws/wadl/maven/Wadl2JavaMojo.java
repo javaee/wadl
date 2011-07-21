@@ -12,6 +12,9 @@ import org.codehaus.plexus.util.DirectoryScanner;
 import org.jvnet.ws.wadl2java.Wadl2Java;
 
 import com.sun.codemodel.JClassAlreadyExistsException;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
 
 /**
  * A Maven plugin to generate Java code from WADL descriptions.
@@ -76,9 +79,9 @@ public class Wadl2JavaMojo extends AbstractMojo {
      * A boolean, indicating if the mojo should fail entirely if it fails to
      * generate code from a single WADL file.
      * 
-     * @parameter default="false"
+     * @parameter default="true"
      */
-    private boolean failOnError;
+    private boolean failOnError = true;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         doExecute(failOnError ? new FailOnErrorPolicy()
@@ -89,20 +92,29 @@ public class Wadl2JavaMojo extends AbstractMojo {
         if (sourceDirectory.exists() && sourceDirectory.canRead()) {
             assureTargetDirExistence();
             String[] matches = getWadlFileMatches();
-            Wadl2Java processor = createProcessor();
-            for (int i = matches.length - 1; i >= 0; i--) {
-                File file = new File(sourceDirectory, matches[i]);
-                try {
-                    processor.process(file.toURI());
-                } catch (JClassAlreadyExistsException jcae) {
-                    policy.process(jcae.getExistingClass().fullName()
-                            + " already exists.", jcae);
-                } catch (Exception e) {
-                    policy.process("Failed to generate sources from "
-                            + file.getAbsolutePath() + ".", e);
+            try {
+                Wadl2Java processor = createProcessor();
+                for (int i = matches.length - 1; i >= 0; i--) {
+                    File file = new File(sourceDirectory, matches[i]);
+                    try {
+                        processor.process(file.toURI());
+                    } catch (JClassAlreadyExistsException jcae) {
+                        policy.process(jcae.getExistingClass().fullName()
+                                + " already exists.", jcae);
+                    } catch (Exception e) {
+                        policy.process("Failed to generate sources from "
+                                + file.getAbsolutePath() + ".", e);
+                    }
                 }
+                project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
             }
-            project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+            catch (IOException ioe) {
+                // This case cannot happen as we already check to
+                // see if the directory in in place
+                //
+                
+                policy.process("Unexpected exception creating processor", ioe);
+            }
         }
     }
 
@@ -127,7 +139,7 @@ public class Wadl2JavaMojo extends AbstractMojo {
      * 
      * @return A new {@link Wadl2Java} instance.
      */
-    private Wadl2Java createProcessor() {
+    private Wadl2Java createProcessor() throws IOException {
         List<File> customizationFiles = null;
         if (customizations != null) {
             customizationFiles = new ArrayList<File>(customizations.size());
@@ -135,7 +147,7 @@ public class Wadl2JavaMojo extends AbstractMojo {
                 customizationFiles.add(new File(customization));
             }
         } else {
-            customizationFiles = new ArrayList<File>(0);
+            customizationFiles = Collections.EMPTY_LIST;
         }
         Wadl2Java processor = new Wadl2Java(targetDirectory, packageName,
                 autoPackaging, customizationFiles);

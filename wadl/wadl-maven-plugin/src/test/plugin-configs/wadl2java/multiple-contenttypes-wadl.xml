@@ -1,0 +1,17 @@
+<project>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>wadl-maven-plugin</artifactId>
+                <configuration>
+                    <targetDirectory>${basedir}/target/test-harness/multiple-contenttypes-wadl/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/multiple-contenttypes-wadl</sourceDirectory>
+                    <packageName>test</packageName>
+                    <includes>*.wadl</includes>
+                    <customizations></customizations>
+                    <autoPackaging>true</autoPackaging>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

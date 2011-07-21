@@ -35,7 +35,6 @@ import java.io.IOException;
 import org.w3c.dom.Element;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-import org.jvnet.ws.wadl.Application;
 import java.io.StringWriter;
 import org.w3c.dom.Attr;
 import org.w3c.dom.NamedNodeMap;

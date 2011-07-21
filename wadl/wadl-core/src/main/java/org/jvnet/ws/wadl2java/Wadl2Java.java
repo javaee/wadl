@@ -20,6 +20,7 @@
 package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
+import com.sun.codemodel.writer.FileCodeWriter;
 import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl2java.ast.FaultNode;
 import org.jvnet.ws.wadl2java.ast.MethodNode;
@@ -42,6 +43,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Generated;
 import javax.xml.bind.util.JAXBResult;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -57,8 +59,8 @@ import org.xml.sax.SAXParseException;
  */
 public class Wadl2Java {
     
-    private File outputDir;
-    private List<File> customizations;
+    private CodeWriter codeWriter;
+    private List<URI> customizations;
     private String pkg;
     private JPackage jPkg;
     private S2JJAXBModel s2jModel;
@@ -75,21 +77,22 @@ public class Wadl2Java {
 
     /**
      * Creates a new instance of a Wadl2Java processor.
-     * @param outputDir the directory in which to generate code.
+     * @param writer the writer to use to write out the java files
      * @param pkg the Java package in which to generate code.
      * @param autoPackage whether to use JAXB auto package name generation
      */
-    public Wadl2Java(File outputDir, String pkg, boolean autoPackage) {
-        this.outputDir = outputDir;
+    public Wadl2Java(CodeWriter writer, String pkg, boolean autoPackage) {
+        this.codeWriter = writer;
         this.pkg = pkg;
         this.javaDoc = new JavaDocUtil();
         this.processedDocs = new ArrayList<String>();
-        this.customizations = new ArrayList<File>();
+        this.customizations = new ArrayList<URI>();
         this.autoPackage = autoPackage;
         this.idMap = new ElementResolver();
         this.ifaceMap = new HashMap<String, ResourceTypeNode>();
     }
     
+
     /**
      * Creates a new instance of a Wadl2Java processor.
      * @param outputDir the directory in which to generate code.
@@ -98,11 +101,39 @@ public class Wadl2Java {
      * @param customizations a list of JAXB customization files
      */
     public Wadl2Java(File outputDir, String pkg, boolean autoPackage, 
-            List<File> customizations) {
-        this(outputDir, pkg, autoPackage);
+            List<File> customizations) throws IOException {
+        this(new FileCodeWriter(outputDir), pkg, autoPackage, 
+                convertToURIList(customizations));
+    }
+    
+    /**
+     * Creates a new instance of a Wadl2Java processor.
+     * @param writer the writer to use to write out the java files
+     * @param pkg the Java package in which to generate code.
+     * @param autoPackage whether to use JAXB auto package name generation
+     * @param customizations a list of JAXB customization files
+     */
+    public Wadl2Java(CodeWriter writer, String pkg, boolean autoPackage, 
+            List<URI> customizations) {
+        this(writer, pkg, autoPackage);
         this.customizations = customizations;
     }
 
+
+    /**
+     * @param files A list of files
+     * @return A list of URI for those files
+     */
+    private static List<URI> convertToURIList(List<File> files) {
+        List<URI> copy = new ArrayList<URI>();
+        for (File file : files) {
+            copy.add(file.toURI());
+        }
+        return copy;
+    }
+    
+    
+    
     private JAXBContext getJAXBContext() throws JAXBException {
         // initialize JAXB runtime
         if (jbc == null) {
@@ -129,6 +160,7 @@ public class Wadl2Java {
 
         // read in root WADL file
         s2j = new SchemaCompilerImpl();
+        
         errorListener = new SchemaCompilerErrorListener();
         if (!autoPackage)
             s2j.setDefaultPackageName(pkg);
@@ -154,8 +186,8 @@ public class Wadl2Java {
             jPkg = codeModel._package(pkg);
             generateResourceTypeInterfaces();
             for (ResourceNode r: rs)
-                generateEndpointClass(r);
-            codeModel.build(outputDir);
+                generateEndpointClass(rootDesc, r);
+            codeModel.build(codeWriter);
         }
     }
     
@@ -236,8 +268,8 @@ public class Wadl2Java {
                 }
             }
         }
-        for (File customization: customizations) {
-            URI incl = desc.resolve(customization.toURI());
+        for (URI customization: customizations) {
+            URI incl = desc.resolve(customization);
             System.out.println(Wadl2JavaMessages.PROCESSING(incl.toString()));
             InputSource input = new InputSource(incl.toURL().openStream());
             input.setSystemId(incl.toString());
@@ -436,16 +468,31 @@ public class Wadl2Java {
     /**
      * Create a class that acts as a container for a hierarchy
      * of static inner classes, one for each resource described by the WADL file.
+     * @param the root URI to the WADL so we can generate the required annotations
      * @param root the resource element that corresponds to the root of the resource tree
      * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
      * generation, the WADL processor attempts to create a duplicate
      * class. This indicates a structural problem with the WADL file, e.g. duplicate
      * peer resource entries.
      */
-    protected void generateEndpointClass(ResourceNode root) 
+    protected void generateEndpointClass(
+            URI rootResource, ResourceNode root) 
             throws JClassAlreadyExistsException {
         JDefinedClass impl = jPkg._class(JMod.PUBLIC, root.getClassName());
         javaDoc.generateClassDoc(root, impl);
+        
+        
+        // Put a Generated annotation on the class for later regeneration
+        // by tooling
+        if (rootResource!=null) {
+            JAnnotationUse annUse = impl.annotate(Generated.class); 
+            annUse.param("value",
+                    rootResource.toString()); 
+            annUse.param("comments",
+                    "wadl2java");
+        }
+        
+        
         for (ResourceNode r: root.getChildResources()) {
             generateSubClass(impl, r);
         }
