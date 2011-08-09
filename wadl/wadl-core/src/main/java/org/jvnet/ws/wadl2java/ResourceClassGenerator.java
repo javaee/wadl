@@ -451,9 +451,11 @@ public class ResourceClassGenerator {
         } else if (outputRep != null) {
             buf.append("As");
             buf.append(outputRep.getMediaTypeAsClassName());
-        } else if (inputRep != null) {
-            buf.append(inputRep.getMediaTypeAsClassName());
         }
+// Duplicate code, ends up adding inputRep twice
+//        } else if (inputRep != null) {
+//            buf.append(inputRep.getMediaTypeAsClassName());
+//        }
         return buf.toString();
     }
     
@@ -514,8 +516,15 @@ public class ResourceClassGenerator {
                 genericReturnType = true;
                 returnType =codeModel.ref(Object.class);
             }
-            else
-                returnType = codeModel.VOID;
+            else {
+                genericReturnType = true;
+                returnType =codeModel.ref(Object.class);
+                // Don't allow void return type otherwise the user
+                // cannot get back status messages, perhaps future enhancement
+                // should just reutrn a void version; but doesn't seem like
+                // a common use case
+                // returnType = codeModel.VOID;
+            }
         }
         
         // generate a name for the method 
@@ -671,7 +680,7 @@ public class ResourceClassGenerator {
             
             // Now deal with the method body
             
-            generateBody(method, exceptionMap, outputRep, 
+            generateBody(method,isJAXB, exceptionMap, outputRep, 
                     $genericMethodParameter, returnType, $resourceBuilder, inputRep, $methodBody);
         }
     }
@@ -680,13 +689,16 @@ public class ResourceClassGenerator {
     /**
      * Generate a method body that uses a JAXBDispatcher, used when the payloads are XML
      * @param method the method to generate a body for
+     * @param isJAXB, whether we are generating a generic of JAXB version
      * @param exceptionMap the generated exceptions that the method can raise
      * @param outputRep the output representation
      * @param returnType the type of the method return
      * @param inputRep the input representation
      * @param $methodBody a reference to the method body in which to generate code
      */
-    protected void generateBody(final MethodNode method, final Map<JType, 
+    protected void generateBody(final MethodNode method, 
+            final boolean isJAXB,
+            final Map<JType, 
             JDefinedClass> exceptionMap, final RepresentationNode outputRep, 
             final JVar $genericMethodParameter,
             final JType returnType, 
@@ -738,11 +750,13 @@ public class ResourceClassGenerator {
                     .arg(JExpr.lit(outputRep.getMediaType())));
         }
 
-        if (outputRep != null)
+        // Generic variant always need to return the result
+        if (outputRep != null || !isJAXB)
             $methodBody._return(
                     $execute);
-        else
-            $methodBody._return();
+        else {
+            $methodBody.add($execute);
+        }
     }
 
 

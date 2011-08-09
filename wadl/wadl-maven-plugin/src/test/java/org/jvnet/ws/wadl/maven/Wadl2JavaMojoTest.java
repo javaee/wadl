@@ -2,19 +2,23 @@ package org.jvnet.ws.wadl.maven;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
+import java.io.DataInputStream;
 import java.net.MalformedURLException;
+import java.util.regex.Matcher;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 import static org.jvnet.ws.wadl.matchers.Matchers.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.lang.Iterable;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 import javax.tools.DiagnosticCollector;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
@@ -217,6 +221,71 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", Class.class));
         assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", GenericType.class));
     }
+
+    /**
+     * Tests the case where the methods produce application/xml but don't
+     * have a matching schema. This results in duplicate methods being produced.
+     * 
+     * See WADL issue 41
+     */
+    public void testJAXBMissingSchema() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("jaxb-missing-schema.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/HttpLocalhost7201Project1Jersey.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+        
+        
+        
+        // Check that we have the expected number of methods
+        Class $Helloworld = cl.loadClass("test.HttpLocalhost7201Project1Jersey$Put");
+        assertNotNull($Helloworld);
+        
+        // Constructors
+        assertNotNull($Helloworld.getConstructor());
+        assertNotNull($Helloworld.getConstructor(Client.class));
+
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", GenericType.class));
+
+        assertNotNull($Helloworld.getDeclaredMethod("putApplicationXml", Object.class, Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("putApplicationXml", Object.class, GenericType.class));
+    
+        // Verify that in both cases the method is actually invoked, in
+        // liu of functional tests for the moment
+        File proxyFile = new File(targetDirectory, "test/HttpLocalhost7201Project1Jersey.java");
+        DataInputStream input = new DataInputStream(new FileInputStream(proxyFile));
+        byte data[] = new byte[(int)proxyFile.length()];
+        input.readFully(data);
+        String contents = new String(data);
+        Matcher matcher = Pattern.compile("return resourceBuilder.method").matcher(contents);
+        // Make sure we only have four return methods of this kind
+        matcher.find(); matcher.find(); matcher.find();
+        assertTrue(matcher.find());
+        assertFalse(matcher.find());
+    }
+    
+    
     
    /**
      * Tests the case in which a method has multiple representations

@@ -18,12 +18,12 @@
     </xsl:template>
 
     <xsl:template match="wadl200610:response/wadl200610:representation">
-        <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="response">
+<!-- This resulted in two layers of response nodes       <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="response"> -->
             <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="representation">
                 <xsl:copy-of select="namespace::*"/>
                 <xsl:apply-templates select="@*|node()"/>
             </xsl:element>
-        </xsl:element>
+<!--        </xsl:element> -->
     </xsl:template>
 
     <xsl:template match="wadl200610:response/wadl200610:fault">
@@ -31,7 +31,7 @@
     </xsl:template>
 
     <xsl:template name="response-with-status">
-        <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="response">
+<!--         <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="response"> -->
             <xsl:attribute name="status">
                 <xsl:value-of select="@status"/>
             </xsl:attribute>
@@ -44,7 +44,7 @@
                 </xsl:for-each>
                 <xsl:apply-templates select="node()"/>
             </xsl:element>
-        </xsl:element>
+<!--        </xsl:element> -->
     </xsl:template>
 
     <xsl:template match="wadl200610:*">
