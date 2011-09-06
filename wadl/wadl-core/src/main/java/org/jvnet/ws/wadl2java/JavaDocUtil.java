@@ -162,6 +162,21 @@ public class JavaDocUtil {
         JDocComment jdoc = c.javadoc();
         appendTextContent(d, jdoc);
     }
+
+    /**
+     * Extract documentation from a WADL resource and add it to a corresponding 
+     * accessor method.
+     * @param r the WADL resource
+     * @param c the corresponding class
+     */
+    public void generateAccessorDoc(ResourceNode r, JMethod c) {
+        if (r.getDoc().size() < 1)
+            return;
+        Doc d = r.getDoc().get(0);
+        JDocComment jdoc = c.javadoc();
+        appendTextContent(d, jdoc);
+    }
+
     
     /**
      * Extract documentation from a WADL resource type and add it to a corresponding 

@@ -19,7 +19,9 @@
 
 package org.jvnet.ws.wadl2java.ast;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import org.jvnet.ws.wadl.Application;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
@@ -52,13 +54,32 @@ public class ResourceNode {
     public ResourceNode(Application app, Resources resources) {
         doc = app.getDoc();
         parentResource = null;
-        className = GeneratorUtil.makeClassName(resources.getBase());
+        className = createClassNameFromBase(resources.getBase());
         pathSegment = new PathSegment(
                 resources==null ? "" : resources.getBase());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();
         types = new ArrayList<ResourceTypeNode>();
     }
+
+    /**
+     * @return A simplified name with both the protocol and the port removed
+     */
+    private String createClassNameFromBase(String base) {
+
+        try {
+            URL url = new URL(base);
+            String simpifiedURL =
+                    url.getHost() + ((url.getPath().length() > 0 && !url.getPath().equals("/")) ? "_"
+                    + url.getPath() : "");
+            return GeneratorUtil.makeClassName(simpifiedURL);
+        }
+        catch (MalformedURLException me) {
+            return GeneratorUtil.makeClassName(base);
+        }
+        
+    }
+    
     
     /**
      * Create a new instance of ResourceNode and attach it as a child of an existing
@@ -77,6 +98,7 @@ public class ResourceNode {
         methods = new ArrayList<MethodNode>();        
         types = new ArrayList<ResourceTypeNode>();
     }
+
     
     /**
      * Create a new instance of ResourceNode and attach it as a child of an existing

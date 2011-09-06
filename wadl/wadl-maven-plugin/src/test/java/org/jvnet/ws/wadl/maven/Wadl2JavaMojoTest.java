@@ -134,7 +134,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/HttpApiSearchYahooComNewsSearchServiceV1.java"));
+        assertThat(targetDirectory, contains("test/ApiSearchYahooCom_NewsSearchServiceV1.java"));
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));
@@ -149,7 +149,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         ClassLoader cl = compile(targetDirectory);
         
         // Check that we have the expected number of methods
-        Class $NewsSearch = cl.loadClass("test.HttpApiSearchYahooComNewsSearchServiceV1$NewsSearch");
+        Class $NewsSearch = cl.loadClass("test.ApiSearchYahooCom_NewsSearchServiceV1$NewsSearch");
         assertNotNull($NewsSearch);
         
         Class $Type = cl.loadClass("test.Type"); 
@@ -202,7 +202,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/HttpLocalhost9998.java"));
+        assertThat(targetDirectory, contains("test/Localhost.java"));
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
@@ -210,7 +210,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         
         
         // Check that we have the expected number of methods
-        Class $Helloworld = cl.loadClass("test.HttpLocalhost9998$Helloworld");
+        Class $Helloworld = cl.loadClass("test.Localhost$Helloworld");
         assertNotNull($Helloworld);
         
         // Constructors
@@ -249,7 +249,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/HttpLocalhost7201Project1Jersey.java"));
+        assertThat(targetDirectory, contains("test/Localhost_Project1Jersey.java"));
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
@@ -257,7 +257,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         
         
         // Check that we have the expected number of methods
-        Class $Helloworld = cl.loadClass("test.HttpLocalhost7201Project1Jersey$Put");
+        Class $Helloworld = cl.loadClass("test.Localhost_Project1Jersey$Put");
         assertNotNull($Helloworld);
         
         // Constructors
@@ -273,7 +273,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
     
         // Verify that in both cases the method is actually invoked, in
         // liu of functional tests for the moment
-        File proxyFile = new File(targetDirectory, "test/HttpLocalhost7201Project1Jersey.java");
+        File proxyFile = new File(targetDirectory, "test/Localhost_Project1Jersey.java");
         DataInputStream input = new DataInputStream(new FileInputStream(proxyFile));
         byte data[] = new byte[(int)proxyFile.length()];
         input.readFully(data);
@@ -317,7 +317,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/HttpLocalhost9998.java"));
+        assertThat(targetDirectory, contains("test/Localhost.java"));
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
@@ -325,7 +325,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         
         
         // Check that we have the expected number of methods
-        Class $Helloworld = cl.loadClass("test.HttpLocalhost9998$Helloworld");
+        Class $Helloworld = cl.loadClass("test.Localhost$Helloworld");
         assertNotNull($Helloworld);
         
         // Constructors
@@ -370,7 +370,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // Verify the files are in place
         
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/HttpLocalhost7101JerseySchemaGenExamplesContextRootJersey.java"));
+        assertThat(targetDirectory, contains("test/Localhost_JerseySchemaGenExamplesContextRootJersey.java"));
         assertThat(targetDirectory, contains("example/"));
         assertThat(targetDirectory, contains("example/IndirectReturn.java"));
         assertThat(targetDirectory, contains("example/ObjectFactory.java"));
@@ -381,9 +381,13 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
-        
+
+        // Check top level accessor
+        Class $Root = cl.loadClass("test.Localhost_JerseySchemaGenExamplesContextRootJersey");
+        assertNotNull($Root.getDeclaredMethod("pathParam1", Client.class, String.class));
+
         // Check that we have the expected number of methods
-        Class $PathParam1 = cl.loadClass("test.HttpLocalhost7101JerseySchemaGenExamplesContextRootJersey$PathParam1");
+        Class $PathParam1 = cl.loadClass("test.Localhost_JerseySchemaGenExamplesContextRootJersey$PathParam1");
         assertNotNull($PathParam1);
 
         // Constructors
@@ -394,6 +398,10 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($PathParam1.getDeclaredMethod("getParam1"));
         assertNotNull($PathParam1.getDeclaredMethod("setParam1", String.class));
 
+        // Check accessors
+        assertNotNull($PathParam1.getDeclaredMethod("param2", String.class));
+        
+        
         // Go on level down
         Class $PathParam2 = $PathParam1.getDeclaredClasses()[0];
         assertThat($PathParam2.getSimpleName(), equalTo("Param2"));
@@ -440,7 +448,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/HttpApiSearchYahooComNewsSearchServiceV1.java"));
+        assertThat(targetDirectory, contains("test/ApiSearchYahooCom_NewsSearchServiceV1.java"));
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));

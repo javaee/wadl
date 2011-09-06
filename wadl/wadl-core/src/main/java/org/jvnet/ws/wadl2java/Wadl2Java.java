@@ -42,8 +42,12 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import javax.annotation.Generated;
+import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.util.JAXBResult;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -74,14 +78,17 @@ public class Wadl2Java {
     private ErrorListener errorListener;
     private String generatedPackages = "";
     private boolean autoPackage;
+    private URI rootDir;
 
     /**
      * Creates a new instance of a Wadl2Java processor.
+     * @param the root of the generation location
      * @param writer the writer to use to write out the java files
      * @param pkg the Java package in which to generate code.
      * @param autoPackage whether to use JAXB auto package name generation
      */
-    public Wadl2Java(CodeWriter writer, String pkg, boolean autoPackage) {
+    public Wadl2Java(URI rootDir, CodeWriter writer, String pkg, boolean autoPackage) {
+        this.rootDir = rootDir;
         this.codeWriter = writer;
         this.pkg = pkg;
         this.javaDoc = new JavaDocUtil();
@@ -102,20 +109,21 @@ public class Wadl2Java {
      */
     public Wadl2Java(File outputDir, String pkg, boolean autoPackage, 
             List<File> customizations) throws IOException {
-        this(new FileCodeWriter(outputDir), pkg, autoPackage, 
+        this(outputDir.toURI(),new FileCodeWriter(outputDir), pkg, autoPackage, 
                 convertToURIList(customizations));
     }
     
     /**
      * Creates a new instance of a Wadl2Java processor.
+     * @param rootDir the root of the generation path
      * @param writer the writer to use to write out the java files
      * @param pkg the Java package in which to generate code.
      * @param autoPackage whether to use JAXB auto package name generation
      * @param customizations a list of JAXB customization files
      */
-    public Wadl2Java(CodeWriter writer, String pkg, boolean autoPackage, 
+    public Wadl2Java(URI rootDir, CodeWriter writer, String pkg, boolean autoPackage, 
             List<URI> customizations) {
-        this(writer, pkg, autoPackage);
+        this(rootDir, writer, pkg, autoPackage);
         this.customizations = customizations;
     }
 
@@ -486,10 +494,31 @@ public class Wadl2Java {
         // by tooling
         if (rootResource!=null) {
             JAnnotationUse annUse = impl.annotate(Generated.class); 
-            annUse.param("value",
-                    rootResource.toString()); 
+            JAnnotationArrayMember array = annUse.paramArray("value");
+            array.param("wadl|" + rootResource.toString()); 
+            
+            // Process any of the binding files if avaliable
+            //
+            
+            URI packagePath = UriBuilder.fromUri(rootDir)
+                    .path(pkg.replace(".", "/") + "/").build();
+            
+            
+            for (URI customization : customizations) {
+                array.param("customization|" + packagePath.relativize(customization));
+            }
+            
+            //
+            
             annUse.param("comments",
-                    "wadl2java");
+                    "wadl2java, http://wadl.java.net");
+            
+            // Output date
+            GregorianCalendar gc = new GregorianCalendar();
+            gc.setTime(new Date());
+            annUse.param("date",
+                    DatatypeConverter.printDateTime(
+                       gc));
         }
         
         
@@ -505,6 +534,7 @@ public class Wadl2Java {
      * generated. This can either be a top level class or a nested static 
      * inner class for a parent resource.
      * @param resource the WADL <code>resource</code> element being processed.
+     * @param isroot is this the
      * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
      * generation, the WADL processor attempts to create a duplicate
      * class. This indicates a structural problem with the WADL file, 
@@ -521,7 +551,8 @@ public class Wadl2Java {
         for (MethodNode m: resource.getMethods()) {
             rcGen.generateMethodDecls(m, false);
         }
-
+        
+ 
         // generate sub classes for each child resource
         for (ResourceNode r: resource.getChildResources()) {
             generateSubClass(impl, r);

@@ -83,7 +83,7 @@ public class GeneratorUtil {
         if (input==null || input.length()==0)
             return("Index");
         StringBuffer buf = new StringBuffer();
-        for(String segment: input.split("[^a-zA-Z0-9]")) {
+        for(String segment: input.split("[^a-zA-Z0-9_]")) {
             if (segment.length()<1)
                 continue;
             buf.append(segment.substring(0,1).toUpperCase());

@@ -168,20 +168,7 @@ public class ResourceClassGenerator {
         
         // Path segments
         for (PathSegment segment: resource.getPathSegments()) {
-            for (Param p: segment.getTemplateParameters()) {
-                $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc),
-                        GeneratorUtil.makeParamName(p.getName()));
-                javaDoc.generateParamDoc(p, $ctor);
-                generateBeanProperty($impl, p, false);
-            }
-            for (Param p: segment.getMatrixParameters()) {
-                if (p.isRequired()) {
-                    $ctor.param(GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc),
-                            GeneratorUtil.makeParamName(p.getName()));
-                    javaDoc.generateParamDoc(p, $ctor);
-                }
-                generateBeanProperty($impl, p, false);
-            }
+            generateParameterForPathSegment(segment, $ctor, true, $impl);
         }
         
         // generate constructor without client parameters
@@ -200,6 +187,117 @@ public class ResourceClassGenerator {
             JVar nextParam = params[i];
             $ctorNoParam.param(nextParam.type(), nextParam.name());
             $thisCall.arg(nextParam);
+        }
+        
+        // If this isn't a root node then we need to generate a method
+        // on the parent to access just this class
+        
+        if (resource.getParentResource()!=null) {
+    
+            boolean outer = !parentClass.fields().containsKey("_client");
+            
+            // Lower the first character to make it into a method name
+            //
+
+            String className = resource.getClassName();
+            String accessorName = 
+                    Character.toLowerCase(className.charAt(0))
+                    + className.substring(1);
+            
+            
+            JMethod $accessorMethod = parentClass.method(
+                    outer ? JMod.PUBLIC | JMod.STATIC: JMod.PUBLIC, $impl, accessorName);
+
+            javaDoc.generateAccessorDoc(resource, $accessorMethod);
+
+            // If we are at the outermost level then we need to allow users
+            // to pass in the client
+            JVar $clientAccessorParam = null;
+            if (outer) {
+                $clientAccessorParam = $accessorMethod.param(Client.class, "client");
+            }
+            
+            generateParameterForPathSegment(resource.getPathSegment(), $accessorMethod, false, $impl);
+            
+            JBlock $accessorBody = $accessorMethod.body();
+            
+            JInvocation invoke = JExpr._new($impl);
+            $accessorBody._return(invoke);
+
+            // Pass in client parameeter
+            //
+            if (!outer) {
+                invoke.arg($clientReference); 
+            } 
+            else {
+                invoke.arg($clientAccessorParam);
+            }
+                
+            
+            // Pass in parent owned context parmaeters
+            
+            for (PathSegment segment : resource.getParentResource().getPathSegments())
+            {
+                for (Param p: segment.getTemplateParameters()) {
+                    // codegen: (Type)templateAndMatrixParameterValues.get(name);
+                    JType propertyType = GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc);       
+                    invoke.arg(JExpr.cast(propertyType,$templateMatrixParamValMap.invoke("get").arg(JExpr.lit(p.getName()))));
+                }
+                for (Param p: segment.getMatrixParameters()) {
+                    if (p.isRequired()) {
+                        // codegen: (Type)templateAndMatrixParameterValues.get(name);
+                        
+                        JType propertyType = GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc);       
+
+                        invoke.arg(
+                                JExpr.cast(propertyType,
+                                $templateMatrixParamValMap.invoke("get").arg(JExpr.lit(p.getName()))));
+                        
+                    }
+                }               
+            }
+            
+            // Copy accross value from this method
+            //
+            
+            for (JVar var : $accessorMethod.listParams()) {
+                if (outer && "client".equals(var.name())) {
+                    continue;
+                }
+                    
+                
+                invoke.arg(var);
+            }
+            
+            // Generate the version without a client parameter
+            if (outer) {
+
+                JMethod $accessorMethodNoClient = parentClass.method(
+                        outer ? JMod.PUBLIC | JMod.STATIC: JMod.PUBLIC, $impl, accessorName);
+
+                javaDoc.generateAccessorDoc(resource, $accessorMethodNoClient);
+
+                JVar[] originalParams = $accessorMethod.listParams();
+                // Miss of first client parameter
+                for (int counter=1; counter < originalParams.length; counter++){
+                    $accessorMethodNoClient.param(
+                            originalParams[counter].type(), 
+                            originalParams[counter].name());
+                }            
+                
+                JBlock $noClientBody = $accessorMethodNoClient.body();
+                JInvocation $invokeOther = JExpr.invoke($accessorMethod);
+                $noClientBody._return($invokeOther);
+                
+                // Create a client and invoke
+                $invokeOther.arg(
+                        codeModel.ref(Client.class).staticInvoke("create"));
+                
+                // Invoke other parameter in order
+                for (JVar next : $accessorMethodNoClient.listParams()) {
+                    $invokeOther.arg(next);
+                }
+            }
         }
         
         
@@ -271,6 +369,35 @@ public class ResourceClassGenerator {
 
         $class = $impl;
         return $class;
+    }
+
+    /**
+     * For a given path segment generate the correct parameters
+     * @param segment the segment to process
+     * @param method the method we are working on
+     * @param contextClass the class we are generating in the context of
+     */
+    private void generateParameterForPathSegment(
+            PathSegment segment, JMethod method, 
+            boolean generateBeanDefinitions, JDefinedClass contextClass) {
+        for (Param p: segment.getTemplateParameters()) {
+            method.param(GeneratorUtil.getJavaType(p, codeModel, contextClass, javaDoc),
+                    GeneratorUtil.makeParamName(p.getName()));
+            javaDoc.generateParamDoc(p, method);
+            if (generateBeanDefinitions) {
+                generateBeanProperty(contextClass, p, false);
+            }
+        }
+        for (Param p: segment.getMatrixParameters()) {
+            if (p.isRequired()) {
+                method.param(GeneratorUtil.getJavaType(p, codeModel, contextClass, javaDoc),
+                        GeneratorUtil.makeParamName(p.getName()));
+                javaDoc.generateParamDoc(p, method);
+            }
+            if (generateBeanDefinitions) {
+                generateBeanProperty(contextClass, p, false);
+            }
+        }
     }
     
     /**
