@@ -21,6 +21,8 @@ package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
 import com.sun.codemodel.writer.FileCodeWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl2java.ast.FaultNode;
 import org.jvnet.ws.wadl2java.ast.MethodNode;
@@ -42,6 +44,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -62,10 +65,126 @@ import org.xml.sax.SAXParseException;
  * @author mh124079
  */
 public class Wadl2Java {
+
     
-    private CodeWriter codeWriter;
-    private List<URI> customizations;
-    private String pkg;
+    /**
+     * A parameter object to make it easier to extend this class without
+     * having to add more constructors or parameters. Each setter is chained
+     * so that it can use used as the first line in a constructor.
+     */
+    public static class Parameters
+      implements Cloneable
+    {
+        private CodeWriter codeWriter;
+        private List<URI> customizations;
+        private String pkg;
+        private String generationStyle;
+        private boolean autoPackage;
+        private URI rootDir;
+        private Map<String, String> baseURIToClassName = Collections.EMPTY_MAP;
+        
+        public Parameters clone()
+        {
+            try {
+                Parameters parameters = (Parameters)super.clone();
+                parameters.customizations = new ArrayList<URI>(this.customizations);
+                parameters.baseURIToClassName = new HashMap<String, String>(this.baseURIToClassName);
+                return parameters;
+            } catch (CloneNotSupportedException ex) {
+                Logger.getLogger(Wadl2Java.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
+        
+        /**
+         * @param the code writer used to write out the Java files
+         * @return this 
+         */
+        public Parameters setCodeWriter(CodeWriter codeWriter) {
+            this.codeWriter = codeWriter;
+            return this;
+        }
+
+        /**
+         * @param the generation style, currently unused
+         * @return this 
+         */
+        public Parameters setGenerationStyle(String generationStyle) {
+            this.generationStyle = generationStyle;
+            return this;
+        }
+
+        /**
+         * @param A list of JAX-B customization files
+         * @return this 
+         */
+        public Parameters setCustomizations(List<URI> customizations) {
+            this.customizations = new ArrayList(
+                    customizations); // Copy
+            return this;
+        }
+
+        /**
+         * @param A list of JAX-B customization files
+         * @return this 
+         */
+        public Parameters setCustomizationsAsFiles(List<File> customizations) {
+            this.customizations = convertToURIList(customizations); // Copy
+            return this;
+        }
+
+        /**
+         * @param files A list of files
+         * @return A list of URI for those files
+         */
+        private static List<URI> convertToURIList(List<File> files) {
+            List<URI> copy = new ArrayList<URI>();
+            for (File file : files) {
+                copy.add(file.toURI());
+            }
+            return copy;
+        }
+        
+        
+        /**
+         * @param The Java package in which to generate the code
+         * @return this 
+         */
+        public Parameters setPkg(String pkg) {
+            this.pkg = pkg;
+            return this;
+        }
+
+        /**
+         * @param Whether to use JAX-B auto-package generation
+         * @return this 
+         */
+        public Parameters setAutoPackage(boolean autoPackage) {
+            this.autoPackage = autoPackage;
+            return this;
+        }
+
+        /**
+         * @param The root directory of the generation
+         * @return this 
+         */
+        public Parameters setRootDir(URI rootDir) {
+            this.rootDir = rootDir;
+            return this;
+        }
+
+    
+        /**
+         * @param A map of template strings to class names
+         * @return this 
+         */
+        public Parameters setCustomClassNames(Map<String, String> map) {
+            baseURIToClassName = new HashMap<String, String>(map);
+            return this;
+        }
+    }    
+    
+    private Parameters parameters;
     private JPackage jPkg;
     private S2JJAXBModel s2jModel;
     private JCodeModel codeModel;
@@ -77,24 +196,15 @@ public class Wadl2Java {
     private SchemaCompiler s2j;
     private ErrorListener errorListener;
     private String generatedPackages = "";
-    private boolean autoPackage;
-    private URI rootDir;
 
     /**
      * Creates a new instance of a Wadl2Java processor.
-     * @param the root of the generation location
-     * @param writer the writer to use to write out the java files
-     * @param pkg the Java package in which to generate code.
-     * @param autoPackage whether to use JAXB auto package name generation
      */
-    public Wadl2Java(URI rootDir, CodeWriter writer, String pkg, boolean autoPackage) {
-        this.rootDir = rootDir;
-        this.codeWriter = writer;
-        this.pkg = pkg;
+    public Wadl2Java(Parameters parameters) {
+        this.parameters = parameters.clone();
+        assert parameters.codeWriter!=null;
         this.javaDoc = new JavaDocUtil();
         this.processedDocs = new ArrayList<String>();
-        this.customizations = new ArrayList<URI>();
-        this.autoPackage = autoPackage;
         this.idMap = new ElementResolver();
         this.ifaceMap = new HashMap<String, ResourceTypeNode>();
     }
@@ -109,36 +219,16 @@ public class Wadl2Java {
      */
     public Wadl2Java(File outputDir, String pkg, boolean autoPackage, 
             List<File> customizations) throws IOException {
-        this(outputDir.toURI(),new FileCodeWriter(outputDir), pkg, autoPackage, 
-                convertToURIList(customizations));
+        this(new Parameters()
+                .setRootDir(outputDir.toURI())
+                .setCodeWriter(new FileCodeWriter(outputDir))
+                .setPkg(pkg)
+                .setAutoPackage(autoPackage)
+                .setCustomizationsAsFiles(customizations));
     }
     
-    /**
-     * Creates a new instance of a Wadl2Java processor.
-     * @param rootDir the root of the generation path
-     * @param writer the writer to use to write out the java files
-     * @param pkg the Java package in which to generate code.
-     * @param autoPackage whether to use JAXB auto package name generation
-     * @param customizations a list of JAXB customization files
-     */
-    public Wadl2Java(URI rootDir, CodeWriter writer, String pkg, boolean autoPackage, 
-            List<URI> customizations) {
-        this(rootDir, writer, pkg, autoPackage);
-        this.customizations = customizations;
-    }
 
 
-    /**
-     * @param files A list of files
-     * @return A list of URI for those files
-     */
-    private static List<URI> convertToURIList(List<File> files) {
-        List<URI> copy = new ArrayList<URI>();
-        for (File file : files) {
-            copy.add(file.toURI());
-        }
-        return copy;
-    }
     
     
     
@@ -170,8 +260,8 @@ public class Wadl2Java {
         s2j = new SchemaCompilerImpl();
         
         errorListener = new SchemaCompilerErrorListener();
-        if (!autoPackage)
-            s2j.setDefaultPackageName(pkg);
+        if (!parameters.autoPackage)
+            s2j.setDefaultPackageName(parameters.pkg);
         s2j.setErrorListener(errorListener);
         Application a = processDescription(rootDesc);
         List<ResourceNode> rs = buildAst(a, rootDesc);
@@ -191,11 +281,11 @@ public class Wadl2Java {
                 buf.append(genPkg.name());
             }
             generatedPackages = buf.toString();
-            jPkg = codeModel._package(pkg);
+            jPkg = codeModel._package(parameters.pkg);
             generateResourceTypeInterfaces();
             for (ResourceNode r: rs)
                 generateEndpointClass(rootDesc, r);
-            codeModel.build(codeWriter);
+            codeModel.build(parameters.codeWriter);
         }
     }
     
@@ -276,7 +366,7 @@ public class Wadl2Java {
                 }
             }
         }
-        for (URI customization: customizations) {
+        for (URI customization: parameters.customizations) {
             URI incl = desc.resolve(customization);
             System.out.println(Wadl2JavaMessages.PROCESSING(incl.toString()));
             InputSource input = new InputSource(incl.toURL().openStream());
@@ -500,11 +590,11 @@ public class Wadl2Java {
             // Process any of the binding files if avaliable
             //
             
-            URI packagePath = UriBuilder.fromUri(rootDir)
-                    .path(pkg.replace(".", "/") + "/").build();
+            URI packagePath = UriBuilder.fromUri(parameters.rootDir)
+                    .path(parameters.pkg.replace(".", "/") + "/").build();
             
             
-            for (URI customization : customizations) {
+            for (URI customization : parameters.customizations) {
                 array.param("customization|" + packagePath.relativize(customization));
             }
             
@@ -582,6 +672,18 @@ public class Wadl2Java {
         List<ResourceNode> ns = new ArrayList<ResourceNode>();
         for (Resources r: rs) {
             ResourceNode rootResourcesNode = new ResourceNode(a, r);
+            
+            // Override the class name if required
+            //
+            
+            String overrideName = parameters.baseURIToClassName.get(
+                    rootResourcesNode.getUriTemplate());
+            if (overrideName!=null) {
+                rootResourcesNode.setClassName(overrideName);
+            }
+            
+            //
+            
             for (Resource child: r.getResource()) {
                 buildResourceTree(rootResourcesNode, child, rootFile);
             }

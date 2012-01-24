@@ -93,7 +93,7 @@ public class ResourceNode {
         doc = resource.getDoc();
         parentResource = parent;
         pathSegment = new PathSegment(resource, file, idMap);
-        className = GeneratorUtil.makeClassName(pathSegment.getTemplate());
+        className = GeneratorUtil.makeClassName(getUriTemplate());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();        
         types = new ArrayList<ResourceTypeNode>();
@@ -112,7 +112,6 @@ public class ResourceNode {
         doc = resource.getDoc();
         parentResource = null;
         pathSegment = new PathSegment(resource, file, idMap);
-        className = GeneratorUtil.makeClassName(pathSegment.getTemplate());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();        
         types = new ArrayList<ResourceTypeNode>();
@@ -137,9 +136,28 @@ public class ResourceNode {
      * @return a suitable name
      */
     public String getClassName() {
+        if (className==null)
+        {
+            className = GeneratorUtil.makeClassName(getUriTemplate());
+        }
         return className;
     }
-    
+
+    /**
+     * @return The template for this resource 
+     */
+    public String getUriTemplate() {
+        return pathSegment.getTemplate();
+    }
+
+    /**
+     * Override the default generated class name
+     */
+    public void setClassName(String className) {
+        // TODO perform some kind of validation
+        this.className = className;
+    }
+
     /**
      * Get the child resources
      * @return a list of child resources
