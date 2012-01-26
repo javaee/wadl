@@ -184,7 +184,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
     /**
      * Tests the hello world file works with custom class names providing less cryptic and
-     * non-changing class names.
+     * non-changing class names for bug bug WADL-43
      * 
      * 
      * @throws Exception
