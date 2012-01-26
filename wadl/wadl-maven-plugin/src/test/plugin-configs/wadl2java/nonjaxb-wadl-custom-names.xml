@@ -1,0 +1,25 @@
+<project>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>wadl-maven-plugin</artifactId>
+                <configuration>
+                    <targetDirectory>${basedir}/target/test-harness/nonjaxb-wadl/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/nonjaxb-wadl</sourceDirectory>
+                    <packageName>test</packageName>
+                    <includes>*.wadl</includes>
+                    <customizations></customizations>
+                    <autoPackaging>true</autoPackaging>
+                    <failOnError>true</failOnError>
+                    <customClassNames>
+                        <property>
+                            <!-- see HelloWorld.wadl -->
+                            <name>http://localhost:9998/</name>
+                            <value>MyApiClient</value>
+                        </property>
+                    </customClassNames>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

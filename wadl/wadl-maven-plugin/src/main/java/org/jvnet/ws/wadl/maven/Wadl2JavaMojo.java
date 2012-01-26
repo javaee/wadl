@@ -2,7 +2,9 @@ package org.jvnet.ws.wadl.maven;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -12,9 +14,12 @@ import org.codehaus.plexus.util.DirectoryScanner;
 import org.jvnet.ws.wadl2java.Wadl2Java;
 
 import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.writer.FileCodeWriter;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * A Maven plugin to generate Java code from WADL descriptions.
@@ -32,49 +37,68 @@ public class Wadl2JavaMojo extends AbstractMojo {
      * @required
      */
     private String packageName;
-
     /**
      * The target directory, to which all Java code will be generated.
      * 
      * @parameter expression="${basedir}/target/generated-sources/wadl"
      */
     private File targetDirectory;
-
     /**
      * The directory containing the WADL files.
      * 
      * @parameter expression="${basedir}/src/main/wadl"
      */
     private File sourceDirectory;
-
     /**
      * The patterns of the files to be included in the transformation.
      * 
      * @parameter expression="*.wadl"
      */
     private String includes;
-
     /**
      * The names of customization files.
      * 
      * @parameter
      */
     private List<String> customizations;
-
     /**
      * The current project.
      * 
      * @parameter expression="${project}"
      */
     private MavenProject project;
-
     /**
      * Autopackaging.
      * 
      * @parameter expression="${autoPackaging}"
      */
     private boolean autoPackaging = true;
-
+    /**
+     * A list of key/value pairs with the key being the Base URL in the WADL file. The value is the
+     * desired name of the resulting class.
+     * 
+     * <pre>
+     * 
+     * <customClassNames>
+     *  <property>
+     *   <name>http://localhost:8080</name>
+     *   <value>MyApi</value>
+     *  </property>
+     *  <property>
+     *   <name>http://example.com/api</name>
+     *   <value>MyApi</value>
+     *  </property>
+     * </customClassNames>
+     * </pre>
+     * 
+     * Properties used instead of map because colon is not allowed in xml element name.
+     * 
+     * @parameter expression="${customClassNames}"
+     * 
+     * 
+     * @see http://java.net/jira/browse/WADL-43
+     */
+    private Properties customClassNames;
     /**
      * A boolean, indicating if the mojo should fail entirely if it fails to
      * generate code from a single WADL file.
@@ -107,12 +131,11 @@ public class Wadl2JavaMojo extends AbstractMojo {
                     }
                 }
                 project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
-            }
-            catch (IOException ioe) {
+            } catch (IOException ioe) {
                 // This case cannot happen as we already check to
                 // see if the directory in in place
                 //
-                
+
                 policy.process("Unexpected exception creating processor", ioe);
             }
         }
@@ -149,8 +172,26 @@ public class Wadl2JavaMojo extends AbstractMojo {
         } else {
             customizationFiles = Collections.EMPTY_LIST;
         }
-        Wadl2Java processor = new Wadl2Java(targetDirectory, packageName,
-                autoPackaging, customizationFiles);
+
+        if (customClassNames == null) {
+            customClassNames = new Properties();
+        }
+
+        // convert objects from properties to String.
+        HashMap<String, String> customClassNamesMap = new HashMap<String, String>();
+        for (Map.Entry<Object, Object> entry : customClassNames.entrySet()) {
+            customClassNamesMap.put(entry.getKey().toString(), entry.getValue().toString());
+        }
+
+        Wadl2Java.Parameters parameters = new Wadl2Java.Parameters();
+        parameters.setAutoPackage(autoPackaging);
+        parameters.setCustomClassNames(customClassNamesMap);
+        parameters.setCustomizationsAsFiles(customizationFiles);
+        parameters.setPkg(packageName);
+        parameters.setRootDir(targetDirectory.toURI());
+        parameters.setCodeWriter(new FileCodeWriter(targetDirectory));
+        Wadl2Java processor = new Wadl2Java(parameters);
+
         return processor;
     }
 
@@ -174,7 +215,6 @@ public class Wadl2JavaMojo extends AbstractMojo {
 
         void process(String message, Throwable cause)
                 throws MojoExecutionException;
-
     }
 
     private class FailOnErrorPolicy implements ErrorPolicy {
@@ -183,7 +223,6 @@ public class Wadl2JavaMojo extends AbstractMojo {
                 throws MojoExecutionException {
             throw new MojoExecutionException(message, cause);
         }
-
     }
 
     private class LogOnlyErrorPolicy implements ErrorPolicy {
@@ -192,7 +231,5 @@ public class Wadl2JavaMojo extends AbstractMojo {
                 throws MojoExecutionException {
             getLog().error(message, cause);
         }
-
     }
-
 }

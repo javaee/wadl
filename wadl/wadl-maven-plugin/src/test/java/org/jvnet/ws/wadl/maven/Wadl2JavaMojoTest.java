@@ -32,7 +32,6 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
 
-
 /**
  * A bunch of tests for the {@link Wadl2JavaMojo}.
  * 
@@ -79,7 +78,6 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertThat(targetDirectory, exists());
     }
 
-    
     /**
      * Tests the simple case with a wadl that is not parsable
      */
@@ -100,16 +98,13 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.replay(project);
         try {
             mojo.execute();
-        }
-        catch (MojoExecutionException mee) {
+        } catch (MojoExecutionException mee) {
             // This is fine
-        }
-        catch (Throwable th) {
+        } catch (Throwable th) {
             assertThat(th, not(instanceOf(MojoExecutionException.class)));
         }
     }
-    
-    
+
     /**
      * Tests the case in which a valid wadl file exists.
      */
@@ -147,45 +142,80 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
-        
+
         // Check that we have the expected number of methods
         Class $NewsSearch = cl.loadClass("test.ApiSearchYahooCom_NewsSearchServiceV1$NewsSearch");
         assertNotNull($NewsSearch);
-        
-        Class $Type = cl.loadClass("test.Type"); 
-        Class $Sort = cl.loadClass("test.Sort"); 
-        Class $Output = cl.loadClass("test.Output"); 
-        
+
+        Class $Type = cl.loadClass("test.Type");
+        Class $Sort = cl.loadClass("test.Sort");
+        Class $Output = cl.loadClass("test.Output");
+
         // Constructors
         assertNotNull($NewsSearch.getConstructor());
         assertNotNull($NewsSearch.getConstructor(Client.class));
-        
-        
+
+
         // Check that we have two methods of the right name and parameters
         assertNotNull($NewsSearch.getDeclaredMethod("getAsResultSet", String.class, String.class));
         assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class, Class.class));
         assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class, GenericType.class));
 
         assertNotNull($NewsSearch.getDeclaredMethod("getAsResultSet", String.class, String.class,
-           $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class));
+                $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class));
         assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class,
-           $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, Class.class));
+                $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, Class.class));
         assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class,
-           $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, GenericType.class));
+                $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, GenericType.class));
 
-        
+
     }
 
-    
     /**
-     * Tests the case in which a valid wadl file exists, and it it contains
-     * a method that returns just text/plain
+     * Tests the case in which a valid wadl file exists, and it it contains a method that returns
+     * just text/plain
      */
     public void testNonJAXBWadlFiles() throws Exception {
+        final String expectedClassName = "Localhost";
+        final String pluginXmlFilename = "nonjaxb-wadl.xml";
+
+        assertNonJAXBWadlFiles(expectedClassName, pluginXmlFilename);
+    }
+
+    /**
+     * Tests the hello world file works with custom class names providing less cryptic and
+     * non-changing class names.
+     * 
+     * 
+     * @throws Exception
+     */
+    public void testNonJAXBWadlFilesCustomClassName() throws Exception {
+        final String expectedClassName = "MyApiClient";
+        final String pluginXmlFilename = "nonjaxb-wadl-custom-names.xml";
+
+        assertNonJAXBWadlFiles(expectedClassName, pluginXmlFilename);
+    }
+
+    /**
+     * Tests the case in which a valid wadl file exists, and it it contains a method that returns
+     * just text/plain
+     * 
+     * @param expectedClassName
+     * @param pluginXmlFilename
+     * @throws Exception
+     * @throws IllegalAccessException
+     * @throws IOException
+     * @throws MojoExecutionException
+     * @throws MojoFailureException
+     * @throws MalformedURLException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     */
+    private void assertNonJAXBWadlFiles(final String expectedClassName, final String pluginXmlFilename)
+            throws Exception {
         // Prepare
-        Wadl2JavaMojo mojo = getMojo("nonjaxb-wadl.xml");
-        File targetDirectory = (File) getVariableValueFromObject(mojo,
-                "targetDirectory");
+        Wadl2JavaMojo mojo = getMojo(pluginXmlFilename);
+        File targetDirectory = (File) getVariableValueFromObject(mojo, "targetDirectory");
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
@@ -202,17 +232,15 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/Localhost.java"));
+        assertThat(targetDirectory, contains("test/" + expectedClassName + ".java"));
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
-        
-        
-        
+
         // Check that we have the expected number of methods
-        Class $Helloworld = cl.loadClass("test.Localhost$Helloworld");
+        Class $Helloworld = cl.loadClass("test." + expectedClassName + "$Helloworld");
         assertNotNull($Helloworld);
-        
+
         // Constructors
         assertNotNull($Helloworld.getConstructor());
         assertNotNull($Helloworld.getConstructor(Client.class));
@@ -253,13 +281,13 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
-        
-        
-        
+
+
+
         // Check that we have the expected number of methods
         Class $Helloworld = cl.loadClass("test.Localhost_Project1Jersey$Put");
         assertNotNull($Helloworld);
-        
+
         // Constructors
         assertNotNull($Helloworld.getConstructor());
         assertNotNull($Helloworld.getConstructor(Client.class));
@@ -270,24 +298,24 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
         assertNotNull($Helloworld.getDeclaredMethod("putApplicationXml", Object.class, Class.class));
         assertNotNull($Helloworld.getDeclaredMethod("putApplicationXml", Object.class, GenericType.class));
-    
+
         // Verify that in both cases the method is actually invoked, in
         // liu of functional tests for the moment
         File proxyFile = new File(targetDirectory, "test/Localhost_Project1Jersey.java");
         DataInputStream input = new DataInputStream(new FileInputStream(proxyFile));
-        byte data[] = new byte[(int)proxyFile.length()];
+        byte data[] = new byte[(int) proxyFile.length()];
         input.readFully(data);
         String contents = new String(data);
         Matcher matcher = Pattern.compile("return resourceBuilder.method").matcher(contents);
         // Make sure we only have four return methods of this kind
-        matcher.find(); matcher.find(); matcher.find();
+        matcher.find();
+        matcher.find();
+        matcher.find();
         assertTrue(matcher.find());
         assertFalse(matcher.find());
     }
-    
-    
-    
-   /**
+
+    /**
      * Tests the case in which a method has multiple representations
      */
     public void testValidMutlipleContentTypes() throws Exception {
@@ -312,7 +340,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertThat(targetDirectory, exists());
 
         // Verify the files are in place
-        
+
         // Verify
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
@@ -321,13 +349,13 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
-        
-        
-        
+
+
+
         // Check that we have the expected number of methods
         Class $Helloworld = cl.loadClass("test.Localhost$Helloworld");
         assertNotNull($Helloworld);
-        
+
         // Constructors
         assertNotNull($Helloworld.getConstructor());
         assertNotNull($Helloworld.getConstructor(Client.class));
@@ -342,7 +370,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationJson", GenericType.class));
 
     }
-    
+
     /**
      * Tests the case in which a valid wadl file exists.
      */
@@ -368,7 +396,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertThat(targetDirectory, exists());
 
         // Verify the files are in place
-        
+
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/Localhost_JerseySchemaGenExamplesContextRootJersey.java"));
         assertThat(targetDirectory, contains("example/"));
@@ -378,7 +406,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertThat(targetDirectory, contains("example/SimpleReturn.java"));
 
 
-        
+
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
 
@@ -400,8 +428,8 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
         // Check accessors
         assertNotNull($PathParam1.getDeclaredMethod("param2", String.class));
-        
-        
+
+
         // Go on level down
         Class $PathParam2 = $PathParam1.getDeclaredClasses()[0];
         assertThat($PathParam2.getSimpleName(), equalTo("Param2"));
@@ -417,7 +445,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($PathParam2.getDeclaredMethod("getParam2"));
         assertNotNull($PathParam2.getDeclaredMethod("setParam2", String.class));
 
-        
+
         // Check that we have two methods of the right name and parameters
         assertNotNull($PathParam2.getDeclaredMethod("getAsSimpleReturn"));
         assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", Class.class));
@@ -459,62 +487,64 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertThat(targetDirectory, contains("yahoo/yn/ResultSet.java"));
         // Because of the customizations
         assertThat(targetDirectory, contains("yahoo/yn/Result.java"));
-        
+
         // Check that the generated code compiles
         compile(targetDirectory);
     }
 
-    
-    
     private ClassLoader compile(File targetDirectory) throws MalformedURLException {
         // Compile the source
-        
+
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticCollector diagnosticCollector = new DiagnosticCollector();
         StandardJavaFileManager fileManager = compiler.getStandardFileManager(
-                diagnosticCollector, 
+                diagnosticCollector,
                 null, null);
-        
+
         List<File> files = listFilesRecursively(targetDirectory);
 
         Iterable<? extends JavaFileObject> compilationUnits1 =
-           fileManager.getJavaFileObjectsFromFiles(files);
-        boolean success = compiler.getTask(null, fileManager, null, null, null, compilationUnits1).call();     
+                fileManager.getJavaFileObjectsFromFiles(files);
+        boolean success = compiler.getTask(null, fileManager, null, null, null, compilationUnits1).call();
         assertTrue("Compilation failed for some reason", success);
-       
+
         assertThat(diagnosticCollector.getDiagnostics().size(), equalTo(0));
-        
+
         // Create an return a stuitable class loader
         //
-        
-        return new URLClassLoader(new java.net.URL[] { targetDirectory.toURI().toURL() });
+
+        return new URLClassLoader(new java.net.URL[]{targetDirectory.toURI().toURL()});
     }
+
     /**
      * @return a list of all java files under the given directory
      */
     private List<File> listFilesRecursively(File root) {
-        
+
         List<File> files = new ArrayList<File>();
         List<File> dirs = new ArrayList<File>();
         dirs.add(root);
-        
+
         for (int i = 0; i < dirs.size(); i++) {
             File dir = dirs.get(i);
-            
+
             files.addAll(Arrays.asList(dir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".java");
-            }})));
-            
+
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".java");
+                }
+            })));
+
             dirs.addAll(Arrays.asList(dir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return new File(dir, name).isDirectory();
-            }})));
+
+                public boolean accept(File dir, String name) {
+                    return new File(dir, name).isDirectory();
+                }
+            })));
         }
-        
+
         return files;
     }
-    
 
     /**
      * A convenience method for getting a configured {@lik Wadl2JavaMojo}
@@ -534,5 +564,4 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         return (Wadl2JavaMojo) lookupMojo("generate", getBasedir()
                 + "/src/test/plugin-configs/wadl2java/" + pluginXml);
     }
-
 }
