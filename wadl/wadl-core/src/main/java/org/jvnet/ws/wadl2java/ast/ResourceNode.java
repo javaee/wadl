@@ -65,7 +65,7 @@ public class ResourceNode {
     /**
      * @return A simplified name with both the protocol and the port removed
      */
-    private String createClassNameFromBase(String base) {
+    public static String createClassNameFromBase(String base) {
 
         try {
             URL url = new URL(base);
