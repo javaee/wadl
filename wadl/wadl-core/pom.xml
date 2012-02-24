@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jvnet.ws.wadl</groupId>
     <artifactId>wadl</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.1.1</version>
   </parent>
   <artifactId>wadl-core</artifactId>
   <name>WADL Core</name>
@@ -47,7 +47,7 @@
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-client</artifactId>
-      <version>1.9</version>
+      <version>1.12</version>
     </dependency>
   </dependencies>
   <build>
