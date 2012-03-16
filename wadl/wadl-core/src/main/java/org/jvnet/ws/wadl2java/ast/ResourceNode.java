@@ -235,8 +235,9 @@ public class ResourceNode {
     public List<Param> getQueryParams() {
         ArrayList<Param> completeList = new ArrayList<Param>();
         completeList.addAll(getPathSegment().getQueryParameters());
-        if (getParentResource() != null)
-            completeList.addAll(getParentResource().getQueryParams());
+// Removed as per WADL-32
+//        if (getParentResource() != null)
+//            completeList.addAll(getParentResource().getQueryParams());
         return completeList;
     }
     
@@ -247,8 +248,9 @@ public class ResourceNode {
     public List<Param> getHeaderParams() {
         ArrayList<Param> completeList = new ArrayList<Param>();
         completeList.addAll(getPathSegment().getHeaderParameters());
-        if (getParentResource() != null)
-            completeList.addAll(getParentResource().getHeaderParams());
+// Removed as per WADL-32
+//        if (getParentResource() != null)
+//            completeList.addAll(getParentResource().getHeaderParams());
         return completeList;
     }
     

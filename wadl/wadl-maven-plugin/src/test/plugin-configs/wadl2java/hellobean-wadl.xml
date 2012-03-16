@@ -4,12 +4,13 @@
             <plugin>
                 <artifactId>wadl-client-plugin</artifactId>
                 <configuration>
-                    <targetDirectory>${basedir}/target/test-harness/multiple-contenttypes-wadl/generated-sources/wadl</targetDirectory>
-                    <sourceDirectory>${basedir}/src/test/resources/multiple-contenttypes-wadl</sourceDirectory>
+                    <targetDirectory>${basedir}/target/test-harness/hellobean-wadl/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/hellobean-wadl</sourceDirectory>
                     <packageName>test</packageName>
                     <includes>*.wadl</includes>
                     <customizations></customizations>
                     <autoPackaging>true</autoPackaging>
+                    <failOnError>true</failOnError>
                 </configuration>
             </plugin>
         </plugins>

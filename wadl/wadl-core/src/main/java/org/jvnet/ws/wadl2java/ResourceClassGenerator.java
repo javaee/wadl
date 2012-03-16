@@ -19,6 +19,7 @@
 
 package org.jvnet.ws.wadl2java;
 
+import com.sun.codemodel.JAnnotatable;
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -50,6 +51,7 @@ import org.jvnet.ws.wadl2java.ast.ResourceNode;
 import org.jvnet.ws.wadl2java.ast.ResourceTypeNode;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.S2JJAXBModel;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +61,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 
 import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Generator class for nested static classes used to represent web resources
@@ -84,6 +88,7 @@ public class ResourceClassGenerator {
     private JDefinedClass $class = null;
     private JavaDocUtil javaDoc;
     private String generatedPackages;
+    private MessageListener messageListener; 
     
     /**
      * Creates a new instance of ResourceClassGenerator
@@ -93,8 +98,11 @@ public class ResourceClassGenerator {
      * @param pkg package for new classes
      * @param resource the resource element for which to generate a class
      */
-    public ResourceClassGenerator(S2JJAXBModel s2jModel, JCodeModel codeModel, 
+    public ResourceClassGenerator(
+            MessageListener messageListener,
+            S2JJAXBModel s2jModel, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
+        this.messageListener = messageListener;
         this.resource = resource;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
@@ -111,8 +119,11 @@ public class ResourceClassGenerator {
      * @param pkg package for new classes
      * @param clazz the existing class
      */
-    public ResourceClassGenerator(S2JJAXBModel s2jModel, JCodeModel codeModel, 
+    public ResourceClassGenerator(
+            MessageListener messageListener,
+            S2JJAXBModel s2jModel, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
+        this.messageListener = messageListener;
         this.resource = null;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
@@ -133,11 +144,12 @@ public class ResourceClassGenerator {
     /**
      * Generate a static member class that represents a WADL resource.
      * @param parentClass the parent class for the generated class
+     * @param $base_uri a reference to the field that contains the base URI
      * @return the generated class
      * @throws com.sun.codemodel.JClassAlreadyExistsException if a class with 
      * the same name already exists
      */
-    public JDefinedClass generateClass(JDefinedClass parentClass) throws JClassAlreadyExistsException {
+    public JDefinedClass generateClass(JDefinedClass parentClass, JVar $base_uri) throws JClassAlreadyExistsException {
         JDefinedClass $impl = parentClass._class(JMod.PUBLIC | JMod.STATIC, resource.getClassName());
         for (ResourceTypeNode t: resource.getResourceTypes()) {
             $impl._implements(t.getGeneratedInterface());
@@ -336,7 +348,7 @@ public class ResourceClassGenerator {
             if (i==0) {
                 // codegen : _webResource = client.resource(...)
                 $ctorBody.assign($uriBuilder,
-                     uriBuilderClass.staticInvoke("fromPath").arg(segment.getTemplate()));
+                     uriBuilderClass.staticInvoke("fromPath").arg($base_uri));
             }
             else {
                 // codegen : _webResource = _webResource.path(...)
@@ -414,7 +426,7 @@ public class ResourceClassGenerator {
             $exCls._extends(Exception.class);
             Mapping m = s2jModel.get(f.getElement());
             if (m==null)
-                System.err.println(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
+                messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
             JType detailType = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
             JVar $detailField = $exCls.field(JMod.PRIVATE, detailType, "m_faultInfo");
             JMethod $ctor = $exCls.constructor(JMod.PUBLIC);
@@ -451,13 +463,13 @@ public class ResourceClassGenerator {
         Map<JType, JDefinedClass> exceptionMap = new HashMap<JType, JDefinedClass>();
         for (FaultNode f: method.getFaults()) {
             if (f.getElement()==null) {// skip fault for which there's no XML
-                System.err.println(Wadl2JavaMessages.FAULT_NO_ELEMENT());
+                messageListener.info(Wadl2JavaMessages.FAULT_NO_ELEMENT());
                 continue;
             }
             JDefinedClass generatedException = generateExceptionClass(f);
             Mapping m = s2jModel.get(f.getElement());
             if (m==null)
-                System.err.println(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
+                messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
             JType faultType = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
             exceptionMap.put(faultType, generatedException);
         }
@@ -509,7 +521,7 @@ public class ResourceClassGenerator {
     protected JType getTypeFromElement(QName element) {
         Mapping m = s2jModel.get(element);
         if (m==null)
-            System.err.println(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
+            messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
         JType type = m==null ? null : m.getType().getTypeClass();
         return type;
     }
@@ -615,10 +627,46 @@ public class ResourceClassGenerator {
 
         // work out the method return type and the type of any input representation
         JType inputType=null, returnType=null;
+        boolean wrapInputTypeInJAXBElement = false;
         boolean genericReturnType = false;
         if (isJAXB) {
             if (inputRep != null) {
                 inputType = getTypeFromElement(inputRep.getElement());
+                
+                if (inputType instanceof JDefinedClass) {
+
+                    boolean isRootElement = false;
+
+                    // The version of code model that comes with JAX-B
+                    // doesn't include accessor methods, to get around this
+                    // I am using reflection otherwise the classloading situation
+                    // becomes difficult
+                    try
+                    {
+                        Field annotationClassField = JAnnotationUse.class.getDeclaredField("clazz");
+                        annotationClassField.setAccessible(true);
+                        Field annotationField = JDefinedClass.class.getDeclaredField("annotations");
+                        annotationField.setAccessible(true);
+                        List<JAnnotationUse> annotations = (List<JAnnotationUse>) annotationField.get(inputType);
+                        found : for (JAnnotationUse use : annotations)
+                        {
+                            JClass annotationClass = (JClass)annotationClassField.get(use);
+                            if (annotationClass.fullName().equals(XmlRootElement.class.getName()))
+                            {
+                                isRootElement = true;
+                                break found;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ignore for the moment
+                        ex.printStackTrace();
+                    }
+                    
+                    wrapInputTypeInJAXBElement = !isRootElement;
+                }
+                
                 if (inputType == null)
                     return;
             }
@@ -808,7 +856,7 @@ public class ResourceClassGenerator {
             // Now deal with the method body
             
             generateBody(method,isJAXB, exceptionMap, outputRep, 
-                    $genericMethodParameter, returnType, $resourceBuilder, inputRep, $methodBody);
+                    $genericMethodParameter, wrapInputTypeInJAXBElement, returnType, $resourceBuilder, inputRep, $methodBody);
         }
     }
 
@@ -819,6 +867,7 @@ public class ResourceClassGenerator {
      * @param isJAXB, whether we are generating a generic of JAXB version
      * @param exceptionMap the generated exceptions that the method can raise
      * @param outputRep the output representation
+     * @param wrapInputTypeInJAXBElement If the JAX-B element is not @XmlRootElement we have to do more
      * @param returnType the type of the method return
      * @param inputRep the input representation
      * @param $methodBody a reference to the method body in which to generate code
@@ -828,6 +877,7 @@ public class ResourceClassGenerator {
             final Map<JType, 
             JDefinedClass> exceptionMap, final RepresentationNode outputRep, 
             final JVar $genericMethodParameter,
+            final boolean wrapInputTypeInJAXBElement,
             final JType returnType, 
             final JVar $resourceBuilder, 
             final RepresentationNode inputRep, final JBlock $methodBody)
@@ -854,9 +904,11 @@ public class ResourceClassGenerator {
             }
         }
 
-        //
-
-        if (method.getName().equals("POST") || method.getName().equals("PUT")) {
+        // Assume we can't be that picky about HTTP methods as there could
+        // be content types
+        
+        if (true) {
+//        if (method.getName().equals("POST") || method.getName().equals("PUT")) {
             if (inputRep == null) {
                 // Do nothing
                 //
@@ -866,7 +918,28 @@ public class ResourceClassGenerator {
                         $resourceBuilder.invoke("type")
                         .arg(JExpr.lit(inputRep.getMediaType())));
                 
-                $execute.arg(JExpr.ref("input"));
+                if (wrapInputTypeInJAXBElement) {
+                    // So this is not a XmlRootElement but we can wrap it with
+                    // the correct JAXBElment to make the code just function
+                    // new JAXBElement(new QName(inputType..),returnType.class, input)
+                    
+                    JExpression jaxbe = JExpr._new(
+                        codeModel.ref(JAXBElement.class))
+                            .arg(
+                                JExpr._new(
+                                    codeModel.ref(QName.class))
+                                       .arg(inputRep.getElement().getNamespaceURI())
+                                       .arg(inputRep.getElement().getLocalPart()))
+                            .arg(
+                                JExpr.dotclass((JClass)returnType))
+                            .arg(JExpr.ref("input"));
+                    
+                    $execute.arg(jaxbe);
+                    
+                }
+                else {
+                    $execute.arg(JExpr.ref("input"));
+                }
             }
         }
         

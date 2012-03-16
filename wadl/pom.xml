@@ -9,7 +9,7 @@
     <groupId>org.jvnet.ws.wadl</groupId>
     <artifactId>wadl</artifactId>
     <packaging>pom</packaging>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.1.2-SNAPSHOT</version>
     <name>WADL</name>
     <url>http://wadl.java.net/</url>
 

@@ -60,7 +60,7 @@
       </plugin>
       <plugin>
         <groupId>org.jvnet.ws.wadl</groupId>
-        <artifactId>wadl-maven-plugin</artifactId>
+        <artifactId>wadl-client-plugin</artifactId>
         <version>${project.version}</version>
         <executions>
           <execution>

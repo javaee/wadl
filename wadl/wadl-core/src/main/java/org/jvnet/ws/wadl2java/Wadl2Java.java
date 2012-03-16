@@ -42,6 +42,7 @@ import com.sun.tools.xjc.api.SchemaCompiler;
 import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +66,8 @@ import org.xml.sax.SAXParseException;
  * @author mh124079
  */
 public class Wadl2Java {
-
+    
+    
     
     /**
      * A parameter object to make it easier to extend this class without
@@ -82,6 +84,20 @@ public class Wadl2Java {
         private boolean autoPackage;
         private URI rootDir;
         private Map<String, String> baseURIToClassName = Collections.EMPTY_MAP;
+        private MessageListener messageListener = new MessageListener() {
+            public void warning(String message, Throwable throwable) {
+                System.err.println(message);
+            }
+
+            public void info(String message) {
+                System.err.println(message);
+            }
+
+            public void error(String message, Throwable throwable) {
+                System.err.println(message);
+            }
+        };
+
         
         public Parameters clone()
         {
@@ -182,6 +198,12 @@ public class Wadl2Java {
             baseURIToClassName = new HashMap<String, String>(map);
             return this;
         }
+        
+        
+        public Parameters setMessageListener(MessageListener ml) {
+            messageListener = ml;
+            return this;
+        }
     }    
     
     private Parameters parameters;
@@ -194,7 +216,7 @@ public class Wadl2Java {
     private JavaDocUtil javaDoc;
     private JAXBContext jbc;
     private SchemaCompiler s2j;
-    private ErrorListener errorListener;
+    private SchemaCompilerErrorListener errorListener;
     private String generatedPackages = "";
 
     /**
@@ -205,7 +227,8 @@ public class Wadl2Java {
         assert parameters.codeWriter!=null;
         this.javaDoc = new JavaDocUtil();
         this.processedDocs = new ArrayList<String>();
-        this.idMap = new ElementResolver();
+        this.idMap = new ElementResolver(
+                parameters.messageListener);
         this.ifaceMap = new HashMap<String, ResourceTypeNode>();
     }
     
@@ -286,6 +309,16 @@ public class Wadl2Java {
             for (ResourceNode r: rs)
                 generateEndpointClass(rootDesc, r);
             codeModel.build(parameters.codeWriter);
+        }
+        
+        // If we have gotten this far as we have recorded a fatal error then
+        // we should wrap and re-throw it
+        
+        if (errorListener.hasFatalErrorOccured())
+        {
+            throw new JAXBException(
+                    Wadl2JavaMessages.JAXB_PROCESSING_FAILED(),
+                    errorListener.getFirstFatalError());
         }
     }
     
@@ -550,7 +583,8 @@ public class Wadl2Java {
             JDefinedClass iface = jPkg._class(JMod.PUBLIC, n.getClassName(), ClassType.INTERFACE);
             n.setGeneratedInterface(iface);
             javaDoc.generateClassDoc(n, iface);
-            ResourceClassGenerator rcGen = new ResourceClassGenerator(s2jModel, 
+            ResourceClassGenerator rcGen = new ResourceClassGenerator(parameters.messageListener,
+                    s2jModel, 
                 codeModel, jPkg, generatedPackages, javaDoc, iface);
             // generate Java methods for each resource method
             for (MethodNode m: n.getMethods()) {
@@ -609,12 +643,64 @@ public class Wadl2Java {
             annUse.param("date",
                     DatatypeConverter.printDateTime(
                        gc));
+            
+            
         }
-        
+
+        // Create a static final field that contains the root URI
+        //
+
+        JFieldVar $base_uri = impl.field(
+            Modifier.PUBLIC
+                | Modifier.STATIC
+                | Modifier.FINAL, String.class, "BASE_URI");
+
+        $base_uri.javadoc().append("The base URI for the resource represented by this proxy");
+
+        // Generate the subordinate classes
+        //
         
         for (ResourceNode r: root.getChildResources()) {
-            generateSubClass(impl, r);
+            generateSubClass(impl, $base_uri, r);
         }
+
+        // Populate the BASE_URI field in a static init block at the
+        // end of the file to make things a bit tidier.
+        
+        JBlock staticInit = impl.init();
+        
+        JVar $originalURI = staticInit.decl($base_uri.type(), "originalURI")
+                .init(JExpr.lit(root.getUriTemplate()));
+        
+        staticInit.directStatement(
+                  "// Look up to see if we have any indirection in the local copy"
+                + "\n        // of META-INF/java-rs-catalog.xml file, assuming it will be in the"
+                + "\n        // oasis:name:tc:entity:xmlns:xml:catalog namespace or similar duck type"
+                + "\n        java.io.InputStream is = " + impl.name() + ".class.getResourceAsStream(\"/META-INF/jax-rs-catalog.xml\");"
+                + "\n        if (is!=null) {"
+                + "\n            try {"
+                + "\n                // Ignore the namespace in the catalog, can't use wildcard until"
+                + "\n                // we are sure we have XPath 2.0"
+                + "\n                String found = javax.xml.xpath.XPathFactory.newInstance().newXPath().evaluate("
+                + "\n                    \"/*[name(.) = 'catalog']/*[name(.) = 'uri' and @name ='\" + originalURI +\"']/@uri\", "
+                + "\n                    new org.xml.sax.InputSource(is)); "
+                + "\n                if (found!=null && found.length()>0) {"
+                + "\n                    originalURI = found;"
+                + "\n                }"
+                + "\n                "
+                + "\n            }"
+                + "\n            catch (Exception ex) {"
+                + "\n                ex.printStackTrace();"
+                + "\n            }"
+                + "\n            finally {"
+                + "\n                try {"
+                + "\n                    is.close();"
+                + "\n                } catch (java.io.IOException e) {"
+                + "\n                }"
+                + "\n            }"
+                + "\n        }"); 
+        staticInit.assign($base_uri, $originalURI); 
+
     }
     
     /**
@@ -624,18 +710,21 @@ public class Wadl2Java {
      * generated. This can either be a top level class or a nested static 
      * inner class for a parent resource.
      * @param resource the WADL <code>resource</code> element being processed.
+     * @param $base_uri The root URI for this resource class
      * @param isroot is this the
      * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
      * generation, the WADL processor attempts to create a duplicate
      * class. This indicates a structural problem with the WADL file, 
      * e.g. duplicate peer resource entries.
      */
-    protected void generateSubClass(JDefinedClass parent, ResourceNode resource) 
+    protected void generateSubClass(JDefinedClass parent, JVar $base_uri, ResourceNode resource) 
             throws JClassAlreadyExistsException {
         
-        ResourceClassGenerator rcGen = new ResourceClassGenerator(s2jModel, 
+        ResourceClassGenerator rcGen = new ResourceClassGenerator(
+                parameters.messageListener,
+                s2jModel, 
             codeModel, jPkg, generatedPackages, javaDoc, resource);
-        JDefinedClass impl = rcGen.generateClass(parent);
+        JDefinedClass impl = rcGen.generateClass(parent, $base_uri);
         
         // generate Java methods for each resource method
         for (MethodNode m: resource.getMethods()) {
@@ -645,7 +734,7 @@ public class Wadl2Java {
  
         // generate sub classes for each child resource
         for (ResourceNode r: resource.getChildResources()) {
-            generateSubClass(impl, r);
+            generateSubClass(impl, $base_uri, r);
         }
     }
     
@@ -776,7 +865,7 @@ public class Wadl2Java {
         if (n != null) {
             resource.addResourceType(n);
         } else {
-            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
+            parameters.messageListener.info(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
         }  
     }
     
@@ -968,12 +1057,32 @@ public class Wadl2Java {
      * support error reporting from the JAXB infrastructure.
      */
     protected class SchemaCompilerErrorListener implements ErrorListener {
+        
+        private Throwable firstFatalError;
+        
+        /**
+         * @return Whether a fatal error has occurred;
+         */
+        public boolean hasFatalErrorOccured(){
+            return firstFatalError!=null;
+        }
+
+        /**
+         * @return The first fatal error to have occurred.
+         */
+        public Throwable getFirstFatalError(){
+            return firstFatalError;
+        }
+
+        
         /**
          * Report a warning
          * @param sAXParseException the exception that caused the warning.
          */
         public void warning(SAXParseException sAXParseException) {
-            System.err.println(Wadl2JavaMessages.WARNING(sAXParseException.getMessage()));
+            parameters.messageListener.warning(
+                    Wadl2JavaMessages.WARNING(sAXParseException.getMessage()),
+                    sAXParseException);
         }
 
         /**
@@ -981,7 +1090,8 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the informative message.
          */
         public void info(SAXParseException sAXParseException) {
-            System.err.println(Wadl2JavaMessages.INFO(sAXParseException.getMessage()));
+            parameters.messageListener.info(
+                Wadl2JavaMessages.INFO(sAXParseException.getMessage()));
         }
 
         /**
@@ -989,7 +1099,14 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the fatal error.
          */
         public void fatalError(SAXParseException sAXParseException) {
-            System.err.println(Wadl2JavaMessages.ERROR_FATAL(sAXParseException.getMessage()));
+            if (firstFatalError==null)
+            {
+                firstFatalError = sAXParseException;
+            }
+            
+            parameters.messageListener.error(
+                    Wadl2JavaMessages.ERROR_FATAL(sAXParseException.getMessage()),
+                    sAXParseException);
         }
 
         /**
@@ -997,7 +1114,9 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the error.
          */
         public void error(SAXParseException sAXParseException) {
-            System.err.println(Wadl2JavaMessages.ERROR(sAXParseException.getMessage()));
+            parameters.messageListener.error(
+                    Wadl2JavaMessages.ERROR_FATAL(sAXParseException.getMessage()),
+                    sAXParseException);
         }
         
     }

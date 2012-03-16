@@ -23,8 +23,10 @@ import java.util.Map;
 public class ElementResolver {
     
     private Map<String, Object> map;
+    private MessageListener messageListener;
     
-    public ElementResolver() {
+    public ElementResolver(MessageListener messageListener) {
+        this.messageListener = messageListener;
         map = new HashMap<String, Object>();
     }
     
@@ -51,9 +53,9 @@ public class ElementResolver {
         String id = file.toString()+href.substring(href.indexOf('#'));
         o = map.get(id);
         if (o == null)
-            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
+            messageListener.info(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
         else if (!clazz.isInstance(o))
-            System.err.println(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href, file.toString()));
+            messageListener.info(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href, file.toString()));
         return (T)o;
     }
     

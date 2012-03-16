@@ -4,11 +4,13 @@
             <plugin>
                 <artifactId>wadl-client-plugin</artifactId>
                 <configuration>
-                    <targetDirectory>${basedir}/target/test-harness/jaxb-missing-schema/generated-sources/wadl</targetDirectory>
-                    <sourceDirectory>${basedir}/src/test/resources/jaxb-missing-schema</sourceDirectory>
+                    <targetDirectory>${basedir}/target/test-harness/hellobean-wadl-simplexjc/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/hellobean-wadl</sourceDirectory>
                     <packageName>test</packageName>
                     <includes>*.wadl</includes>
-                    <customizations></customizations>
+                    <customizations>
+                      <customization>${basedir}/src/test/resources/hellobean-wadl/simple.jaxb</customization>
+                    </customizations>
                     <autoPackaging>true</autoPackaging>
                     <failOnError>true</failOnError>
                 </configuration>

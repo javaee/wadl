@@ -4,11 +4,11 @@
             <plugin>
                 <artifactId>wadl-client-plugin</artifactId>
                 <configuration>
-                    <targetDirectory>${basedir}/target/test-harness/smoke-test/generated-sources/wadl</targetDirectory>
-                    <sourceDirectory>${basedir}/src/test/resources/smoke-test</sourceDirectory>
-                    <packageName>smoke</packageName>
-                    <customizations></customizations>
+                    <targetDirectory>${basedir}/target/test-harness/valid-wadl-with-catalog/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/valid-wadl-with-catalog</sourceDirectory>
+                    <packageName>test</packageName>
                     <includes>*.wadl</includes>
+                    <customizations></customizations>
                     <autoPackaging>true</autoPackaging>
                     <failOnError>false</failOnError>
                 </configuration>

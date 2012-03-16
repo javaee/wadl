@@ -2,7 +2,7 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>wadl-maven-plugin</artifactId>
+                <artifactId>wadl-client-plugin</artifactId>
                 <configuration>
                     <targetDirectory>${basedir}/target/test-harness/parameterized-wadl/generated-sources/wadl</targetDirectory>
                     <sourceDirectory>${basedir}/src/test/resources/parameterized-wadl</sourceDirectory>

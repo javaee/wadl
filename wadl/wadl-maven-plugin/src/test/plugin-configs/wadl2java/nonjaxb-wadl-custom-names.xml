@@ -2,7 +2,7 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>wadl-maven-plugin</artifactId>
+                <artifactId>wadl-client-plugin</artifactId>
                 <configuration>
                     <targetDirectory>${basedir}/target/test-harness/nonjaxb-wadl/generated-sources/wadl</targetDirectory>
                     <sourceDirectory>${basedir}/src/test/resources/nonjaxb-wadl</sourceDirectory>
@@ -14,7 +14,7 @@
                     <customClassNames>
                         <property>
                             <!-- see HelloWorld.wadl -->
-                            <name>http://localhost:9998/</name>
+                            <name>http://localhost:9998/</name> 
                             <value>MyApiClient</value>
                         </property>
                     </customClassNames>

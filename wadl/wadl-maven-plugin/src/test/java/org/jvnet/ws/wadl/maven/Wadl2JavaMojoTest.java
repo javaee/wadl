@@ -12,7 +12,9 @@ import static org.jvnet.ws.wadl.matchers.Matchers.*;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.PrintStream;
 import java.lang.Iterable;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -143,6 +145,12 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
 
+        // Check that the BASE_URI is correct
+        Class $ProxyRoot = cl.loadClass("test.ApiSearchYahooCom_NewsSearchServiceV1");
+        assertEquals(
+                "http://api.search.yahoo.com/NewsSearchService/V1/",
+                $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
+        
         // Check that we have the expected number of methods
         Class $NewsSearch = cl.loadClass("test.ApiSearchYahooCom_NewsSearchServiceV1$NewsSearch");
         assertNotNull($NewsSearch);
@@ -168,6 +176,62 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class,
                 $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, GenericType.class));
 
+
+    }
+
+    
+    /**
+     * Tests the case in which a valid wadl file exists, and we have a catalog
+     * file with which to override the BASE_URI with
+     */
+    public void testValidWadlFilesWithCatalog() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("valid-wadl-config-with-catalog.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+ 
+        // Create a catalog file
+        
+        File metainf = new File(targetDirectory, "META-INF/");
+        metainf.mkdirs();
+        File catalog = new File(metainf, "jax-rs-catalog.xml");
+        PrintStream ps = new PrintStream(
+                new FileOutputStream(catalog));
+        try
+        {
+            ps.println("<catalog xmlns=\"urn:oasis:names:tc:entity:xmlns:xml:catalog\">");
+            ps.println("  <uri name=\"http://api.search.yahoo.com/NewsSearchService/V1/\"" );
+            ps.println("          uri=\"http://otherhost/\"/> ");
+            ps.println("</catalog>");
+        }
+        finally
+        {
+            ps.close();
+        }
+        
+        
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Check that the BASE_URI is correct
+        Class $ProxyRoot = cl.loadClass("test.ApiSearchYahooCom_NewsSearchServiceV1");
+        assertEquals(
+                "http://otherhost/",
+                $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
 
     }
 
@@ -250,6 +314,11 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", GenericType.class));
     }
 
+    
+    
+    
+    
+    
     /**
      * Tests the case where the methods produce application/xml but don't
      * have a matching schema. This results in duplicate methods being produced.
@@ -372,6 +441,88 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
     }
 
     /**
+     * Test the case where we have the types generating as @XmlType not
+     * @XmlRootElement so we need to generate some extra boilerplate code.
+     */
+    public void testHelloBeanInputOuputJAXB() throws Exception {
+        runBeanInputOuputJAXB(false);
+    }
+    /**
+     * Test the case where we have the types generating as 
+     * @XmlRootElement so we don't need to generate boilerplate code.
+     */
+    public void testHelloBeanInputOuputJAXBSimpleXJC() throws Exception {
+        runBeanInputOuputJAXB(true);
+    }
+    
+    /**
+     * Test the case where we have the types generating as @XmlType not
+     * @XmlRootElement so we need to generate some extra boilerplate code.
+     */
+    private void runBeanInputOuputJAXB(boolean simplexjc) throws Exception {
+    
+        
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo(simplexjc ? "hellobean-wadl-simplexjc.xml" : "hellobean-wadl.xml");
+        
+
+        
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/WwwExampleCom_Resource.java"));
+        assertThat(targetDirectory, contains("com/example/beans/Bean.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Just check that the base class works
+        Class $ProxyRoot = cl.loadClass("test.WwwExampleCom_Resource");
+        
+        // Load the source for the Proxy and check we generated the correct new JAXBElement lines
+        String contents ="";
+        File resource = new File(targetDirectory,"test/WwwExampleCom_Resource.java" );
+        FileInputStream fis = new FileInputStream(resource);
+        try {
+            byte data[] = new byte[(int)resource.length()];
+            fis.read(data);
+            contents = new String(data);
+        }
+        finally
+        {
+            fis.close();
+        }
+        
+        // Make sure we wrap the @XmlType as a JAXBElement with the right
+        // namespace
+        
+        boolean containsBinding = contents.contains("new JAXBElement(new QName(\"http://example.com/beans\", \"bean\"), com.example.beans.Bean.class, input)");
+        if (simplexjc) {
+            assertFalse(
+                 containsBinding);            
+        }
+        else {
+            assertTrue(
+                 containsBinding);            
+        }
+    }    
+    
+    /**
      * Tests the case in which a valid wadl file exists.
      */
     public void testValidWadlFilesWithParameters() throws Exception {
@@ -452,6 +603,57 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", GenericType.class));
     }
 
+    
+    /**
+     * Verify as per WADL-37 that query and header parameters are not inhereted
+     * from parent resources
+     */
+    public void testValidWadlFilesWithNestedParameters() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("nested-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+
+        // Verify the files are in place
+
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Nested.java"));
+ 
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Check top level accessor
+        Class $Root = cl.loadClass("test.Nested$Root");
+
+        // Check that we have the expected number of methods
+        Class $Sub = cl.loadClass("test.Nested$Root$Sub");
+        assertNotNull($Sub);
+
+
+        // Check that we have two methods of the right name and parameters
+        // Should only have four string parametes as per WADL-32 the
+        // root resource parametes are not inhereted
+        assertNotNull($Sub.getDeclaredMethod("getAs", String.class, String.class, String.class, String.class, Class.class));
+        assertNotNull($Sub.getDeclaredMethod("getAs", String.class, String.class,String.class, String.class, GenericType.class));
+
+    }
+
+    
     /**
      * Tests the case in which a valid wadl file exists.
      */

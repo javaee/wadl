@@ -68,6 +68,16 @@ public class GeneratorUtilTest extends TestCase {
         assertEquals("Class", GeneratorUtil.makeClassName("class"));
     }        
 
+     /**
+     * Test of makeClassName method with something that looks like an IP
+     */
+    public void testMakeClassNameIP() {
+        System.out.println("makeIPClassName");
+        
+        assertEquals("IP120001", GeneratorUtil.makeClassName("120001"));
+    }        
+   
+    
     /**
      * Test of makeParamName method, of class org.jvnet.ws.wadl2java.GeneratorUtil.
      */

@@ -89,6 +89,18 @@ public class GeneratorUtil {
             buf.append(segment.substring(0,1).toUpperCase());
             buf.append(segment.substring(1));
         }
+        
+        // If the name now starts with a number because we started
+        // with an ip address then we should prefix with IP just
+        // so we have a valid name
+        
+        if (buf.length() > 0 && Character.isDigit(buf.charAt(0)))
+        {
+            buf.insert(0, "IP");
+        }
+        
+        //
+        
         return buf.toString();
     }
     

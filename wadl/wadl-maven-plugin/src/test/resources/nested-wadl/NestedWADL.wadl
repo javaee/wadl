@@ -1,0 +1,24 @@
+<?xml version = '1.0' encoding = 'UTF-8' standalone = 'yes'?>
+<application xmlns="http://wadl.dev.java.net/2009/02">
+   <doc xmlns:jersey="http://jersey.java.net/" jersey:generatedBy="Jersey: 1.8-SNAPSHOT 06/01/2011 07:09 PM"/>
+   <resources base="http://nested/">
+      <resource path="root">
+         <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="rootQ" style="query" type="xs:string"/>
+         <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="rootH" style="header" type="xs:string"/>
+
+         <resource path="/sub">
+            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subQ" style="query" type="xs:string"/>
+            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subH" style="header" type="xs:string"/>
+            <method id="get" name="GET">
+               <request>
+                  <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subMethodQ" style="query" type="xs:string"/>
+                  <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subMethodH" style="header" type="xs:string"/>
+               </request>
+               <response>
+                  <representation mediaType="*/*"/>
+               </response>
+            </method>
+         </resource>
+      </resource>
+   </resources>
+</application>
