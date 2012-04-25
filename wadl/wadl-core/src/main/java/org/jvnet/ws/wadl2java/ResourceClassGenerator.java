@@ -80,7 +80,7 @@ public class ResourceClassGenerator {
     
     private ResourceNode resource;
     private JPackage pkg;
-    private S2JJAXBModel s2jModel;
+    private ElementToClassResolver resolver;
     private JCodeModel codeModel;
     private JFieldVar $clientReference;
     private JFieldVar $uriBuilder;
@@ -93,20 +93,20 @@ public class ResourceClassGenerator {
     /**
      * Creates a new instance of ResourceClassGenerator
      * @param javaDoc a JavaDocUtil instance for use when generating documentation
-     * @param s2jModel the schema2java model to use for element to class mapping lookups
+     * @param resolver the schema2java model to use for element to class mapping lookups
      * @param codeModel code model instance to use when generating code
      * @param pkg package for new classes
      * @param resource the resource element for which to generate a class
      */
     public ResourceClassGenerator(
             MessageListener messageListener,
-            S2JJAXBModel s2jModel, JCodeModel codeModel, 
+            ElementToClassResolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
         this.messageListener = messageListener;
         this.resource = resource;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
-        this.s2jModel = s2jModel;
+        this.resolver = resolver;
         this.pkg = pkg;
         this.generatedPackages = generatedPackages;
     }
@@ -114,20 +114,20 @@ public class ResourceClassGenerator {
     /**
      * Creates a new instance of ResourceClassGenerator
      * @param javaDoc a JavaDocUtil instance for use when generating documentation
-     * @param s2jModel the schema2java model to use for element to class mapping lookups
+     * @param resolver the schema2java model to use for element to class mapping lookups
      * @param codeModel code model instance to use when generating code
      * @param pkg package for new classes
      * @param clazz the existing class
      */
     public ResourceClassGenerator(
             MessageListener messageListener,
-            S2JJAXBModel s2jModel, JCodeModel codeModel, 
+            ElementToClassResolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
         this.messageListener = messageListener;
         this.resource = null;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
-        this.s2jModel = s2jModel;
+        this.resolver = resolver;
         this.pkg = pkg;
         this.$class = clazz;
         this.generatedPackages = generatedPackages;
@@ -424,10 +424,8 @@ public class ResourceClassGenerator {
         try {
             $exCls = pkg._class( JMod.PUBLIC, exName);
             $exCls._extends(Exception.class);
-            Mapping m = s2jModel.get(f.getElement());
-            if (m==null)
-                messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
-            JType detailType = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
+            JType rawType = getTypeFromElement(f.getElement());
+            JType detailType = rawType==null ? codeModel._ref(Object.class) : rawType;
             JVar $detailField = $exCls.field(JMod.PRIVATE, detailType, "m_faultInfo");
             JMethod $ctor = $exCls.constructor(JMod.PUBLIC);
             JVar $msg = $ctor.param(String.class, "message");
@@ -467,10 +465,8 @@ public class ResourceClassGenerator {
                 continue;
             }
             JDefinedClass generatedException = generateExceptionClass(f);
-            Mapping m = s2jModel.get(f.getElement());
-            if (m==null)
-                messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(f.getElement().toString()));
-            JType faultType = m==null ? codeModel._ref(Object.class) : m.getType().getTypeClass();
+            JType rawType = getTypeFromElement(f.getElement());
+            JType faultType = rawType==null ? codeModel._ref(Object.class) : rawType;
             exceptionMap.put(faultType, generatedException);
         }
         if (supportedInputs.size()==0) {
@@ -519,10 +515,9 @@ public class ResourceClassGenerator {
      * if no matching generated type was found.
      */
     protected JType getTypeFromElement(QName element) {
-        Mapping m = s2jModel.get(element);
-        if (m==null)
+        JType type = resolver.resolve(element);
+        if (type==null)
             messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
-        JType type = m==null ? null : m.getType().getTypeClass();
         return type;
     }
     

@@ -23,6 +23,7 @@ import com.sun.codemodel.*;
 import com.sun.codemodel.writer.FileCodeWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.namespace.QName;
 import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl2java.ast.FaultNode;
 import org.jvnet.ws.wadl2java.ast.MethodNode;
@@ -38,10 +39,16 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import com.sun.tools.xjc.api.ErrorListener;
+import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.SchemaCompiler;
+import com.sun.tools.xjc.api.TypeAndAnnotation;
 import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
+import com.sun.tools.xjc.model.Model;
+import com.sun.xml.xsom.XSElementDecl;
+import com.sun.xml.xsom.XSType;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.ArrayList;
@@ -209,6 +216,68 @@ public class Wadl2Java {
     private Parameters parameters;
     private JPackage jPkg;
     private S2JJAXBModel s2jModel;
+    private ElementToClassResolver resolver = new ElementToClassResolver()
+    {
+        private Model _model;
+        
+        private Model getModel()
+        {
+           if (_model==null)
+           {
+               try
+               {
+                   Field $model = s2jModel.getClass().getDeclaredField("model");
+                   $model.setAccessible(true);
+                   _model = (Model) $model.get(s2jModel);
+               }
+               catch (Throwable th)
+               {
+                   parameters.messageListener.
+                           warning("Problem getting hold of the model", th);
+               }
+           }
+           return _model;
+        }
+        
+        
+        public JType resolve(QName element) {
+            
+            // Use the default method to resolve an element
+            
+            Mapping map = s2jModel.get(element);
+            if (map!=null)
+            {
+                return map.getType().getTypeClass();
+            }
+            
+            // This can fail with certain customizations where the element
+            // and type class are seperate, so instead look up the 
+            // type class directly from the model
+            //
+            
+            Model model = getModel();
+            XSElementDecl xelement =  model.schemaComponent.getElementDecl(element.getNamespaceURI(), element.getLocalPart());
+            if (xelement!=null)
+            {
+                XSType type = xelement.getType();
+                if (type!=null && type.isGlobal())
+                {
+                    QName qname = new QName(type.getTargetNamespace(), type.getName());
+                    TypeAndAnnotation taa = s2jModel.getJavaType(qname);
+                    if (taa!=null)
+                    {
+                        return taa.getTypeClass();
+                    }
+                }
+            }
+
+            // Even then we might fail on this
+            //
+            
+            return null;
+        }
+    };
+
     private JCodeModel codeModel;
     private ElementResolver idMap;
     private Map<String, ResourceTypeNode> ifaceMap;
@@ -584,7 +653,7 @@ public class Wadl2Java {
             n.setGeneratedInterface(iface);
             javaDoc.generateClassDoc(n, iface);
             ResourceClassGenerator rcGen = new ResourceClassGenerator(parameters.messageListener,
-                    s2jModel, 
+                    resolver, 
                 codeModel, jPkg, generatedPackages, javaDoc, iface);
             // generate Java methods for each resource method
             for (MethodNode m: n.getMethods()) {
@@ -722,7 +791,7 @@ public class Wadl2Java {
         
         ResourceClassGenerator rcGen = new ResourceClassGenerator(
                 parameters.messageListener,
-                s2jModel, 
+                resolver, 
             codeModel, jPkg, generatedPackages, javaDoc, resource);
         JDefinedClass impl = rcGen.generateClass(parent, $base_uri);
         

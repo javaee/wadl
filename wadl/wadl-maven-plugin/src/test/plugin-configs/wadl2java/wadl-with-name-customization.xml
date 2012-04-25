@@ -1,0 +1,20 @@
+<project>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>wadl-client-plugin</artifactId>
+                <configuration>
+                    <targetDirectory>${basedir}/target/test-harness/wadl-with-name-customization/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/wadl-with-name-customization</sourceDirectory>
+                    <packageName>test</packageName>
+                    <includes>*.wadl</includes>
+                    <customizations>
+                      <customization>${basedir}/src/test/resources/wadl-with-name-customization/customize.xml</customization>
+                    </customizations>
+                    <autoPackaging>true</autoPackaging>
+                    <failOnError>false</failOnError>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

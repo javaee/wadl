@@ -694,6 +694,60 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         compile(targetDirectory);
     }
 
+    
+    /**
+     * Tests the case where when using a customisation that get on the JAXBModel
+     * doesn't return anything for an Element an instead we have to look for the 
+     * XmlType class. This was causing the sub getEmp method to go missing
+     * on the sub class.
+     */
+    public void testWadlWithNameCustomization() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("wadl-with-name-customization.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Localhost_REST_SanityEmpServiceContextRootResources.java"));
+        assertThat(targetDirectory, contains("JAXB_EmployeePack/Emp.java"));
+        assertThat(targetDirectory, contains("JAXB_EmployeePack/ObjectFactory.java"));
+        assertThat(targetDirectory, contains("JAXB_EmployeePack/EmployeeList.java"));
+        
+
+        // Check that the generated code compiles
+        compile(targetDirectory);
+
+    
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+    
+        // Check that we have the expected number of methods
+        Class $Sub = cl.loadClass("test.Localhost_REST_SanityEmpServiceContextRootResources$Project1$Name");
+        assertNotNull($Sub);
+
+
+        // Look for the getEmp method that was going missing
+        assertNotNull($Sub.getDeclaredMethod("getAsEmp"));
+    }
+    
+    
+    
+    
+    
     private ClassLoader compile(File targetDirectory) throws MalformedURLException {
         // Compile the source
 
