@@ -1,10 +1,13 @@
 package org.jvnet.ws.wadl.maven;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -18,6 +21,7 @@ import com.sun.codemodel.writer.FileCodeWriter;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
@@ -49,6 +53,13 @@ public class Wadl2JavaMojo extends AbstractMojo {
      * @parameter expression="${basedir}/src/main/wadl"
      */
     private File sourceDirectory;
+    /**
+     * Specify a remote URLs for the target where a local version is not 
+     * avaliable
+     * 
+     * @parameter 
+     */
+    private URL targets[];
     /**
      * The patterns of the files to be included in the transformation.
      * 
@@ -113,31 +124,55 @@ public class Wadl2JavaMojo extends AbstractMojo {
     }
 
     private void doExecute(ErrorPolicy policy) throws MojoExecutionException {
-        if (sourceDirectory.exists() && sourceDirectory.canRead()) {
-            assureTargetDirExistence();
-            String[] matches = getWadlFileMatches();
-            try {
-                Wadl2Java processor = createProcessor();
-                for (int i = matches.length - 1; i >= 0; i--) {
-                    File file = new File(sourceDirectory, matches[i]);
-                    try {
-                        processor.process(file.toURI());
-                    } catch (JClassAlreadyExistsException jcae) {
-                        policy.process(jcae.getExistingClass().fullName()
-                                + " already exists.", jcae);
-                    } catch (Exception e) {
-                        policy.process("Failed to generate sources from "
-                                + file.getAbsolutePath() + ".", e);
-                    }
-                }
-                project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
-            } catch (IOException ioe) {
-                // This case cannot happen as we already check to
-                // see if the directory in in place
-                //
+        
+        List<URI> toProcess = new ArrayList<URI>();
 
-                policy.process("Unexpected exception creating processor", ioe);
+        // Look for files in disk
+        if (sourceDirectory!=null && sourceDirectory.exists() && sourceDirectory.canRead()) {
+            String[] matches = getWadlFileMatches();
+            for (int i = matches.length - 1; i >= 0; i--) {
+                File file = new File(sourceDirectory, matches[i]);
+                toProcess.add(file.toURI());
             }
+        }
+        
+        // Look for remote URLs
+        if (targets!=null)
+        {
+            for (URL target : targets)
+            {
+                try {
+                    toProcess.add(target.toURI());
+                } catch (URISyntaxException ex) {
+                    Logger.getLogger(Wadl2JavaMojo.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+        
+        // Process if we have found any URLS to work on
+        try {
+            assureTargetDirExistence();
+            Wadl2Java processor = createProcessor();
+            for (URI next : toProcess) {
+                try {
+                    processor.process(next);
+                } catch (JClassAlreadyExistsException jcae) {
+                    policy.process(jcae.getExistingClass().fullName()
+                            + " already exists.", jcae);
+                } catch (Exception e) {
+                    policy.process("Failed to generate sources from "
+                            + next.toASCIIString() + ".", e);
+                    throw new MojoExecutionException(
+                        e.getMessage(), e);
+                }
+            }
+            project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        } catch (IOException ioe) {
+            // This case cannot happen as we already check to
+            // see if the directory in in place
+            //
+
+            policy.process("Unexpected exception creating processor", ioe);
         }
     }
 

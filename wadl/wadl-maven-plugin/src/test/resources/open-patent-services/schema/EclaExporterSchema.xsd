@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Classification Schema v1.4 to define the structure and constraints of classication data for external use -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.epo.org/eclaexport" xmlns="http://www.epo.org/eclaexport" elementFormDefault="qualified">
+
+	<!-- Class scheme structure :
+			<class-scheme scheme-type="?" export-date="?">
+				<classification-item link-file="?" level="?">
+					</clasification-symbol>			
+					</class-title>				
+					</notes-and-warnings>			
+					</definition>				
+					</link-file> 			
+					</classification>	
+				</classification-item>
+			</class-scheme>
+	-->
+	<xs:element name="class-scheme">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="classification-item" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="scheme-type" type="classification-scheme-list" use="required"/>
+			<xs:attribute name="export-date" type="xs:date" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="classification-item" type="classification-item-type"/>
+	<xs:complexType name="classification-item-type">
+		<xs:annotation>
+			<xs:documentation>
+				The classification-item element must at least have a symbol. All other elements are optional 
+				Note the classification element is contained within itself. This is a recursive method to create a 'tree' structure of classifications 
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="classification-symbol" type="xs:string"/>
+			<xs:element ref="class-title" minOccurs="0"/>
+			<xs:element ref="notes-and-warnings" minOccurs="0"/>
+			<xs:element ref="definition" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element ref="classification-item" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="level" type="xs:string" use="optional"/>
+		<xs:attribute name="link-file" type="xs:string" use="optional"/>
+	</xs:complexType>
+	<xs:element name="class-title">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="title-part" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="date-revised" type="xs:string" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="title-part">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element ref="text"/>
+				<xs:element ref="explanation"/>
+				<xs:element ref="comment"/>
+				<xs:element ref="upd"/>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="notes-and-warnings">
+		<xs:annotation>
+			<xs:documentation>
+		 		Note Element. Notes are made up of note parts which can have note sub parts.
+		 		Each note sub part can have it's own note part forming a tree structure of notes.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="note" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="note">
+		<xs:complexType mixed="true">
+			<xs:choice minOccurs="0" maxOccurs="unbounded">
+				<xs:element ref="note-paragraph"/>
+				<xs:element ref="class-ref"/>
+				<xs:element ref="upd"/>
+			</xs:choice>
+			<xs:attribute name="type" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="note"/>
+						<xs:enumeration value="warning"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="note-paragraph" type="markup"/>
+	<xs:element name="subnote">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="note-paragraph" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="class-transfers">
+		<xs:annotation>
+			<xs:documentation>
+				A list of classifications transferred to other classifications along with the date of transfer
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="class-transfer" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="from" type="transfer-classes-type" minOccurs="1" maxOccurs="unbounded"/>
+							<xs:element name="to" type="transfer-classes-type" minOccurs="1" maxOccurs="unbounded"/>
+							<xs:element name="date" type="xs:string"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="transfer-classes-type">
+		<xs:annotation>
+			<xs:documentation>
+				A list of transferred from and transferred to classifications.
+				For each classification we have a boolean attribute to define the use of subgroups
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element ref="class-ref" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="use-sub-groups" type="xs:boolean" use="optional"/>
+	</xs:complexType>
+	<xs:element name="upd">
+		<xs:complexType mixed="true">
+			<xs:sequence>
+				<xs:element ref="text" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="text" type="markup"/>
+	<xs:element name="explanation" type="markup"/>
+	<xs:element name="comment" type="markup"/>
+	<xs:complexType name="markup" mixed="true">
+		<xs:annotation>
+			<xs:documentation>HTML markup potentially contained within elements such as title, warning and notes etc.</xs:documentation>
+		</xs:annotation>
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element ref="text"/>
+			<xs:element ref="explanation"/>
+			<xs:element ref="comment"/>
+			<xs:element ref="class-ref"/>
+			<xs:element ref="pre"/>
+			<xs:element ref="br"/>
+			<xs:element ref="u"/>
+			<xs:element ref="p"/>
+			<xs:element ref="fig"/>
+			<xs:element ref="class-transfers"/>
+			<xs:element ref="upd"/>
+			<xs:element ref="subnote"/>
+			<xs:element name="link" type="xs:string"/>
+		</xs:choice>
+		<xs:attribute name="scheme" type="classification-scheme-list" use="optional"/>
+	</xs:complexType>
+	<xs:element name="definition">
+		<xs:annotation>
+			<xs:documentation>
+				Definition element of a classification. Requires a number and some content 
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true">
+			<xs:sequence>
+				<xs:element name="number" type="xs:string"/>
+				<xs:element name="content" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="class-ref">
+		<xs:annotation>
+			<xs:documentation>
+				An element to encapsulate a cross referenced classification symbol
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="scheme" type="classification-scheme-list" use="required"/>
+					<xs:attribute name="qualifier" type="xs:string"/>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="classification-scheme-list">
+		<xs:annotation>
+			<xs:documentation>
+				Simple type describing a list of schemes
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="ecla"/>
+			<xs:enumeration value="ico"/>
+			<xs:enumeration value="kwcla"/>
+			<xs:enumeration value="ipc"/>
+			<xs:enumeration value="idt"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:element name="fig">
+		<xs:complexType mixed="true">
+			<xs:attribute name="identifier" type="xs:string"/>
+			<xs:attribute name="alt" type="xs:string"/>
+			<xs:attribute name="file" type="xs:string"/>
+			<xs:attribute name="id" type="xs:string"/>
+			<xs:attribute name="img-content">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="drawing"/>
+						<xs:enumeration value="photograph"/>
+						<xs:enumeration value="character"/>
+						<xs:enumeration value="dna"/>
+						<xs:enumeration value="undefined"/>
+						<xs:enumeration value="chem"/>
+						<xs:enumeration value="table"/>
+						<xs:enumeration value="math"/>
+						<xs:enumeration value="program-listing"/>
+						<xs:enumeration value="flowchart"/>
+						<xs:enumeration value="graph"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="img-format">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="jpg"/>
+						<xs:enumeration value="tif"/>
+						<xs:enumeration value="st33"/>
+						<xs:enumeration value="st35"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="inline">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="yes"/>
+						<xs:enumeration value="no"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="orientation">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="protrait"/>
+						<xs:enumeration value="landscape"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="he" type="xs:float"/>
+			<xs:attribute name="wi" type="xs:float"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="pre" type="markup"/>
+	<xs:element name="br"/>
+	<xs:element name="p"/>
+	<xs:element name="u" type="markup"/>
+	<xs:element name="date">
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:pattern value="[1-9](\d{3}((0[1-9]|1[012])(0[1-9]|1\d|2[0-8])|(0[13456789]|1[012])(29|30)|(0[13578]|1[02])31)|(([1-9]\d)(0[48]|[2468][048]|[13579][26])|(([2468][048]|[13579][26])00))0229
+)"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+</xs:schema>

@@ -1,0 +1,21 @@
+<project>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>wadl-client-plugin</artifactId>
+                <configuration>
+                    <targetDirectory>${basedir}/target/test-harness/path-with-numbers/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/open-patent-services</sourceDirectory>
+                    <packageName>test</packageName>
+                    <includes>wadl/ops-original.wadl</includes>
+                    <customizations></customizations>
+                    <customizations>
+                      <customization>${basedir}/src/test/resources/open-patent-services/customization-original.xjb</customization>
+                    </customizations>
+                    <autoPackaging>true</autoPackaging>
+                    <failOnError>false</failOnError>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

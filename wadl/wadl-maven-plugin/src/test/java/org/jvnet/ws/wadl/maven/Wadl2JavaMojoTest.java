@@ -16,7 +16,9 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.lang.Iterable;
+import java.lang.reflect.Field;
 import java.net.URLClassLoader;
+import java.net.URLStreamHandlerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +35,7 @@ import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
+import org.jvnet.ws.wadl2java.InvalidWADLException;
 
 /**
  * A bunch of tests for the {@link Wadl2JavaMojo}.
@@ -42,18 +45,31 @@ import org.easymock.classextension.EasyMock;
  */
 public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
+
+    
     /**
      * A mock object representing the active project.
      */
     private MavenProject project;
-
+    
     // JavaDoc inherited
     @Override
     public void setUp() throws Exception {
         super.setUp();
         project = EasyMock.createMock(MavenProject.class);
+        
+        // Register the package for the stream handler
+        System.setProperty("java.protocol.handler.pkgs", "org.jvnet.ws.wadl.maven");
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        //compiled code
+        super.tearDown();
+    }
+    
+    
+    
     /**
      * Tests the simple case with an existing sourceDirectory containing no wadl
      * files.
@@ -179,6 +195,116 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
     }
 
+
+    /**
+     * Tests the case in which is method is missing the name attribute
+     * WADL bug 49.
+     */
+    public void testMethodMissingName() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("missing-method-name.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        try
+        {
+            mojo.execute();
+            
+            assertTrue("Should have failed with an invalid wadl exception", false);
+        }
+        catch (Exception ex)
+        {
+            // All in fine
+            assertTrue("Should have failed with an invalid wadl exception", 
+                    ex.getCause() instanceof InvalidWADLException); 
+        }
+    }
+
+
+    /**
+     * Test a fixed version of the open patent wadl, that doesn't
+     * contain breaks as per testMissingMethodName, this is to exercise
+     * WADL-49 and WADL-50 the latter being specifically about relative
+     * URI in the base property of resources
+     */
+    public void testOpenPatentExample() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("open-patent-example.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        
+        assertThat(targetDirectory, contains("test/Example_262RestServicesClassification.java"));
+        assertThat(targetDirectory, contains("test/Example_262RestServicesFamily.java"));
+        assertThat(targetDirectory, contains("test/Example_262RestServicesLegal.java"));
+        assertThat(targetDirectory, contains("test/Example_262RestServicesNumberService.java"));
+        // Deal with duplicate class name
+        assertThat(targetDirectory, contains("test/Example_262RestServicesNumberService2.java"));
+        assertThat(targetDirectory, contains("test/Example_262RestServicesPublishedData.java"));
+        assertThat(targetDirectory, contains("test/Example_262RestServicesRegister.java"));
+        // Relative path version
+        
+        assertThat(targetDirectory, contains("test/Example_OpenPatentServicesWadlRelativePath.java"));
+        
+        // Exceptions
+        assertThat(targetDirectory, contains("test/FaultException.java"));
+        // Enumeration on navigator type
+        assertThat(targetDirectory, contains("test/Nav.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Check that the BASE_URI is correct with a / absolute path
+        Class $ProxyRoot = cl.loadClass("test.Example_262RestServicesClassification");
+        assertEquals(
+                "wadl://example/2.6.2/rest-services/classification/",
+                $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
+        
+        // Verify relative path version
+        $ProxyRoot = cl.loadClass("test.Example_OpenPatentServicesWadlRelativePath");
+        assertEquals(
+                "wadl://example/open-patent-services/wadl/relativePath/",
+                $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
+
+        // Check the enumeration is correct
+        Class $Nav = cl.loadClass("test.Nav");
+        assertTrue($Nav.isEnum());
+        Object conts[] = $Nav.getEnumConstants();
+        assertEquals(conts[0].toString(), "prev");
+        assertEquals(conts[1].toString(), "next");
+        
+
+        // Check the fault is correct
+        Class $FE = cl.loadClass("test.FaultException");
+        assertTrue($FE.getSuperclass() == Exception.class);
+        assertEquals($FE.getDeclaredFields()[0].getName(), "m_faultInfo");
+
+    }
+    
     
     /**
      * Tests the case in which a valid wadl file exists, and we have a catalog
@@ -820,4 +946,18 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         return (Wadl2JavaMojo) lookupMojo("generate", getBasedir()
                 + "/src/test/plugin-configs/wadl2java/" + pluginXml);
     }
+
+    /**
+     * A convenience method for getting a link to the resources dir
+     * 
+     * @param subpath
+     *            The sub path under the resources directory
+     * @return The full path to this file
+     */
+    public static String getFilePath(String subpath)  {
+        return getBasedir()
+                + "/src/test/resources/" + subpath;
+    }
+
+
 }

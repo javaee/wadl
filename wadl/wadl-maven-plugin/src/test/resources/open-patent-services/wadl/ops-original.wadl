@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://wadl.dev.java.net/2009/02 wadl.xsd"
+  xmlns="http://wadl.dev.java.net/2009/02" xmlns:ops="http://ops.epo.org" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <grammars>
+    <include href="../schema/ops.xsd" />
+  </grammars>
+
+  <!--Published data retrieval -->
+  <resources base="/2.6.2/rest-services/published-data/">
+    <!-- GET -->
+    <resource path="{ref-type}/{ref-format}/{number}/{constituents}" id="publishedDataRetrievalGET">
+      <doc xml:lang="en" title="Published document retrieval GET interface" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+      <param name="constituents" href="#published-data-constituents" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <!-- POST -->
+    <resource path="{ref-type}/{ref-format}/{constituents}" id="publishedDataRetrievalPOST">
+      <doc xml:lang="en" title="Published document retrieval POST interface" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param name="constituents" href="#published-data-constituents" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+    <!-- Published data search GET + POST -->
+    <resource path="search/{constituents}/" id="publishedDataSearch">
+      <doc xml:lang="en" title="Published document search" />
+      <param name="constituents" href="#published-data-constituents" />
+
+      <method name="GET" href="#wpdSearchGET" />
+      <method name="POST" href="#wpdGETPOST" /> <!-- search query -->
+    </resource>
+
+    <!--Published images retrieval GET -->
+    <resource path="images/{imageId}/" id="publishedDataImagesDownloadGET">
+      <doc xml:lang="en" title="Published document images download" />
+      <param name="imageId" type="xs:string" required="true" style="template">
+        <doc xml:lang="en" title="Image identifier can be obtained by Published data images inquiry request" />
+      </param>
+      <method name="GET" href="#imagesGETPOST"/>
+    </resource>
+
+    <!--Published images retrieval POST -->
+    <resource path="images/" id="publishedDataImagesDownloadPOST">
+      <doc xml:lang="en" title="Published document images download" />
+      <method name="POST" href="#imagesGETPOST" /> <!-- line break separated image identifiers -->
+    </resource>
+
+
+    <!--Published data images inquiry GET -->
+    <resource path="{ref-type}/{ref-format}/{number}/images" id="publishedDataImagesInquiryRequestGET">
+      <doc xml:lang="en" title="Published document images availability inquiry" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <!--Published data images inquiry POST -->
+    <resource path="{ref-type}/{ref-format}/images" id="publishedDataImagesInquiryRequestPOST">
+      <doc xml:lang="en" title="Published document images availability inquiry" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+    <!--Published data equivalents retrieval GET -->
+    <resource path="{ref-type}/{ref-format}/{number}/equivalents/{constituents}" id="publishedDataEquivalentsRequestGET">
+      <doc xml:lang="en" title="Published document equivalents" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+      <param name="constituents" href="#equivalents-constituents" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <!--Published data equivalents retrieval POST -->
+    <resource path="{ref-type}/{ref-format}/equivalents/{constituents}" id="publishedDataEquivalentsRequestPOST">
+      <doc xml:lang="en" title="Published document equivalents" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param name="constituents" href="#equivalents-constituents" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+    <!--Published data fulltext availability inquiry GET -->
+    <resource path="{ref-type}/{ref-format}/{number}/fulltext" id="publishedDataFulltextRequestGET">
+      <doc xml:lang="en" title="Published document fulltext availability inquiry" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <!--Published data fulltext availability inquiry POST -->
+    <resource path="{ref-type}/{ref-format}/fulltext" id="publishedDataFulltextRequestPOST">
+      <doc xml:lang="en" title="Published document fulltext availability inquiry" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+
+    <!--Published data claims retrieval GET -->
+    <resource path="{ref-type}/{ref-format}/{number}/claims" id="publishedDataClaimsRequestGET">
+      <doc xml:lang="en" title="Published document claims" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <!--Published data claims retrieval POST -->
+    <resource path="{ref-type}/{ref-format}/claims" id="publishedDataClaimsRequestPOST">
+      <doc xml:lang="en" title="Published document claims" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+    <!--Published data description retrieval GET -->
+    <resource path="{ref-type}/{ref-format}/{number}/description" id="publishedDataDescriptionRequestGET">
+      <doc xml:lang="en" title="Published document description" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <!--Published data description retrieval POST -->
+    <resource path="{ref-type}/{ref-format}/description" id="publishedDataDescriptionRequestPOST">
+      <doc xml:lang="en" title="Published document description" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+  </resources>
+
+  <!--Published data family data retrieval -->
+  <resources base="/2.6.2/rest-services/family/">
+    <resource path="{ref-type}/{ref-format}/{number}/{constituents}" id="familyRequestGET">
+      <doc xml:lang="en" title="Family information retrieval" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+      <param name="constituents" href="#family-constituents" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <resource path="{ref-type}/{ref-format}/{constituents}" id="familyRequestPOST">
+      <doc xml:lang="en" title="Family information retrieval" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param name="constituents" href="#family-constituents" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+  </resources>
+
+  <!--Published data legal data retrieval -->
+  <resources base="/2.6.2/rest-services/legal/">
+    <resource path="{ref-type}/{ref-format}/{number}" id="legalRequestGET">
+      <doc xml:lang="en" title="Legal information retrieval" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <resource path="{ref-type}/{ref-format}" id="legalRequestPOST">
+      <doc xml:lang="en" title="Legal information retrieval" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+  </resources>
+
+  <!--Register data retrieval -->
+  <resources base="/2.6.2/rest-services/register/">
+    <resource path="{ref-type}/{ref-format}/{number}" id="registerRequestGET">
+      <doc xml:lang="en" title="Register information retrieval" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+      <param href="#number" />
+
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+
+    <resource path="{ref-type}/{ref-format}" id="registerRequestPOST">
+      <doc xml:lang="en" title="Register information retrieval" />
+      <param href="#ref-type" />
+      <param href="#ref-format" />
+
+      <method name="POST" href="#wpdGETPOST" /> <!-- line break separated references -->
+    </resource>
+
+
+    <!-- Register data search -->
+    <resource path="search/" id="registerSearchRequest">
+      <doc xml:lang="en" title="Register documents search" />
+
+      <method name="GET" href="#wpdSearchGET" />
+      <method name="POST" href="#wpdGETPOST" /> <!-- search query -->
+    </resource>
+
+  </resources>
+
+  <!-- Classification inquiry -->
+  <resources base="/2.6.2/rest-services/classification/">
+    <!-- ECLA Classification inquiry GET -->
+    <resource path="ecla/{class}/{nav}" id="eclaRequestPOST">
+      <doc xml:lang="en" title="ECLA information retrieval" />
+      <param name="class" type="xs:string" required="true" style="template">
+        <doc xml:lang="en" title="ECLA class" />
+      </param>
+      <param name="nav" type="xs:string" required="false" style="template">
+        <option value="prev">
+          <doc xml:lang="en" title="Previous class in the ECLA classication tree" />
+        </option>
+        <option value="next">
+          <doc xml:lang="en" title="Next class in the ECLA classication tree" />
+        </option>
+      </param>
+      <method name="GET" id="eclaGETPOST" />
+    </resource>
+
+    <!-- ECLA Classification inquiry POST -->
+    <resource path="ecla" id="eclaRequestPOST">
+      <doc xml:lang="en" title="ECLA information retrieval" />
+      <method name="POST" id="eclaGETPOST" /> <!-- class/navigation style line brake separated requests, e.g. A/next -->
+    </resource>
+
+    <!-- ECLA Classification images retrieval -->
+    <resource path="images/{image}" id="eclaImagesRequest">
+      <doc xml:lang="en" title="ECLA image retrieval" />
+      <param name="image" type="xs:anyURI" required="true" style="template">
+        <doc xml:lang="en" title="ECLA image name" />
+      </param>
+      <method name="GET" id="eclaImagesGET">
+        <response status="200">
+          <representation mediaType="image/gif" />
+        </response>
+        <response status="400 403 404 405 406 408 413 500 503">
+          <representation mediaType="application/xml" element="ops:fault" />
+        </response>
+      </method>
+    </resource>
+
+    <!-- ECLA Classification search -->
+    <resource path="search/" id="eclaSearchRequest">
+      <doc xml:lang="en" title="ECLA classification search" />
+      <method name="GET" href="#wpdSearchGET" />
+      <method name="POST" href="#wpdGETPOST" /> <!-- search query as a post request body -->
+    </resource>
+  </resources>
+
+  <!-- Number service request GET -->
+  <resources base="/2.6.2/rest-services/number-service/">
+    <resource path="{ref-type}/{in-ref-format}/{number}/{out-ref-format}" id="numberServiceRequestGET">
+      <doc xml:lang="en" title="Number service. Converts number formats" />
+      <param href="#ref-type" />
+      <param name="in-ref-format" href="#ref-format" />
+      <param href="#number" />
+      <param name="out-ref-format" href="#ref-format" />
+      <method name="GET" href="#wpdGETPOST" />
+    </resource>
+  </resources>
+
+  <!-- Number service request POST -->
+  <resources base="/2.6.2/rest-services/number-service/">
+    <resource path="{ref-type}/{in-ref-format}/{out-ref-format}" id="numberServiceRequestPOST">
+      <doc xml:lang="en" title="Number service. Converts number formats" />
+      <param href="#ref-type" />
+      <param name="in-ref-format" href="#ref-format" />
+      <param name="out-ref-format" href="#ref-format" />
+      <method name="POST" href="#wpdGETPOST" /> <!-- linebreak separated references -->
+    </resource>
+  </resources>
+
+  <!-- METHODS -->
+  <method id="wpdGETPOST">
+    <response status="200">
+      <representation mediaType="application/xml" element="ops:world-patent-data" />
+      <representation mediaType="application/json" />
+      <representation mediaType="application/javascript" />
+    </response>
+    <response status="400 403 404 405 406 408 413 500 503">
+      <representation mediaType="application/xml" element="ops:fault" />
+    </response>
+  </method>
+
+  <method id="wpdSearchGET">
+    <request>
+      <param name="q" type="xs:string" required="true" style="query">
+        <doc xml:lang="en">Search query</doc>
+      </param>
+      <param name="X-OPS-Range" type="ops:range-Type" required="false" style="header">
+        <doc xml:lang="en">Range of elements were requested, e.g. 1-20 or 7 </doc>
+      </param>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="ops:world-patent-data" />
+      <representation mediaType="application/json" />
+      <representation mediaType="application/javascript" />
+    </response>
+    <response status="400 403 404 405 406 408 413 500 503">
+      <representation mediaType="application/xml" element="ops:fault" />
+    </response>
+  </method>
+  
+  <method id="imagesGETPOST">
+    <param name="X-OPS-Range" type="xs:nonNegativeInteger" required="false" style="header">
+      <doc xml:lang="en">Page number</doc>
+    </param>
+    <response status="200">
+      <representation mediaType="application/pdf" />
+      <representation mediaType="application/tiff" />
+      <representation mediaType="image/tiff" />
+      <representation mediaType="image/png" />
+    </response>
+    <response status="403 404 500 503">
+      <representation mediaType="application/xml" element="ops:fault" />
+    </response>
+  </method>
+  
+
+  <method id="eclaGETPOST">
+    <request>
+      <param name="depth" type="xs:nonNegativeInteger" required="false" style="query">
+        <doc xml:lang="en">Depth of the ECLA classes will be displayed</doc>
+      </param>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="ops:world-patent-data" />
+      <representation mediaType="application/json" />
+      <representation mediaType="application/javascript" />
+    </response>
+    <response status="400 403 404 405 406 408 413 500 503">
+      <representation mediaType="application/xml" element="ops:fault" />
+    </response>
+  </method>
+
+
+  <!-- PARAMS -->
+  <param name="ref-type" type="ops:refType-Type" required="true" style="template">
+    <doc xml:lang="en" title="Reference type" />
+  </param>
+  <param name="ref-format" type="ops:refFormat-Type" required="true" style="template">
+    <doc xml:lang="en" title="Reference format" />
+  </param>
+  <param name="number" type="xs:string" style="template">
+    <doc xml:lang="en" title="Reference" />
+  </param>
+
+  <param name="published-data-constituents" type="xs:string" required="true" style="template">
+    <option value="abstract" />
+    <option value="biblio" />
+    <option value="full-cycle" />
+    <option value="abstract,full-cycle" />
+    <option value="biblio,full-cycle" />
+  </param>
+
+  <param name="equivalents-constituents" type="xs:string" required="false" style="template">
+    <option value="abstract" />
+    <option value="biblio" />
+    <option value="full-cycle" />
+    <option value="images" />
+  </param>
+
+  <param name="family-constituents" type="xs:string" required="false" style="template">
+    <option value="legal" />
+    <option value="biblio" />
+    <option value="legal,biblio" />
+  </param>
+
+
+
+</application>

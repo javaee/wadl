@@ -22,6 +22,8 @@ package org.jvnet.ws.wadl2java;
 import com.sun.codemodel.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.net.URI;
@@ -118,6 +120,8 @@ public class Main {
             }
             Wadl2Java w = new Wadl2Java(outputDir, pkg, autoPackage, customizations);
             w.process(wadlDesc);
+        } catch (InvalidWADLException ex) {
+            ex.printStackTrace();
         } catch (URISyntaxException ex) {
             ex.printStackTrace();
         } catch (JAXBException ex) {

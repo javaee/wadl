@@ -30,6 +30,7 @@ import org.jvnet.ws.wadl.Resources;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.core.UriBuilder;
 import org.jvnet.ws.wadl2java.ElementResolver;
 
 /**
@@ -51,12 +52,44 @@ public class ResourceNode {
      * @param app the unmarshalled JAXB-generated application object
      * @param resources the unmarshalled JAXB-generated resources object
      */
-    public ResourceNode(Application app, Resources resources) {
+    public ResourceNode(URI baseURI, Application app, Resources resources) {
         doc = app.getDoc();
         parentResource = null;
-        className = createClassNameFromBase(resources.getBase());
+        
+        // So we have the base string, which is a simple anyURI type
+        // but we need to test to see if this is an relative one or
+        // not
+        String baseString = resources.getBase();
+        URI base = URI.create(baseString);
+        if (!base.isAbsolute())
+        {
+            UriBuilder builder = UriBuilder.fromUri(baseURI);
+            String originalPath = baseURI.getPath();
+
+            // Absolute URI path on the given server
+            if (baseString.startsWith("/")) {
+                builder.replacePath(baseString);
+            }
+            else {
+                // If the path doesn't end in a /, normal for most WADL references
+                // then you need to hack it back to the / to get relative URI to 
+                // work properly
+                if (!originalPath.endsWith("/") && originalPath.lastIndexOf('/')!=-1) {
+                    builder.replacePath(
+                            originalPath.substring(0,originalPath.lastIndexOf('/')));
+                }
+                
+                builder.path(baseString);
+            }
+                
+            
+            // Build it up
+            base = builder.build();
+        }
+        
+        className = createClassNameFromBase(base.toString());
         pathSegment = new PathSegment(
-                resources==null ? "" : resources.getBase());
+                resources==null ? "" : base.toString());
         childResources = new ArrayList<ResourceNode>();
         methods = new ArrayList<MethodNode>();
         types = new ArrayList<ResourceTypeNode>();

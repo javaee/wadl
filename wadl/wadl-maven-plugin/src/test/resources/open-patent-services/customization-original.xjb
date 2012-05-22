@@ -1,0 +1,61 @@
+<jaxb:bindings xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+  jaxb:version="1.0"
+  xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+  jaxb:extensionBindingPrefixes="xjc">
+   <jaxb:globalBindings>
+     <xjc:simple />
+   </jaxb:globalBindings>
+
+
+
+    <jaxb:bindings schemaLocation="schema/ops.xsd" >
+
+
+        <jaxb:bindings node="//xs:complexType[@name='any-referenceType']">
+            <jaxb:bindings node=".//xs:element[@ref='ops:publication-reference']">
+                <jaxb:property name="OpsPublicationReference"/>
+            </jaxb:bindings>
+            <jaxb:bindings node=".//xs:element[@ref='ops:application-reference']">
+                <jaxb:property name="OpsApplicationReference"/>
+            </jaxb:bindings>
+            <jaxb:bindings node=".//xs:element[@ref='ops:priority-claim']">
+                <jaxb:property name="OpsPriorityClaim"/>
+            </jaxb:bindings>
+        </jaxb:bindings>
+
+        <jaxb:bindings node="//xs:complexType[@name='any-publication-referenceType']">
+            <jaxb:bindings node=".//xs:element[@ref='ops:publication-reference']">
+                <jaxb:property name="OpsPublicationReference"/>
+            </jaxb:bindings>
+        </jaxb:bindings>
+
+
+    </jaxb:bindings>
+
+
+
+<jaxb:bindings schemaLocation="schema/exchange-documents.xsd" >
+   <jaxb:schemaBindings>
+
+
+
+      <jaxb:nameXmlTransform>
+         <jaxb:typeName suffix="Type" />
+      </jaxb:nameXmlTransform>
+   </jaxb:schemaBindings>
+  </jaxb:bindings>
+
+
+<jaxb:bindings schemaLocation="schema/rplus.xsd" >
+   <jaxb:schemaBindings>
+
+
+
+      <jaxb:nameXmlTransform>
+         <jaxb:typeName suffix="Type" />
+      </jaxb:nameXmlTransform>
+   </jaxb:schemaBindings>
+  </jaxb:bindings>
+
+</jaxb:bindings> 
