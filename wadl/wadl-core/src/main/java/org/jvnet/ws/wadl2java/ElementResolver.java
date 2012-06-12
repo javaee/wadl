@@ -45,17 +45,19 @@ public class ElementResolver {
      * @param file the URI of the file in which the referenced element is located, used
      * to absolutize references
      * @param href the reference to resolve
-     * @param clazz the class of object expected
+     * @param object the original referring object
      */
     @SuppressWarnings("unchecked")
-    public <T> T resolve(URI file, String href, Class<T> clazz) {
+    public <T> T resolve(URI file, String href, T object) throws InvalidWADLException {
         Object o = null;
         String id = file.toString()+href.substring(href.indexOf('#'));
         o = map.get(id);
-        if (o == null)
-            messageListener.info(Wadl2JavaMessages.SKIPPING_REFERENCE(href, file.toString()));
-        else if (!clazz.isInstance(o))
-            messageListener.info(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href, file.toString()));
+        if (o == null) {
+            throw Wadl2Java.messageStringFromObject(Wadl2JavaMessages.SKIPPING_REFERENCE(href), object);
+        }
+        else if (!object.getClass().isInstance(o)) {
+            throw Wadl2Java.messageStringFromObject(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href), object);
+        }
         return (T)o;
     }
     

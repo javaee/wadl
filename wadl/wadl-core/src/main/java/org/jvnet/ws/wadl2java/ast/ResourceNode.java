@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.core.UriBuilder;
 import org.jvnet.ws.wadl2java.ElementResolver;
+import org.jvnet.ws.wadl2java.InvalidWADLException;
 
 /**
  * Represents a WADL resource
@@ -122,7 +123,7 @@ public class ResourceNode {
      * @param file the URI of the WADL file that contains the resource element
      * @param idMap a map of URI reference to WADL definition element
      */
-    public ResourceNode(Resource resource, ResourceNode parent, URI file, ElementResolver idMap) {
+    public ResourceNode(Resource resource, ResourceNode parent, URI file, ElementResolver idMap) throws InvalidWADLException {
         doc = resource.getDoc();
         parentResource = parent;
         pathSegment = new PathSegment(resource, file, idMap);
@@ -141,7 +142,7 @@ public class ResourceNode {
      * @param file the URI of the WADL file that contains the resource element
      * @param idMap a map of URI reference to WADL definition element
      */
-    public ResourceNode(Resource resource, ResourceTypeNode parent, URI file, ElementResolver idMap) {
+    public ResourceNode(Resource resource, ResourceTypeNode parent, URI file, ElementResolver idMap) throws InvalidWADLException {
         doc = resource.getDoc();
         parentResource = null;
         pathSegment = new PathSegment(resource, file, idMap);
@@ -157,7 +158,7 @@ public class ResourceNode {
      * @param idMap a map of URI reference to WADL definition element
      * @return the new resource element
      */
-    public ResourceNode addChild(Resource r, URI file, ElementResolver idMap) {
+    public ResourceNode addChild(Resource r, URI file, ElementResolver idMap) throws InvalidWADLException {
         ResourceNode n = new ResourceNode(r, this, file, idMap);
         childResources.add(n);
         return n;

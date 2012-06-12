@@ -67,6 +67,7 @@
           <schemaDirectory>${basedir}/src/main/resources/xsd</schemaDirectory>
           <generatePackage>org.jvnet.ws.wadl</generatePackage>
           <catalog>etc/catalog.xml</catalog>
+          <args>-Xlocator</args>
         </configuration>
 	<dependencies>
 	  <dependency>

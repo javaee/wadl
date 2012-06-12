@@ -25,6 +25,7 @@ import org.jvnet.ws.wadl.ParamStyle;
 import org.jvnet.ws.wadl.Resource;
 import java.util.HashMap;
 import java.util.List;
+import org.jvnet.ws.wadl2java.InvalidWADLException;
 
 /**
  *
@@ -47,7 +48,7 @@ public class PathSegmentTest extends TestCase {
     /**
      * Test of getTemplateParameters method, of class org.jvnet.ws.wadl2java.PathSegment.
      */
-    public void testGetTemplateParameters() {
+    public void testGetTemplateParameters() throws InvalidWADLException {
         System.out.println("getTemplateParameters");
         
         Resource r = new Resource();
@@ -66,7 +67,7 @@ public class PathSegmentTest extends TestCase {
         assertFalse(result.get(1).isRequired());
     }
     
-    public void testEvaluate() {
+    public void testEvaluate() throws InvalidWADLException {
         System.out.println("evaluate");
         Resource r = new Resource();
         r.setPath("fred/{param1}/bob/{param2}");

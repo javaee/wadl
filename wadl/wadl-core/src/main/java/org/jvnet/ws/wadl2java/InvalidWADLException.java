@@ -16,18 +16,69 @@
 
 package org.jvnet.ws.wadl2java;
 
+import org.xml.sax.Locator;
+
 /**
  * Thrown the the WADL is invalid and cannot be processed
- * @author mh124079
+ * @author gdavison
  */
 public class InvalidWADLException extends java.lang.Exception {
     
+    private static final Locator NULL_LOCATOR = new Locator() {
+        public String getPublicId() {
+            return null;
+        }
+
+        public String getSystemId() {
+            return null;
+        }
+
+        public int getLineNumber() {
+            return -1;
+        }
+
+        public int getColumnNumber() {
+            return -1;
+        }
+    };
+    
+    private Locator _locator;
     
     /**
-     * Constructs an instance of <code>UnresolvableReferenceException</code> with the specified detail message.
+     * Constructs an instance of <code>InvalidWADLException</code> with the specified detail message
+     * and location
      * @param msg the detail message.
      */
-    public InvalidWADLException(String msg) {
-        super(msg);
+    public InvalidWADLException(String msg, Locator locator) {
+        super(locator==null ? msg : Wadl2JavaMessages.FILE(
+              msg,
+              locator.getLineNumber(), locator.getColumnNumber(), locator.getSystemId()));                    
+
+        // Use a null locator is one isn't provided
+        _locator = locator !=null ? locator : NULL_LOCATOR;
     }
+    
+    
+    /**
+     * @return the line number for the problem, can be -1
+     */
+    public int getLineNumber() {
+        return _locator.getLineNumber();
+    }
+
+    /**
+     * @return the column for the problem, can be -1
+     */
+    public int getColumnNumber() {
+        return _locator.getColumnNumber();
+    }
+
+    /**
+     * @return the system id of the location, can be used as the location
+     * of the file being processed if avaliable.
+     */
+    public String getSystemId() {
+        return _locator.getSystemId();
+    }
+
 }

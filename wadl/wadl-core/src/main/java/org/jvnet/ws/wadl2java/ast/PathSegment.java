@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import org.jvnet.ws.wadl2java.ElementResolver;
+import org.jvnet.ws.wadl2java.InvalidWADLException;
 
 /**
  * Represents a segment of a URI with zero or more embedded parameters as found
@@ -97,7 +98,7 @@ public class PathSegment {
      * @param file the URI of the WADL file that contains the resource element
      * @param idMap a map of URI reference to WADL definition element
      */
-    public PathSegment(Resource resource, URI file, ElementResolver idMap) {
+    public PathSegment(Resource resource, URI file, ElementResolver idMap) throws InvalidWADLException {
         template = resource.getPath() == null ? "" : resource.getPath();
         this.templateParameters = new ArrayList<Param>();
         this.matrixParameters = new ArrayList<Param>();
@@ -144,7 +145,7 @@ public class PathSegment {
      * @param file the URI of the WADL file that contains the resource type element
      * @param idMap a map of URI reference to WADL definition element
      */
-    public PathSegment(ResourceType resource, URI file, ElementResolver idMap) {
+    public PathSegment(ResourceType resource, URI file, ElementResolver idMap) throws InvalidWADLException {
         template = null;
         templateParameters = new ArrayList<Param>();
         matrixParameters = new ArrayList<Param>();
@@ -174,10 +175,10 @@ public class PathSegment {
      * @param idMap a map of URI reference to WADL definition element
      * @return the param definition element
      */
-    protected static Param derefIfRequired(Param p, URI file, ElementResolver idMap) {
+    protected static Param derefIfRequired(Param p, URI file, ElementResolver idMap) throws InvalidWADLException {
         String href = p.getHref();
         if (href!=null && href.length()>0)
-            return idMap.resolve(file, href, Param.class);
+            return idMap.resolve(file, href, p);
         else
             return p;
     }
