@@ -445,7 +445,9 @@ public class Wadl2Java {
         parameters.messageListener.info(Wadl2JavaMessages.PROCESSING(desc.toString()));
 
         
-        // Upgrade the WADL if required
+        // Upgrade the WADL if required, write to
+        // a insternal string as the direct JAXB transform means that
+        // we don't get the Locator attribute set.
         StringWriter sw = new StringWriter();
         
         StreamResult result = new StreamResult(sw);
