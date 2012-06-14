@@ -17,19 +17,20 @@
  *
  */
 
-package org.jvnet.ws.wadl2java.ast;
+package org.jvnet.ws.wadl.ast;
 
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Method;
 import org.jvnet.ws.wadl.Param;
 import java.util.ArrayList;
 import java.util.List;
+import org.xml.sax.Locator;
 
 /**
  * Represents a WADL method
  * @author mh124079
  */
-public class MethodNode {
+public class MethodNode extends AbstractNode {
     
     private ResourceNode parentResource;
     private ResourceTypeNode parentResourceType;
@@ -180,5 +181,38 @@ public class MethodNode {
     public List<Doc> getDoc() {
         return method.getDoc();
     }
+
+    /**
+     * @return The location of the node
+     */
+    @Override
+    public Locator getLocation() {
+        return method.sourceLocation();
+    }
+    
+    /**
+     * Allow the provided parameter to visit the current node and any
+     * child nodes.
+     */
+    public void visit(NodeVisitor visitor)
+    {
+        super.visit(visitor);
+        
+        // Visit inputs, outputs and faults
+        //
+        for (RepresentationNode node : getSupportedInputs()) {
+            node.visit(visitor); 
+        }
+
+        for (RepresentationNode node : getSupportedOutputs()) {
+            node.visit(visitor); 
+        }
+
+        for (FaultNode node : getFaults()) {
+            node.visit(visitor); 
+        }
+
+    }
+    
 
 }

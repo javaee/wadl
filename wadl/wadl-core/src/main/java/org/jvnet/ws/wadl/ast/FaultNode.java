@@ -17,7 +17,7 @@
  *
  */
 
-package org.jvnet.ws.wadl2java.ast;
+package org.jvnet.ws.wadl.ast;
 
 import org.jvnet.ws.wadl.Representation;
 import org.jvnet.ws.wadl.Param;
@@ -25,13 +25,14 @@ import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.xml.sax.Locator;
 
 /**
  * Represents a WADL fault
  * @author mh124079
  */
-public class FaultNode {
-    
+public class FaultNode  extends AbstractNode {
+     
     private Representation fault;
     String className;
     
@@ -99,4 +100,14 @@ public class FaultNode {
     public List<Doc> getDoc() {
         return fault.getDoc();
     }
+    
+    
+    /**
+     * @return The location of the node
+     */
+    @Override
+    public Locator getLocation() {
+        return fault.sourceLocation();
+    }
+    
 }

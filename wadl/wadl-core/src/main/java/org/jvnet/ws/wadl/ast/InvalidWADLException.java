@@ -14,8 +14,9 @@
  * 
  */
 
-package org.jvnet.ws.wadl2java;
+package org.jvnet.ws.wadl.ast;
 
+import org.jvnet.ws.wadl2java.Wadl2JavaMessages;
 import org.xml.sax.Locator;
 
 /**

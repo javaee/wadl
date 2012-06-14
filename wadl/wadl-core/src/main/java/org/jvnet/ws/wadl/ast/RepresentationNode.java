@@ -17,7 +17,7 @@
  *
  */
 
-package org.jvnet.ws.wadl2java.ast;
+package org.jvnet.ws.wadl.ast;
 
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
@@ -25,12 +25,13 @@ import org.jvnet.ws.wadl.Representation;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.xml.sax.Locator;
 
 /**
  * Represents a WADL representation
  * @author mh124079
  */
-public class RepresentationNode {
+public class RepresentationNode extends AbstractNode {
     
     Representation rep;
     
@@ -99,4 +100,16 @@ public class RepresentationNode {
     public String getId() {
         return rep.getId();
     }
+
+
+    /**
+     * @return The location of the node
+     */
+    @Override
+    public Locator getLocation() {
+        return rep.sourceLocation();
+    }
+    
+    
+
 }

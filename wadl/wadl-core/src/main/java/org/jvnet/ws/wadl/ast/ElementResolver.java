@@ -10,11 +10,13 @@
  * permissions and limitations under the License.
  */
 
-package org.jvnet.ws.wadl2java;
+package org.jvnet.ws.wadl.ast;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import org.jvnet.ws.wadl.util.MessageListener;
+
 
 /**
  * Maintains a map of file+ref to element.
@@ -53,10 +55,10 @@ public class ElementResolver {
         String id = file.toString()+href.substring(href.indexOf('#'));
         o = map.get(id);
         if (o == null) {
-            throw Wadl2Java.messageStringFromObject(Wadl2JavaMessages.SKIPPING_REFERENCE(href), object);
+            throw WadlAstBuilder.messageStringFromObject(AstMessages.SKIPPING_REFERENCE(href), object);
         }
         else if (!object.getClass().isInstance(o)) {
-            throw Wadl2Java.messageStringFromObject(Wadl2JavaMessages.SKIPPING_REFERENCE_TYPE(href), object);
+            throw WadlAstBuilder.messageStringFromObject(AstMessages.SKIPPING_REFERENCE_TYPE(href), object);
         }
         return (T)o;
     }

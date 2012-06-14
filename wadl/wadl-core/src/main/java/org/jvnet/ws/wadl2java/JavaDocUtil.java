@@ -27,15 +27,16 @@ import com.sun.codemodel.JMethod;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Option;
 import org.jvnet.ws.wadl.Param;
-import org.jvnet.ws.wadl2java.ast.MethodNode;
-import org.jvnet.ws.wadl2java.ast.RepresentationNode;
-import org.jvnet.ws.wadl2java.ast.ResourceNode;
-import org.jvnet.ws.wadl2java.ast.ResourceTypeNode;
+import org.jvnet.ws.wadl.ast.MethodNode;
+import org.jvnet.ws.wadl.ast.RepresentationNode;
+import org.jvnet.ws.wadl.ast.ResourceNode;
+import org.jvnet.ws.wadl.ast.ResourceTypeNode;
 import java.io.IOException;
 import org.w3c.dom.Element;
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import java.io.StringWriter;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Attr;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
@@ -117,12 +118,10 @@ public class JavaDocUtil {
         copyElementContent(e, normalizedDoc);
         
         StringWriter sw = new StringWriter();
-        OutputFormat of = new OutputFormat("html", null, false);
-        of.setOmitXMLDeclaration(true);
-        XMLSerializer xs = new XMLSerializer(sw, of);
         try {
-            xs.serialize(normalizedDoc);
-        } catch (IOException ex) {
+            TransformerFactory.newInstance().newTransformer()
+                    .transform(new DOMSource(e), new StreamResult(sw));
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return sw.toString();

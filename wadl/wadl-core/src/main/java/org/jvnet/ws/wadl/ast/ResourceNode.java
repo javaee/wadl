@@ -17,7 +17,7 @@
  *
  */
 
-package org.jvnet.ws.wadl2java.ast;
+package org.jvnet.ws.wadl.ast;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -31,15 +31,15 @@ import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.core.UriBuilder;
-import org.jvnet.ws.wadl2java.ElementResolver;
-import org.jvnet.ws.wadl2java.InvalidWADLException;
+import org.xml.sax.Locator;
 
 /**
  * Represents a WADL resource
  * @author mh124079
  */
-public class ResourceNode {
+public class ResourceNode extends AbstractNode {
     
+    private Object rootElement;
     private ResourceNode parentResource;
     private String className;
     private PathSegment pathSegment;
@@ -56,6 +56,7 @@ public class ResourceNode {
     public ResourceNode(URI baseURI, Application app, Resources resources) {
         doc = app.getDoc();
         parentResource = null;
+        rootElement = resources;
         
         // So we have the base string, which is a simple anyURI type
         // but we need to test to see if this is an relative one or
@@ -125,6 +126,7 @@ public class ResourceNode {
      */
     public ResourceNode(Resource resource, ResourceNode parent, URI file, ElementResolver idMap) throws InvalidWADLException {
         doc = resource.getDoc();
+        rootElement = resource;
         parentResource = parent;
         pathSegment = new PathSegment(resource, file, idMap);
         className = GeneratorUtil.makeClassName(getUriTemplate());
@@ -144,6 +146,7 @@ public class ResourceNode {
      */
     public ResourceNode(Resource resource, ResourceTypeNode parent, URI file, ElementResolver idMap) throws InvalidWADLException {
         doc = resource.getDoc();
+        rootElement = resource;
         parentResource = null;
         pathSegment = new PathSegment(resource, file, idMap);
         childResources = new ArrayList<ResourceNode>();
@@ -295,4 +298,41 @@ public class ResourceNode {
     public List<Doc> getDoc() {
         return doc;
     }
+
+
+    /**
+     * @return The location of the node
+     */
+    @Override
+    public Locator getLocation() {
+        return rootElement instanceof Application ?
+                ((Resources)rootElement).sourceLocation():
+                ((Resource)rootElement).sourceLocation();
+    }
+    
+    /**
+     * Allow the provided parameter to visit the current node and any
+     * child nodes.
+     */
+    public void visit(NodeVisitor visitor)
+    {
+        super.visit(visitor);
+        
+        // Visit resources, resourcetypes, and methods
+        //
+        for (ResourceTypeNode node : getResourceTypes()) {
+            node.visit(visitor); 
+        }
+
+        for (ResourceNode node : getChildResources()) {
+            node.visit(visitor); 
+        }
+
+        for (MethodNode node : getMethods()) {
+            node.visit(visitor); 
+        }
+
+    }
+    
+
 }

@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.jvnet.ws.wadl2java;
+package org.jvnet.ws.wadl.util;
 
 /**
  * A public class that allows an implementor to deal with messages output

@@ -32,7 +32,7 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
 import org.jvnet.ws.wadl.Option;
 import org.jvnet.ws.wadl.Param;
-import org.jvnet.ws.wadl2java.ast.ResourceNode;
+import org.jvnet.ws.wadl.ast.ResourceNode;
 import java.util.Arrays;
 import java.util.HashSet;
 import javax.xml.namespace.QName;

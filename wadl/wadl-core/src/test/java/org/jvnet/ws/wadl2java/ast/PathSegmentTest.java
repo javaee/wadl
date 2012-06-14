@@ -19,13 +19,14 @@
 
 package org.jvnet.ws.wadl2java.ast;
 
+import org.jvnet.ws.wadl.ast.PathSegment;
+import org.jvnet.ws.wadl.ast.InvalidWADLException;
 import junit.framework.*;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ParamStyle;
 import org.jvnet.ws.wadl.Resource;
 import java.util.HashMap;
 import java.util.List;
-import org.jvnet.ws.wadl2java.InvalidWADLException;
 
 /**
  *

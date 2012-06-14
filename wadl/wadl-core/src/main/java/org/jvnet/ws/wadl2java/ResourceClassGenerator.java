@@ -19,6 +19,7 @@
 
 package org.jvnet.ws.wadl2java;
 
+import org.jvnet.ws.wadl.util.MessageListener;
 import com.sun.codemodel.JAnnotatable;
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
@@ -43,12 +44,12 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import org.jvnet.ws.wadl.*;
-import org.jvnet.ws.wadl2java.ast.FaultNode;
-import org.jvnet.ws.wadl2java.ast.MethodNode;
-import org.jvnet.ws.wadl2java.ast.PathSegment;
-import org.jvnet.ws.wadl2java.ast.RepresentationNode;
-import org.jvnet.ws.wadl2java.ast.ResourceNode;
-import org.jvnet.ws.wadl2java.ast.ResourceTypeNode;
+import org.jvnet.ws.wadl.ast.FaultNode;
+import org.jvnet.ws.wadl.ast.MethodNode;
+import org.jvnet.ws.wadl.ast.PathSegment;
+import org.jvnet.ws.wadl.ast.RepresentationNode;
+import org.jvnet.ws.wadl.ast.ResourceNode;
+import org.jvnet.ws.wadl.ast.ResourceTypeNode;
 import com.sun.tools.xjc.api.Mapping;
 import com.sun.tools.xjc.api.S2JJAXBModel;
 import java.lang.reflect.Field;

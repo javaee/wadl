@@ -17,7 +17,7 @@
  *
  */
 
-package org.jvnet.ws.wadl2java.ast;
+package org.jvnet.ws.wadl.ast;
 
 import com.sun.codemodel.JDefinedClass;
 import java.net.URI;
@@ -28,14 +28,13 @@ import org.jvnet.ws.wadl2java.GeneratorUtil;
 import java.util.ArrayList;
 import java.util.List;
 import org.jvnet.ws.wadl.Resource;
-import org.jvnet.ws.wadl2java.ElementResolver;
-import org.jvnet.ws.wadl2java.InvalidWADLException;
+import org.xml.sax.Locator;
 
 /**
  * Represents a WADL resource_type
  * @author mh124079
  */
-public class ResourceTypeNode {
+public class ResourceTypeNode extends AbstractNode {
     
     private String interfaceName;
     private List<MethodNode> methods;
@@ -43,6 +42,7 @@ public class ResourceTypeNode {
     private PathSegment pathSegment;
     private List<Doc> doc;
     private JDefinedClass generatedInterface;
+    private ResourceType resourceType;
     
     /**
      * Create a new instance of ResourceTypeNode
@@ -57,6 +57,7 @@ public class ResourceTypeNode {
         methods = new ArrayList<MethodNode>();
         resources = new ArrayList<ResourceNode>();
         generatedInterface = null;
+        this.resourceType = resourceType;
     }
     
     /**
@@ -123,4 +124,35 @@ public class ResourceTypeNode {
     public JDefinedClass getGeneratedInterface() {
         return generatedInterface;
     }
+    
+    
+    /**
+     * @return The location of the node
+     */
+    @Override
+    public Locator getLocation() {
+        return resourceType.sourceLocation();
+    }
+    
+    /**
+     * Allow the provided parameter to visit the current node and any
+     * child nodes.
+     */
+    public void visit(NodeVisitor visitor)
+    {
+        super.visit(visitor);
+        
+        // resources and methods
+        //
+        for (ResourceNode node : getResources()) {
+            node.visit(visitor); 
+        }
+        
+        for (MethodNode node : getMethods()) {
+            node.visit(visitor);
+        }
+
+    }
+    
+    
 }

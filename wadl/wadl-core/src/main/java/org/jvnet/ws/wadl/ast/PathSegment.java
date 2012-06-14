@@ -17,7 +17,7 @@
  *
  */
 
-package org.jvnet.ws.wadl2java.ast;
+package org.jvnet.ws.wadl.ast;
 
 
 import java.net.URI;
@@ -31,8 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import org.jvnet.ws.wadl2java.ElementResolver;
-import org.jvnet.ws.wadl2java.InvalidWADLException;
+import org.jvnet.ws.wadl.ast.AstMessages;
 
 /**
  * Represents a segment of a URI with zero or more embedded parameters as found
