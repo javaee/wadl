@@ -47,7 +47,7 @@ import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
-import org.jvnet.ws.wadl2java.InvalidWADLException;
+import org.jvnet.ws.wadl.ast.InvalidWADLException;
 
 /**
  * A bunch of tests for the {@link Wadl2JavaMojo}.

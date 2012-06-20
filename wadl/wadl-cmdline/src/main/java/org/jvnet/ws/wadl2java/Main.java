@@ -19,6 +19,7 @@
 
 package org.jvnet.ws.wadl2java;
 
+import org.jvnet.ws.wadl.ast.InvalidWADLException;
 import com.sun.codemodel.*;
 import java.io.IOException;
 import java.net.URISyntaxException;

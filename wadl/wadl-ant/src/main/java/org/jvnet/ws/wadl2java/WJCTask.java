@@ -18,12 +18,15 @@
  */
 
 package org.jvnet.ws.wadl2java;
+import com.sun.codemodel.writer.FileCodeWriter;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.Task;
@@ -51,12 +54,32 @@ import org.apache.tools.ant.types.FileSet;
  *     &lt;customizations dir="." includes="binding.xjc"/&gt;
  *     &lt;produces dir="gen-src/com/yahoo/search" includes="*.java"/&gt;
  *     &lt;depends dir="." includes="schema.xsd"/&gt;
+ *     &lt;customClassName uri="http://yahoo.com/rest" classname="YahooRest" &gt;
  *   &lt;/wjc&gt;
  * &lt;/target&gt;</pre>
 
  * @author mh124079
  */
 public class WJCTask extends Task {
+    
+    
+    public class ClassnameMapper
+    {
+       private String uri;
+       private String classname;
+       
+       
+       public void setClassname(String classname)
+       {
+           this.classname = classname;
+       }
+       
+       public void setURI(String uri)
+       {
+           this.uri = uri;
+       }
+    }
+    
     
     private String pkg;
     private boolean autoPackage;
@@ -65,12 +88,28 @@ public class WJCTask extends Task {
     private List<FileSet> producedFileSets;
     private List<FileSet> consumedFileSets;
     private List<FileSet> customizationFileSets;
-    
+    private List<ClassnameMapper> customClassnames
+            = new ArrayList<ClassnameMapper>();
     /**
      * Default constructor for WJCTask
      */
     public WJCTask() {
     }
+    
+    
+    /**
+     * This option allows the caller to override the name of the class
+     * being generated for a particular root URI.
+     * @return A new instance of the class mapper so that the Ant
+     *   system can properly populate it.
+     */
+    public ClassnameMapper createCustomClassName()
+    {
+        ClassnameMapper mapper = new ClassnameMapper();
+        customClassnames.add(mapper);
+        return mapper;
+    }
+    
     
     /**
      * Set the package in which generates code will be placed. Equivalent to the
@@ -227,9 +266,22 @@ public class WJCTask extends Task {
             }
         }
         
+        //
+        Map<String, String> classCustomization = new HashMap<String,String>();
+        for (ClassnameMapper mapper : this.customClassnames)
+        {
+           classCustomization.put(mapper.uri, mapper.classname); 
+        }
+        
         // pre-requisites satisfied, compile the description
         try {
-            Wadl2Java wadlProcessor = new Wadl2Java(target, pkg, autoPackage, customizations);
+            Wadl2Java wadlProcessor = new Wadl2Java(new Wadl2Java.Parameters()
+                .setRootDir(target.toURI())
+                .setCodeWriter(new FileCodeWriter(target))
+                .setPkg(pkg)
+                .setAutoPackage(autoPackage)
+                .setCustomizationsAsFiles(customizations)
+                .setCustomClassNames(classCustomization));
             wadlProcessor.process(desc);
         } catch (Exception ex) {
             ex.printStackTrace();
