@@ -54,7 +54,7 @@ import org.apache.tools.ant.types.FileSet;
  *     &lt;customizations dir="." includes="binding.xjc"/&gt;
  *     &lt;produces dir="gen-src/com/yahoo/search" includes="*.java"/&gt;
  *     &lt;depends dir="." includes="schema.xsd"/&gt;
- *     &lt;customClassName uri="http://yahoo.com/rest" classname="YahooRest" &gt;
+ *     &lt;customClassName uri="http://yahoo.com/rest" classname="YahooRest" /&gt;
  *   &lt;/wjc&gt;
  * &lt;/target&gt;</pre>
 
