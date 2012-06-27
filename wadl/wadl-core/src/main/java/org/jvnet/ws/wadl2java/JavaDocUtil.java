@@ -19,11 +19,12 @@
 
 package org.jvnet.ws.wadl2java;
 
-import com.sun.codemodel.JCommentPart;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JDocComment;
-import com.sun.codemodel.JEnumConstant;
-import com.sun.codemodel.JMethod;
+import java.io.StringWriter;
+
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Option;
 import org.jvnet.ws.wadl.Param;
@@ -31,20 +32,22 @@ import org.jvnet.ws.wadl.ast.MethodNode;
 import org.jvnet.ws.wadl.ast.RepresentationNode;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.ast.ResourceTypeNode;
-import java.io.IOException;
-import org.w3c.dom.Element;
-import java.io.StringWriter;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.sun.codemodel.JCommentPart;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JDocComment;
+import com.sun.codemodel.JEnumConstant;
+import com.sun.codemodel.JMethod;
 
 /**
  * Utility class containing methods for generating JavaDoc from XML documentation
  * embedded in WADL files.
+ *
  * @author mh124079
  */
 public class JavaDocUtil {
@@ -59,8 +62,9 @@ public class JavaDocUtil {
      * Copy attributes and content of one element to another. Namespace decls
      * are stripped rendering all elements and attributes in the default
      * namespace.
-     * @param source the element to copy from
-     * @param sink the element to copy to
+     *
+     * @param source the element to copy from.
+     * @param sink the element to copy to.
      */
     protected void copyElementContent(Element source, Element sink) {
         // copy attributes
@@ -106,8 +110,9 @@ public class JavaDocUtil {
     /**
      * Create tagged Javadoc from an XML element. XML namespace declarations,
      * comments and processing instructions are stripped.
-     * @param e the XML element
-     * @return the extracted tagged javadoc
+     *
+     * @param e the XML element.
+     * @return the extracted tagged javadoc.
      */
     protected String createTaggedJavaDoc(Element e) {
         Element normalizedDoc;
@@ -128,9 +133,10 @@ public class JavaDocUtil {
     }
     
     /**
-     * Append text extracted from a WADL doc element to the JavaDoc code model
-     * @param d the WADL doc element
-     * @param jdoc the code model element to which the content shoudl be appended
+     * Append text extracted from a WADL doc element to the JavaDoc code model.
+     *
+     * @param d the WADL doc element.
+     * @param jdoc the code model element to which the content shoudl be appended.
      */
     protected void appendTextContent(Doc d, JCommentPart jdoc) {
         if (d.getTitle() != null) {
@@ -151,8 +157,9 @@ public class JavaDocUtil {
     /**
      * Extract documentation from a WADL resource and add it to a corresponding 
      * generated class.
-     * @param r the WADL resource
-     * @param c the corresponding class
+     *
+     * @param r the WADL resource.
+     * @param c the corresponding class.
      */
     public void generateClassDoc(ResourceNode r, JDefinedClass c) {
         if (r.getDoc().size() < 1)
@@ -165,8 +172,9 @@ public class JavaDocUtil {
     /**
      * Extract documentation from a WADL resource and add it to a corresponding 
      * accessor method.
-     * @param r the WADL resource
-     * @param c the corresponding class
+     *
+     * @param r the WADL resource.
+     * @param c the corresponding class.
      */
     public void generateAccessorDoc(ResourceNode r, JMethod c) {
         if (r.getDoc().size() < 1)
@@ -180,8 +188,9 @@ public class JavaDocUtil {
     /**
      * Extract documentation from a WADL resource type and add it to a corresponding 
      * generated interface.
-     * @param n the WADL resource type
-     * @param iface the corresponding interface
+     *
+     * @param n the WADL resource type.
+     * @param iface the corresponding interface.
      */
     void generateClassDoc(ResourceTypeNode n, JDefinedClass iface) {
         if (n.getDoc().size() < 1)
@@ -193,9 +202,10 @@ public class JavaDocUtil {
 
     /**
      * Extract documentation from a WADL method and add it to the corresponding
-     * generated Java method
-     * @param m the WADL method
-     * @param jm the corresponding Java method
+     * generated Java method.
+     *
+     * @param m the WADL method.
+     * @param jm the corresponding Java method.
      */
     public void generateMethodDoc(MethodNode m, JMethod jm) {
         if (m.getDoc().size() < 1)
@@ -207,9 +217,10 @@ public class JavaDocUtil {
     
     /**
      * Extract documentation from a WADL param with enumerated values and add it to the corresponding
-     * Java enum
-     * @param p the WADL param
-     * @param e the corresponding enum
+     * Java enum.
+     *
+     * @param p the WADL param.
+     * @param e the corresponding enum.
      */
     public void generateEnumDoc(Param p, JDefinedClass e) {
         if (p.getDoc().size() < 1)
@@ -221,9 +232,10 @@ public class JavaDocUtil {
 
     /**
      * Extract documentation from a WADL param and add it to the corresponding
-     * Java method
-     * @param p the WADL param
-     * @param jm the corresponding method
+     * Java method.
+     *
+     * @param p the WADL param.
+     * @param jm the corresponding method.
      */
     public void generateParamDoc(Param p, JMethod jm) {
         if (p.getDoc().size() < 1)
@@ -237,8 +249,9 @@ public class JavaDocUtil {
     /**
      * Extract documentation from a WADL representation and add it to the 
      * corresponding Java method parameter.
-     * @param r the WADL representation
-     * @param jm the corresponding Java method
+     *
+     * @param r the WADL representation.
+     * @param jm the corresponding Java method.
      */
     public void generateParamDoc(RepresentationNode r, JMethod jm) {
         if (r.getDoc().size() < 1)
@@ -252,8 +265,9 @@ public class JavaDocUtil {
     /**
      * Extract documentation from a WADL param and add it to the 
      * corresponding Java method return.
-     * @param p the parameter to extract documentation from
-     * @param jm the corresponding Java method
+     *
+     * @param p the parameter to extract documentation from.
+     * @param jm the corresponding Java method.
      */
     public void generateReturnDoc(Param p, JMethod jm) {
         if (p.getDoc().size() < 1)

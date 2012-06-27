@@ -19,11 +19,12 @@
 
 package org.jvnet.ws.wadl.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Method;
 import org.jvnet.ws.wadl.Param;
-import java.util.ArrayList;
-import java.util.List;
 import org.xml.sax.Locator;
 
 /**

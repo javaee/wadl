@@ -11,8 +11,9 @@
  */
 package org.jvnet.ws.wadl2java;
 
-import com.sun.codemodel.JType;
 import javax.xml.namespace.QName;
+
+import com.sun.codemodel.JType;
 
 /**
  * This is a simple interface to replace reference to the S2JJAXModel
@@ -24,7 +25,8 @@ import javax.xml.namespace.QName;
 public interface ElementToClassResolver {
    
     /**
-     * @param element The element to resolve
+     * @param element The element to resolve.
+     *
      * @return the java type that is used to represent this element, might
      *   actually be a XmlType rather than a XmlElement
      */

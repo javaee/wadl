@@ -13,6 +13,7 @@ package org.jvnet.ws.wadl.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jvnet.ws.wadl.Application;
 import org.xml.sax.Locator;
 
@@ -41,7 +42,7 @@ public class ApplicationNode  extends AbstractNode {
     }
     
     /**
-     * @return The location of the node
+     * @return The location of the node.
      */
     @Override
     public Locator getLocation() {

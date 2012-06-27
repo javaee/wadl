@@ -19,32 +19,8 @@
 
 package org.jvnet.ws.wadl2java;
 
-import org.jvnet.ws.wadl.ast.InvalidWADLException;
-import org.jvnet.ws.wadl.util.MessageListener;
-import com.sun.codemodel.*;
-import com.sun.codemodel.writer.FileCodeWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.xml.namespace.QName;
-import org.jvnet.ws.wadl.*;
-import org.jvnet.ws.wadl.ast.MethodNode;
-import org.jvnet.ws.wadl.ast.ResourceNode;
-import org.jvnet.ws.wadl.ast.ResourceTypeNode;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import javax.xml.bind.JAXBException;
-import com.sun.tools.xjc.api.S2JJAXBModel;
-import com.sun.tools.xjc.api.ErrorListener;
-import com.sun.tools.xjc.api.Mapping;
-import com.sun.tools.xjc.api.SchemaCompiler;
-import com.sun.tools.xjc.api.TypeAndAnnotation;
-import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
-import com.sun.tools.xjc.model.Model;
-import com.sun.xml.xsom.XSElementDecl;
-import com.sun.xml.xsom.XSType;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
@@ -52,19 +28,61 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Generated;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.ws.rs.core.UriBuilder;
+
+import javax.annotation.Generated;
 import javax.xml.bind.DatatypeConverter;
+import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
+
+import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ast.ApplicationNode;
+import org.jvnet.ws.wadl.ast.InvalidWADLException;
+import org.jvnet.ws.wadl.ast.MethodNode;
+import org.jvnet.ws.wadl.ast.ResourceNode;
+import org.jvnet.ws.wadl.ast.ResourceTypeNode;
 import org.jvnet.ws.wadl.ast.WadlAstBuilder;
+import org.jvnet.ws.wadl.util.MessageListener;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 
+import com.sun.codemodel.ClassType;
+import com.sun.codemodel.CodeWriter;
+import com.sun.codemodel.JAnnotationArrayMember;
+import com.sun.codemodel.JAnnotationUse;
+import com.sun.codemodel.JBlock;
+import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JFieldVar;
+import com.sun.codemodel.JMod;
+import com.sun.codemodel.JPackage;
+import com.sun.codemodel.JType;
+import com.sun.codemodel.JVar;
+import com.sun.codemodel.writer.FileCodeWriter;
+import com.sun.tools.xjc.api.ErrorListener;
+import com.sun.tools.xjc.api.Mapping;
+import com.sun.tools.xjc.api.S2JJAXBModel;
+import com.sun.tools.xjc.api.SchemaCompiler;
+import com.sun.tools.xjc.api.TypeAndAnnotation;
+import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
+import com.sun.tools.xjc.model.Model;
+import com.sun.xml.xsom.XSElementDecl;
+import com.sun.xml.xsom.XSType;
+
 /**
  * Processes a WADL file and generates client-side stubs for the resources and
  * methods described.
+ *
  * @author mh124079
  */
 public class Wadl2Java {
@@ -120,8 +138,8 @@ public class Wadl2Java {
         }
         
         /**
-         * @param the code writer used to write out the Java files
-         * @return this 
+         * @param codeWriter the code writer used to write out the Java files.
+         * @return {@code this}.
          */
         public Parameters setCodeWriter(CodeWriter codeWriter) {
             this.codeWriter = codeWriter;
@@ -129,8 +147,8 @@ public class Wadl2Java {
         }
 
         /**
-         * @param the generation style, currently unused
-         * @return this 
+         * @param generationStyle the generation style, currently unused.
+         * @return {@code this}.
          */
         public Parameters setGenerationStyle(String generationStyle) {
             this.generationStyle = generationStyle;
@@ -138,18 +156,18 @@ public class Wadl2Java {
         }
 
         /**
-         * @param A list of JAX-B customization files
-         * @return this 
+         * @param customizations A list of JAX-B customization files.
+         * @return {@code this}.
          */
         public Parameters setCustomizations(List<URI> customizations) {
-            this.customizations = new ArrayList(
+            this.customizations = new ArrayList<URI>(
                     customizations); // Copy
             return this;
         }
 
         /**
-         * @param A list of JAX-B customization files
-         * @return this 
+         * @param customizations A list of JAX-B customization files.
+         * @return {@code this}.
          */
         public Parameters setCustomizationsAsFiles(List<File> customizations) {
             this.customizations = convertToURIList(customizations); // Copy
@@ -157,8 +175,8 @@ public class Wadl2Java {
         } 
 
         /**
-         * @param files A list of files
-         * @return A list of URI for those files
+         * @param files A list of files.
+         * @return A list of URI for those files.
          */
         private static List<URI> convertToURIList(List<File> files) {
             List<URI> copy = new ArrayList<URI>();
@@ -170,8 +188,8 @@ public class Wadl2Java {
         
         
         /**
-         * @param The Java package in which to generate the code
-         * @return this 
+         * @param pkg The Java package in which to generate the code.
+         * @return {@code this}.
          */
         public Parameters setPkg(String pkg) {
             this.pkg = pkg;
@@ -179,8 +197,8 @@ public class Wadl2Java {
         }
 
         /**
-         * @param Whether to use JAX-B auto-package generation
-         * @return this 
+         * @param autoPackage Whether to use JAX-B auto-package generation.
+         * @return {@code this}.
          */
         public Parameters setAutoPackage(boolean autoPackage) {
             this.autoPackage = autoPackage;
@@ -188,8 +206,8 @@ public class Wadl2Java {
         }
 
         /**
-         * @param The root directory of the generation
-         * @return this 
+         * @param rootDir The root directory of the generation.
+         * @return {@code this}.
          */
         public Parameters setRootDir(URI rootDir) {
             this.rootDir = rootDir;
@@ -198,15 +216,15 @@ public class Wadl2Java {
 
     
         /**
-         * @param A map of template strings to class names
-         * @return this 
+         * @param map A map of template strings to class names.
+         * @return {@code this}.
          */
         public Parameters setCustomClassNames(Map<String, String> map) {
             baseURIToClassName = new HashMap<String, String>(map);
             return this;
         }
         
-        
+
         public Parameters setMessageListener(MessageListener ml) {
             messageListener = ml;
             return this;
@@ -282,7 +300,6 @@ public class Wadl2Java {
     private JCodeModel codeModel;
     private JavaDocUtil javaDoc;
     private SchemaCompiler s2j;
-    private SchemaCompilerErrorListener errorListener;
     private String generatedPackages = "";
     private WadlAstBuilder astBuilder;
 
@@ -302,6 +319,7 @@ public class Wadl2Java {
      * @param pkg the Java package in which to generate code.
      * @param autoPackage whether to use JAXB auto package name generation
      * @param customizations a list of JAXB customization files
+     * @throws java.io.IOException TODO.
      */
     public Wadl2Java(File outputDir, String pkg, boolean autoPackage, 
             List<File> customizations) throws IOException {
@@ -331,14 +349,15 @@ public class Wadl2Java {
      * generation, the WADL processor attempts to create a duplicate
      * class. This indicates a structural problem with the WADL file, e.g. duplicate
      * peer resource entries.
+     * @throws org.jvnet.ws.wadl.ast.InvalidWADLException TODO.
      */
     public void process(URI rootDesc) throws JAXBException, IOException, 
             JClassAlreadyExistsException, InvalidWADLException {
 
         // read in root WADL file
         s2j = new SchemaCompilerImpl();
-        
-        errorListener = new SchemaCompilerErrorListener();
+
+        SchemaCompilerErrorListener errorListener = new SchemaCompilerErrorListener();
         if (!parameters.autoPackage)
             s2j.setDefaultPackageName(parameters.pkg);
         s2j.setErrorListener(errorListener);
@@ -448,7 +467,7 @@ public class Wadl2Java {
     /**
      * Create a class that acts as a container for a hierarchy
      * of static inner classes, one for each resource described by the WADL file.
-     * @param the root URI to the WADL so we can generate the required annotations
+     * @param rootResource the root URI to the WADL so we can generate the required annotations
      * @param root the resource element that corresponds to the root of the resource tree
      * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
      * generation, the WADL processor attempts to create a duplicate
@@ -460,7 +479,7 @@ public class Wadl2Java {
             throws JClassAlreadyExistsException {
         
         int counter=0; //
-        JDefinedClass impl = null;
+        JDefinedClass impl;
         
         // It is possible for multiple resources to have the same
         // root, so in that case we genreate the name sequentially
@@ -583,8 +602,7 @@ public class Wadl2Java {
      * inner class for a parent resource.
      * @param resource the WADL <code>resource</code> element being processed.
      * @param $base_uri The root URI for this resource class
-     * @param isroot is this the
-     * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
+     * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code
      * generation, the WADL processor attempts to create a duplicate
      * class. This indicates a structural problem with the WADL file, 
      * e.g. duplicate peer resource entries.

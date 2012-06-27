@@ -19,16 +19,19 @@
 
 package org.jvnet.ws.wadl.ast;
 
+import java.util.List;
+
+import javax.xml.namespace.QName;
+
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.Representation;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
-import java.util.List;
-import javax.xml.namespace.QName;
 import org.xml.sax.Locator;
 
 /**
- * Represents a WADL representation
+ * Represents a WADL representation.
+ *
  * @author mh124079
  */
 public class RepresentationNode extends AbstractNode {
@@ -36,8 +39,9 @@ public class RepresentationNode extends AbstractNode {
     Representation rep;
     
     /**
-     * Creates a new instance of RepresentationNode
-     * @param r the unmarshalled JAXB-generated representation object
+     * Creates a new instance of RepresentationNode.
+     *
+     * @param r the unmarshalled JAXB-generated representation object.
      */
     public RepresentationNode(Representation r) {
         rep = r;
@@ -45,16 +49,18 @@ public class RepresentationNode extends AbstractNode {
     
     /**
      * Convenience function for generating a suitable Java class name for this WADL
-     * representation based on the media type
-     * @return a suitable name
+     * representation based on the media type.
+     *
+     * @return a suitable name.
      */
     public String getMediaTypeAsClassName() {
         return GeneratorUtil.makeClassName(getMediaType());
     }
     
     /**
-     * Get the media type of the representation
-     * @return the media type
+     * Get the media type of the representation.
+     *
+     * @return the media type.
      */
     public String getMediaType() {
         return rep.getMediaType();
@@ -62,23 +68,26 @@ public class RepresentationNode extends AbstractNode {
     
     /**
      * Get the list of link profiles used to described the relationships of 
-     * embedded links
-     * @return list of profiles
+     * embedded links.
+     *
+     * @return list of profiles.
      */
     public List<String> getProfiles() {
         return rep.getProfile();
     }
 
     /**
-     * Get the XML root element name for the representation
-     * @return the qualified name of the root XML element
+     * Get the XML root element name for the representation.
+     *
+     * @return the qualified name of the root XML element.
      */
     public QName getElement() {
         return rep.getElement();
     }
     
     /**
-     * Get a list of child parameters
+     * Get a list of child parameters.
+     *
      * @return child parameters
      */
     public List<Param> getParam() {
@@ -86,16 +95,18 @@ public class RepresentationNode extends AbstractNode {
     }
 
     /**
-     * List of child documentation elements
-     * @return documentation list, one item per language
+     * List of child documentation elements.
+     *
+     * @return documentation list, one item per language.
      */
     public List<Doc> getDoc() {
         return rep.getDoc();
     }
     
     /**
-     * Get the representation id (if any)
-     * @return the id or null if no id
+     * Get the representation id (if any).
+     *
+     * @return the id or null if no id.
      */
     public String getId() {
         return rep.getId();

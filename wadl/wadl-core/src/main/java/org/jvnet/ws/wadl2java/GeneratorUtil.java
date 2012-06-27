@@ -19,7 +19,14 @@
 
 package org.jvnet.ws.wadl2java;
 
-import com.sun.codemodel.ClassType;
+import java.util.Arrays;
+import java.util.HashSet;
+
+import javax.xml.namespace.QName;
+
+import org.jvnet.ws.wadl.Option;
+import org.jvnet.ws.wadl.Param;
+
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
@@ -30,15 +37,10 @@ import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
-import org.jvnet.ws.wadl.Option;
-import org.jvnet.ws.wadl.Param;
-import org.jvnet.ws.wadl.ast.ResourceNode;
-import java.util.Arrays;
-import java.util.HashSet;
-import javax.xml.namespace.QName;
 
 /**
- * Utility functions for code generators
+ * Utility functions for code generators.
+ *
  * @author mh124079
  */
 public class GeneratorUtil {
@@ -58,8 +60,9 @@ public class GeneratorUtil {
     /**
      * Make a Java constant name for the supplied WADL parameter. Capitalizes all
      * chars and replaces illegal chars with '_'.
-     * @param input the WADL parameter
-     * @return a constant name
+     *
+     * @param input the WADL parameter.
+     * @return a constant name.
      */
     public static String makeConstantName(String input) {
         if (input==null || input.length()==0)
@@ -76,8 +79,9 @@ public class GeneratorUtil {
     /**
      * Utility function for generating a suitable Java class name from an arbitrary
      * string. Replaces any characters not allowed in an class name with '_'.
-     * @param input the string
-     * @return a string suitable for use as a Java class name
+     *
+     * @param input the string.
+     * @return a string suitable for use as a Java class name.
      */
     public static String makeClassName(String input) {
         if (input==null || input.length()==0)
@@ -131,12 +135,13 @@ public class GeneratorUtil {
      * Maps WADL param types to their respective Java type. For params with
      * child option elements a Java enum is generated, otherwise an existing
      * Java class is used.
-     * @param param the WADL parameter
-     * @param model the JAXB codeModel instance to use if code generation is required
-     * @param parentClass the class in which any generated enums will be placed
+     *
+     * @param param the WADL parameter.
+     * @param model the JAXB codeModel instance to use if code generation is required.
+     * @param parentClass the class in which any generated enums will be placed.
      * @param javaDoc a JavaDocUtil instance that will be used for generating
-     * JavaDoc comments on any generated enum
-     * @return the class of the corresponding Java type
+     * JavaDoc comments on any generated enum.
+     * @return the class of the corresponding Java type.
      */
     public static JClass getJavaType(Param param, JCodeModel model, 
             JDefinedClass parentClass, JavaDocUtil javaDoc) {

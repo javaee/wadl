@@ -19,8 +19,27 @@
 
 package org.jvnet.ws.wadl2java;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.core.UriBuilder;
+
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.namespace.QName;
+
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl.ParamStyle;
+import org.jvnet.ws.wadl.ast.FaultNode;
+import org.jvnet.ws.wadl.ast.MethodNode;
+import org.jvnet.ws.wadl.ast.PathSegment;
+import org.jvnet.ws.wadl.ast.RepresentationNode;
+import org.jvnet.ws.wadl.ast.ResourceNode;
+import org.jvnet.ws.wadl.ast.ResourceTypeNode;
 import org.jvnet.ws.wadl.util.MessageListener;
-import com.sun.codemodel.JAnnotatable;
+
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -43,42 +62,19 @@ import com.sun.codemodel.JVar;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
-import org.jvnet.ws.wadl.*;
-import org.jvnet.ws.wadl.ast.FaultNode;
-import org.jvnet.ws.wadl.ast.MethodNode;
-import org.jvnet.ws.wadl.ast.PathSegment;
-import org.jvnet.ws.wadl.ast.RepresentationNode;
-import org.jvnet.ws.wadl.ast.ResourceNode;
-import org.jvnet.ws.wadl.ast.ResourceTypeNode;
-import com.sun.tools.xjc.api.Mapping;
-import com.sun.tools.xjc.api.S2JJAXBModel;
-import java.lang.reflect.Field;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Generated;
-import javax.xml.bind.JAXBException;
-import javax.xml.namespace.QName;
-
-import javax.ws.rs.core.UriBuilder;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * Generator class for nested static classes used to represent web resources
+ * Generator class for nested static classes used to represent web resources.
+ *
  * @author mh124079
  */
 public class ResourceClassGenerator {
 
-    
     private static enum MethodType
     {
         JAXB, CLASS, GENERIC_TYPE
     };
-    
-    
-    
+
     private ResourceNode resource;
     private JPackage pkg;
     private ElementToClassResolver resolver;
@@ -92,12 +88,13 @@ public class ResourceClassGenerator {
     private MessageListener messageListener; 
     
     /**
-     * Creates a new instance of ResourceClassGenerator
-     * @param javaDoc a JavaDocUtil instance for use when generating documentation
-     * @param resolver the schema2java model to use for element to class mapping lookups
-     * @param codeModel code model instance to use when generating code
-     * @param pkg package for new classes
-     * @param resource the resource element for which to generate a class
+     * Creates a new instance of ResourceClassGenerator.
+     *
+     * @param javaDoc a JavaDocUtil instance for use when generating documentation.
+     * @param resolver the schema2java model to use for element to class mapping lookups.
+     * @param codeModel code model instance to use when generating code.
+     * @param pkg package for new classes.
+     * @param resource the resource element for which to generate a class.
      */
     public ResourceClassGenerator(
             MessageListener messageListener,
@@ -113,12 +110,13 @@ public class ResourceClassGenerator {
     }
     
     /**
-     * Creates a new instance of ResourceClassGenerator
-     * @param javaDoc a JavaDocUtil instance for use when generating documentation
-     * @param resolver the schema2java model to use for element to class mapping lookups
-     * @param codeModel code model instance to use when generating code
-     * @param pkg package for new classes
-     * @param clazz the existing class
+     * Creates a new instance of ResourceClassGenerator.
+     *
+     * @param javaDoc a JavaDocUtil instance for use when generating documentation.
+     * @param resolver the schema2java model to use for element to class mapping lookups.
+     * @param codeModel code model instance to use when generating code.
+     * @param pkg package for new classes.
+     * @param clazz the existing class.
      */
     public ResourceClassGenerator(
             MessageListener messageListener,
@@ -135,7 +133,8 @@ public class ResourceClassGenerator {
     }
     
     /**
-     * Get the class for which methods will be generated
+     * Get the class for which methods will be generated.
+     *
      * @return the class or null if no class has yet been generated.
      */
     public JDefinedClass getGeneratedClass() {
@@ -144,11 +143,12 @@ public class ResourceClassGenerator {
     
     /**
      * Generate a static member class that represents a WADL resource.
-     * @param parentClass the parent class for the generated class
-     * @param $base_uri a reference to the field that contains the base URI
-     * @return the generated class
+     *
+     * @param parentClass the parent class for the generated class.
+     * @param $base_uri a reference to the field that contains the base URI.
+     * @return the generated class.
      * @throws com.sun.codemodel.JClassAlreadyExistsException if a class with 
-     * the same name already exists
+     * the same name already exists.
      */
     public JDefinedClass generateClass(JDefinedClass parentClass, JVar $base_uri) throws JClassAlreadyExistsException {
         JDefinedClass $impl = parentClass._class(JMod.PUBLIC | JMod.STATIC, resource.getClassName());
@@ -286,7 +286,7 @@ public class ResourceClassGenerator {
             if (outer) {
 
                 JMethod $accessorMethodNoClient = parentClass.method(
-                        outer ? JMod.PUBLIC | JMod.STATIC: JMod.PUBLIC, $impl, accessorName);
+                        JMod.PUBLIC | JMod.STATIC, $impl, accessorName);
 
                 javaDoc.generateAccessorDoc(resource, $accessorMethodNoClient);
 
@@ -385,10 +385,12 @@ public class ResourceClassGenerator {
     }
 
     /**
-     * For a given path segment generate the correct parameters
-     * @param segment the segment to process
-     * @param method the method we are working on
-     * @param contextClass the class we are generating in the context of
+     * For a given path segment generate the correct parameters.
+     *
+     * @param segment the segment to process.
+     * @param method the method we are working on.
+     * @param generateBeanDefinitions when {@link true}, bean definitions will be generated.
+     * @param contextClass the class we are generating in the context of.
      */
     private void generateParameterForPathSegment(
             PathSegment segment, JMethod method, 
@@ -416,11 +418,12 @@ public class ResourceClassGenerator {
     /**
      * Create an exception class that wraps an element used for indicating a fault
      * condition.
+     *
      * @param f the WADL <code>fault</code> element for which to generate the exception class.
      * @return the generated exception class.
      */
     protected JDefinedClass generateExceptionClass(FaultNode f) {
-        JDefinedClass $exCls = null;
+        JDefinedClass $exCls;
         String exName = f.getClassName();
         try {
             $exCls = pkg._class( JMod.PUBLIC, exName);
@@ -445,14 +448,14 @@ public class ResourceClassGenerator {
     /**
      * Generate a set of method declarations for a WADL <code>method</code> element.
      * 
-     * Generates two Java methods per returned representation type for each request
+     * <p>Generates two Java methods per returned representation type for each request
      * type, one with all optional parameters and one without. I.e. if the WADL method
-     * specifies two possible request repreesentation formats and three supported
+     * specifies two possible request representation formats and three supported
      * response representation formats, this method will generate twelve Java methods,
-     * one for each combination.
+     * one for each combination.</p>
      * 
-     * @param isAbstract controls whether the generated methods will have a body (false)
-     * or not (true)
+     * @param isAbstract controls whether the generated methods will have a body {@code false}
+     * or not {@code true}.
      * @param method the WADL <code>method</code> element to process.
      */
     protected void generateMethodDecls(MethodNode method, boolean isAbstract) {
@@ -508,11 +511,11 @@ public class ResourceClassGenerator {
     /**
      * Get the Java type generated for the specified XML element name.
      * 
-     * Note that the specified element must be declared as a top-level element in a
+     * <p>Note that the specified element must be declared as a top-level element in a
      * schema imported by the WADL file otherwise no such Java type will have been
-     * generated and this method will return <code>Object</code>.
+     * generated and this method will return {@link Object}.</p>
      * @param element the name of the XML element.
-     * @return the Java type that was generated for the specified element or null
+     * @return the Java type that was generated for the specified element or {@code null}
      * if no matching generated type was found.
      */
     protected JType getTypeFromElement(QName element) {
@@ -530,8 +533,8 @@ public class ResourceClassGenerator {
      * generates an additional method that uses JAXB when XML representations are used
      * and the document element is specified.
      * 
-     * @param isAbstract controls whether the generated methods will have a body (false)
-     * or not (true)
+     * @param isAbstract controls whether the generated methods will have a body {@code false}
+     * or not {@code true}.
      * @param exceptionMap maps generated types to the corresponding exception class. Used to generate the
      * throws clause for the method and the code to map output types to exceptions when
      * the output type is designated as a fault.
@@ -549,12 +552,13 @@ public class ResourceClassGenerator {
     }
     
     /**
-     * Generate a name for the method
+     * Generate a name for the method.
+     *
      * @param method the WADL <code>method</code> element for the Java method being generated.
      * @param inputRep the WADL <code>representation</code> element for the request format.
      * @param outputRep the WADL <code>representation</code> element for the response format.
-     * @param returnType a reference to the Java return type
-     * @return a suitable method name
+     * @param returnType a reference to the Java return type.
+     * @return a suitable method name.
      */
     protected String getMethodName(MethodNode method, RepresentationNode inputRep, RepresentationNode outputRep,
             JType returnType) {
@@ -598,8 +602,10 @@ public class ResourceClassGenerator {
      * Generate a Java method for a specified combination of WADL <code>method</code>,
      * input <code>representation</code> and output <code>representation</code>
      * elements.
-     * @param isAbstract controls whether the generated methods will have a body (false)
-     * or not (true)
+     *
+     * @param methodType {@link MethodType}
+     * @param isAbstract controls whether the generated methods will have a body {@code false}
+     * or not {@code true}.
      * @param exceptionMap maps generated types to the corresponding exception class. Used to generate the
      * throws clause for the method and the code to map output types to exceptions when
      * the output type is designated as a fault.
@@ -858,15 +864,18 @@ public class ResourceClassGenerator {
 
     
     /**
-     * Generate a method body that uses a JAXBDispatcher, used when the payloads are XML
-     * @param method the method to generate a body for
-     * @param isJAXB, whether we are generating a generic of JAXB version
-     * @param exceptionMap the generated exceptions that the method can raise
-     * @param outputRep the output representation
-     * @param wrapInputTypeInJAXBElement If the JAX-B element is not @XmlRootElement we have to do more
-     * @param returnType the type of the method return
-     * @param inputRep the input representation
-     * @param $methodBody a reference to the method body in which to generate code
+     * Generate a method body that uses a JAXBDispatcher, used when the payloads are XML.
+     *
+     * @param method the method to generate a body for.
+     * @param isJAXB, whether we are generating a generic of JAXB version.
+     * @param exceptionMap the generated exceptions that the method can raise.
+     * @param outputRep the output representation.
+     * @param $genericMethodParameter TODO.
+     * @param wrapInputTypeInJAXBElement If the JAX-B element is not @XmlRootElement we have to do more.
+     * @param returnType the type of the method return.
+     * @param $resourceBuilder TODO.
+     * @param inputRep the input representation.
+     * @param $methodBody a reference to the method body in which to generate code.
      */
     protected void generateBody(final MethodNode method, 
             final boolean isJAXB,
@@ -957,11 +966,12 @@ public class ResourceClassGenerator {
 
 
     /**
-     * Generate a bean setter and getter for a parameter
-     * @param $impl The class or interface to add the bean setter and getter to
-     * @param p the WADL parameter for which to create the setter and getter
-     * @param isAbstract controls whether a method body is created (false) or not (true). Set to true 
-     * for interface methods, false for class methods
+     * Generate a bean setter and getter for a parameter.
+     *
+     * @param $impl The class or interface to add the bean setter and getter to.
+     * @param p the WADL parameter for which to create the setter and getter.
+     * @param isAbstract controls whether a method body is created {@code false} or not {@code true}. Set to {@code true}
+     * for interface methods, {@code false} for class methods.
      */
     public void generateBeanProperty(JDefinedClass $impl, Param p, boolean isAbstract) {
         JType propertyType = GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc);

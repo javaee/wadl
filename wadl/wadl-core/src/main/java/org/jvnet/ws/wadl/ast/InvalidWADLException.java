@@ -20,7 +20,8 @@ import org.jvnet.ws.wadl2java.Wadl2JavaMessages;
 import org.xml.sax.Locator;
 
 /**
- * Thrown the the WADL is invalid and cannot be processed
+ * Thrown the the WADL is invalid and cannot be processed.
+ *
  * @author gdavison
  */
 public class InvalidWADLException extends java.lang.Exception {

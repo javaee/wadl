@@ -22,19 +22,22 @@ package org.jvnet.ws.wadl.ast;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.core.UriBuilder;
+
 import org.jvnet.ws.wadl.Application;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.Resource;
 import org.jvnet.ws.wadl.Resources;
 import org.jvnet.ws.wadl2java.GeneratorUtil;
-import java.util.ArrayList;
-import java.util.List;
-import javax.ws.rs.core.UriBuilder;
 import org.xml.sax.Locator;
 
 /**
- * Represents a WADL resource
+ * Represents a WADL resource.
+ *
  * @author mh124079
  */
 public class ResourceNode extends AbstractNode {
@@ -49,9 +52,10 @@ public class ResourceNode extends AbstractNode {
     private List<Doc> doc;
     
     /**
-     * Creates a new instance of ResourceNode
-     * @param app the unmarshalled JAXB-generated application object
-     * @param resources the unmarshalled JAXB-generated resources object
+     * Creates a new instance of ResourceNode.
+     *
+     * @param app the unmarshalled JAXB-generated application object.
+     * @param resources the unmarshalled JAXB-generated resources object.
      */
     public ResourceNode(URI baseURI, Application app, Resources resources) {
         doc = app.getDoc();
@@ -98,7 +102,7 @@ public class ResourceNode extends AbstractNode {
     }
 
     /**
-     * @return A simplified name with both the protocol and the port removed
+     * @return A simplified name with both the protocol and the port removed.
      */
     public static String createClassNameFromBase(String base) {
 
@@ -118,11 +122,13 @@ public class ResourceNode extends AbstractNode {
     
     /**
      * Create a new instance of ResourceNode and attach it as a child of an existing
-     * resource
-     * @param resource the unmarshalled JAXB-generated resource object
-     * @param parent the parent resource to attach the new resource to
-     * @param file the URI of the WADL file that contains the resource element
-     * @param idMap a map of URI reference to WADL definition element
+     * resource.
+     *
+     * @param resource the unmarshalled JAXB-generated resource object.
+     * @param parent the parent resource to attach the new resource to.
+     * @param file the URI of the WADL file that contains the resource element.
+     * @param idMap a map of URI reference to WADL definition element.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     public ResourceNode(Resource resource, ResourceNode parent, URI file, ElementResolver idMap) throws InvalidWADLException {
         doc = resource.getDoc();
@@ -138,11 +144,13 @@ public class ResourceNode extends AbstractNode {
     
     /**
      * Create a new instance of ResourceNode and attach it as a child of an existing
-     * resource type
-     * @param resource the unmarshalled JAXB-generated resource object
-     * @param parent the parent resource to attach the new resource to
-     * @param file the URI of the WADL file that contains the resource element
-     * @param idMap a map of URI reference to WADL definition element
+     * resource type.
+     *
+     * @param resource the unmarshalled JAXB-generated resource object.
+     * @param parent the parent resource to attach the new resource to.
+     * @param file the URI of the WADL file that contains the resource element.
+     * @param idMap a map of URI reference to WADL definition element.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     public ResourceNode(Resource resource, ResourceTypeNode parent, URI file, ElementResolver idMap) throws InvalidWADLException {
         doc = resource.getDoc();
@@ -155,11 +163,13 @@ public class ResourceNode extends AbstractNode {
     }
     
     /**
-     * Create a new resource and add it as a child
-     * @param r the unmarshalled JAXB resource element
-     * @param file the URI of the WADL file that contains the resource element
-     * @param idMap a map of URI reference to WADL definition element
-     * @return the new resource element
+     * Create a new resource and add it as a child.
+     *
+     * @param r the unmarshalled JAXB resource element.
+     * @param file the URI of the WADL file that contains the resource element.
+     * @param idMap a map of URI reference to WADL definition element.
+     * @return the new resource element.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     public ResourceNode addChild(Resource r, URI file, ElementResolver idMap) throws InvalidWADLException {
         ResourceNode n = new ResourceNode(r, this, file, idMap);
@@ -169,8 +179,9 @@ public class ResourceNode extends AbstractNode {
     
     /**
      * Convenience function for generating a suitable Java class name for this WADL
-     * resource
-     * @return a suitable name
+     * resource.
+     *
+     * @return a suitable name.
      */
     public String getClassName() {
         if (className==null)
@@ -181,14 +192,16 @@ public class ResourceNode extends AbstractNode {
     }
 
     /**
-     * @return The template for this resource 
+     * @return The template for this resource.
      */
     public String getUriTemplate() {
         return pathSegment.getTemplate();
     }
 
     /**
-     * Override the default generated class name
+     * Override the default generated class name.
+     *
+     * @param className class name.
      */
     public void setClassName(String className) {
         // TODO perform some kind of validation
@@ -196,24 +209,27 @@ public class ResourceNode extends AbstractNode {
     }
 
     /**
-     * Get the child resources
-     * @return a list of child resources
+     * Get the child resources.
+     *
+     * @return a list of child resources.
      */
     public List<ResourceNode> getChildResources() {
         return childResources;
     }
     
     /**
-     * Get the path segment for this resource
-     * @return the path segment
+     * Get the path segment for this resource.
+     *
+     * @return the path segment.
      */
     public PathSegment getPathSegment() {
         return pathSegment;
     }
     
     /**
-     * Get the method for this resource
-     * @return a list of methods
+     * Get the method for this resource.
+     *
+     * @return a list of methods.
      */
     public List<MethodNode> getMethods() {
         return methods;
@@ -223,7 +239,8 @@ public class ResourceNode extends AbstractNode {
      * Add a new base type for this resource - adds any methods, query or
      * matrix parameters specified on the type to those specified for
      * this resource.
-     * @param n the abstract resource type node to add
+     *
+     * @param n the abstract resource type node to add.
      */
     public void addResourceType(ResourceTypeNode n) {
         types.add(n);
@@ -234,15 +251,17 @@ public class ResourceNode extends AbstractNode {
     }
     
     /**
-     * Get the types for this resource
-     * @return a list of resource types
+     * Get the types for this resource.
+     *
+     * @return a list of resource types.
      */
     public List<ResourceTypeNode> getResourceTypes() {
         return types;
     }
     
     /**
-     * Get the parent resource
+     * Get the parent resource.
+     *
      * @return the parent resource or null if there isn't one.
      */
     public ResourceNode getParentResource() {
@@ -253,7 +272,8 @@ public class ResourceNode extends AbstractNode {
      * Get a list of path segments for this resource and its ancestors. The order of
      * segments is the reverse of the ancestor list. I.e. root resource, child of root,
      * ..., parent of resource, resource.
-     * @return list of path segments
+     *
+     * @return list of path segments.
      */
     public List<PathSegment> getPathSegments() {
         List<PathSegment> list = new ArrayList<PathSegment>();
@@ -267,6 +287,7 @@ public class ResourceNode extends AbstractNode {
     
     /**
      * Get a list of query parameters for this resource and its types.
+     *
      * @return list of query parameters
      */
     public List<Param> getQueryParams() {
@@ -280,6 +301,7 @@ public class ResourceNode extends AbstractNode {
     
     /**
      * Get a list of header parameters for this resource and its types.
+     *
      * @return list of header parameters
      */
     public List<Param> getHeaderParams() {
@@ -292,8 +314,9 @@ public class ResourceNode extends AbstractNode {
     }
     
     /**
-     * List of child documentation elements
-     * @return documentation list, one item per language
+     * List of child documentation elements.
+     *
+     * @return documentation list, one item per language.
      */
     public List<Doc> getDoc() {
         return doc;
@@ -301,7 +324,7 @@ public class ResourceNode extends AbstractNode {
 
 
     /**
-     * @return The location of the node
+     * @return The location of the node.
      */
     @Override
     public Locator getLocation() {
@@ -313,6 +336,8 @@ public class ResourceNode extends AbstractNode {
     /**
      * Allow the provided parameter to visit the current node and any
      * child nodes.
+     *
+     * @param visitor {@link NodeVisitor} instance.
      */
     public void visit(NodeVisitor visitor)
     {
@@ -331,8 +356,5 @@ public class ResourceNode extends AbstractNode {
         for (MethodNode node : getMethods()) {
             node.visit(visitor); 
         }
-
     }
-    
-
 }

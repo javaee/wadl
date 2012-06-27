@@ -15,6 +15,7 @@ package org.jvnet.ws.wadl.ast;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.jvnet.ws.wadl.util.MessageListener;
 
 
@@ -33,9 +34,10 @@ public class ElementResolver {
     }
     
     /**
-     * Get the element for a ref
+     * Get the element for a ref.
+     *
      * @param ref the element reference as returned by {@link #addReference}.
-     * @return the corresponding element or null if not found
+     * @return the corresponding element or null if not found.
      */
     public Object get(String ref) {
         return map.get(ref);
@@ -43,11 +45,13 @@ public class ElementResolver {
     
     /**
      * Resolve a href and return the element if it is of the expected type.
-     * @return the resolved object
+     *
+     * @return the resolved object.
      * @param file the URI of the file in which the referenced element is located, used
-     * to absolutize references
-     * @param href the reference to resolve
-     * @param object the original referring object
+     * to absolutize references.
+     * @param href the reference to resolve.
+     * @param object the original referring object.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     @SuppressWarnings("unchecked")
     public <T> T resolve(URI file, String href, T object) throws InvalidWADLException {
@@ -64,12 +68,13 @@ public class ElementResolver {
     }
     
     /**
-     * Add a reference to an element if it has an identifier
-     * @param file the URI of the file that contains the element
-     * @param id the id of the element, may be null
-     * @param o the element 
+     * Add a reference to an element if it has an identifier.
+     *
+     * @param file the URI of the file that contains the element.
+     * @param id the id of the element, may be null.
+     * @param o the element.
      * @return the unique identifier of the element or null if the element did
-     * not contain an identifier
+     * not contain an identifier.
      */
     public String addReference(URI file, String id, Object o) {
         String uniqueId = null;

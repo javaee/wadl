@@ -19,17 +19,18 @@
 
 package org.jvnet.ws.wadl2java;
 
-import org.jvnet.ws.wadl.ast.InvalidWADLException;
-import com.sun.codemodel.*;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.xml.bind.JAXBException;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.bind.JAXBException;
+
+import org.jvnet.ws.wadl.ast.InvalidWADLException;
+
+import com.sun.codemodel.JClassAlreadyExistsException;
 
 /**
  * Command line support for WADL to Java tool

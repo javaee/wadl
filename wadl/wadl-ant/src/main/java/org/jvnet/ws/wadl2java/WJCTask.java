@@ -18,19 +18,19 @@
  */
 
 package org.jvnet.ws.wadl2java;
-import com.sun.codemodel.writer.FileCodeWriter;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.FileSet;
+
+import com.sun.codemodel.writer.FileCodeWriter;
 
 /**
  * Ant task implementation for the WADL to Java tool
@@ -63,15 +63,15 @@ import org.apache.tools.ant.types.FileSet;
 public class WJCTask extends Task {
     
     
-    public class ClassnameMapper
+    public class ClassNameMapper
     {
        private String uri;
        private String classname;
        
        
-       public void setClassname(String classname)
+       public void setClassName(String className)
        {
-           this.classname = classname;
+           this.classname = className;
        }
        
        public void setURI(String uri)
@@ -88,8 +88,8 @@ public class WJCTask extends Task {
     private List<FileSet> producedFileSets;
     private List<FileSet> consumedFileSets;
     private List<FileSet> customizationFileSets;
-    private List<ClassnameMapper> customClassnames
-            = new ArrayList<ClassnameMapper>();
+    private List<ClassNameMapper> customClassNames
+            = new ArrayList<ClassNameMapper>();
     /**
      * Default constructor for WJCTask
      */
@@ -103,10 +103,10 @@ public class WJCTask extends Task {
      * @return A new instance of the class mapper so that the Ant
      *   system can properly populate it.
      */
-    public ClassnameMapper createCustomClassName()
+    public ClassNameMapper createCustomClassName()
     {
-        ClassnameMapper mapper = new ClassnameMapper();
-        customClassnames.add(mapper);
+        ClassNameMapper mapper = new ClassNameMapper();
+        customClassNames.add(mapper);
         return mapper;
     }
     
@@ -268,7 +268,7 @@ public class WJCTask extends Task {
         
         //
         Map<String, String> classCustomization = new HashMap<String,String>();
-        for (ClassnameMapper mapper : this.customClassnames)
+        for (ClassNameMapper mapper : this.customClassNames)
         {
            classCustomization.put(mapper.uri, mapper.classname); 
         }

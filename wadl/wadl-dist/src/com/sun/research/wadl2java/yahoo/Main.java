@@ -31,7 +31,7 @@ import yahoo.yn.ResultSet;
  * @author mh124079
  */
 public class Main {
-    
+
     /**
      * Query the Yahoo News Search service for stories that contain the word Java.
      * @param args the command line arguments
@@ -39,8 +39,8 @@ public class Main {
     public static void main(String[] args) {
         try {
             NewsSearch s = new NewsSearch();
-            ResultSet resultSet = s.getAsResultSet( 
-                    "jaxws_restful_sample", "java sun", Type.ALL, 10, 1, 
+            ResultSet resultSet = s.getAsResultSet(
+                    "jaxws_restful_sample", "java sun", Type.ALL, 10, 1,
                     Sort.DATE, "en", Output.XML, null);
             for (Result result: resultSet.getResultList()) {
                 System.out.printf("%s (%s)\n", result.getTitle(),

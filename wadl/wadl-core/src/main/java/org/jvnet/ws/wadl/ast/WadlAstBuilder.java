@@ -11,26 +11,39 @@
  */
 package org.jvnet.ws.wadl.ast;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.xml.namespace.QName;
-import org.jvnet.ws.wadl.*;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
+import org.jvnet.ws.wadl.Application;
+import org.jvnet.ws.wadl.Grammars;
+import org.jvnet.ws.wadl.Include;
+import org.jvnet.ws.wadl.Method;
+import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl.ParamStyle;
+import org.jvnet.ws.wadl.Representation;
+import org.jvnet.ws.wadl.Request;
+import org.jvnet.ws.wadl.Resource;
+import org.jvnet.ws.wadl.ResourceType;
+import org.jvnet.ws.wadl.Resources;
+import org.jvnet.ws.wadl.Response;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -47,7 +60,7 @@ import org.xml.sax.Locator;
 public class WadlAstBuilder {
     
     /**
-     * Allow client to process both internal and external schemas
+     * Allow client to process both internal and external schemas.
      */
     public interface SchemaCallback {
         
@@ -65,11 +78,12 @@ public class WadlAstBuilder {
     private SchemaCallback schemaCallback;
     
     /**
-     * Create a new instance of the AST builder providing a MessageListener
-     * for informational messages and a SchemaCallback instance to allow
+     * Create a new instance of the AST builder providing a {@link MessageListener}
+     * for informational messages and a {@link SchemaCallback} instance to allow
      * the caller to be provided with schema instances to process.
-     * @param schemaCallback
-     * @param messageListener 
+     *
+     * @param schemaCallback used for processing schemas.
+     * @param messageListener informal messages listener.
      */
     public WadlAstBuilder(
             SchemaCallback schemaCallback,
@@ -101,10 +115,13 @@ public class WadlAstBuilder {
 
     
     /**
-     * Build an abstract tree from an unmarshalled WADL file
+     * Build an abstract tree from an unmarshalled WADL file.
+     *
      * @param rootFile the URI of the root WADL file. Other WADL files might be
      * included by reference.
-     * @return the resource elements that correspond to the roots of the resource trees
+     * @return the resource elements that correspond to the roots of the resource trees.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
+     * @throws IOException if the specified WADL file cannot be read.
      */
     public ApplicationNode buildAst(URI rootFile) throws InvalidWADLException, IOException {
         try {
@@ -118,11 +135,13 @@ public class WadlAstBuilder {
     
     
     /**
-     * Build an abstract tree from an unmarshalled WADL file
-     * @param a the application element of the root WADL file
+     * Build an abstract tree from an unmarshalled WADL file.
+     *
+     * @param a the application element of the root WADL file.
      * @param rootFile the URI of the root WADL file. Other WADL files might be
      * included by reference.
-     * @return the resource elements that correspond to the roots of the resource trees
+     * @return the resource elements that correspond to the roots of the resource trees.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected ApplicationNode buildAst(Application a, URI rootFile) throws InvalidWADLException {
         // process resource types in two steps:
@@ -154,9 +173,11 @@ public class WadlAstBuilder {
     
     /**
      * Build an abstract resource type based on the methods of a resource type 
-     * in a WADL file
-     * @param ifaceId the identifier of the resource type
-     * @param a the application element of the root WADL file
+     * in a WADL file.
+     *
+     * @param ifaceId the identifier of the resource type.
+     * @param a the application element of the root WADL file.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void buildResourceType(String ifaceId, Application a) throws InvalidWADLException {
         try {
@@ -175,9 +196,11 @@ public class WadlAstBuilder {
     
     /**
      * Build an abstract resource type tree based on the child resources of a 
-     * resource type in a WADL file
-     * @param ifaceId the identifier of the resource type
-     * @param a the application element of the root WADL file
+     * resource type in a WADL file.
+     *
+     * @param ifaceId the identifier of the resource type.
+     * @param a the application element of the root WADL file.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void buildResourceTypeTree(String ifaceId, Application a) throws InvalidWADLException {
         try {
@@ -195,10 +218,12 @@ public class WadlAstBuilder {
     
     /**
      * Add a resource and (recursively) its children to a tree starting at the parent.
-     * Follow references to resources across WADL file boundaries
-     * @param parent the parent resource in the tree being built
-     * @param resource the WADL resource to process
-     * @param file the URI of the current WADL file being processed
+     * Follow references to resources across WADL file boundaries.
+     *
+     * @param parent the parent resource in the tree being built.
+     * @param resource the WADL resource to process.
+     * @param file the URI of the current WADL file being processed.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void buildResourceTree(ResourceNode parent, 
             Resource resource, URI file) throws InvalidWADLException {
@@ -221,11 +246,13 @@ public class WadlAstBuilder {
     
     /**
      * Add a type to a resource.
-     * Follow references to types across WADL file boundaries
-     * @param href the identifier of the resource_type element to process
-     * @param resourceNode the resource AST node
+     *
+     * <p>Follow references to types across WADL file boundaries.</p>
+     * @param href the identifier of the resource_type element to process.
+     * @param resourceNode the resource AST node.
      * @param resource the resource object from the model.
-     * @param file the URI of the current WADL file being processed
+     * @param file the URI of the current WADL file being processed.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void addTypeToResource(
             ResourceNode resourceNode, 
@@ -246,10 +273,12 @@ public class WadlAstBuilder {
     
     /**
      * Add a method to a resource type.
-     * Follow references to methods across WADL file boundaries
-     * @param method the WADL method element to process
-     * @param resource the resource type
-     * @param file the URI of the current WADL file being processed
+     *
+     * <p>Follow references to methods across WADL file boundaries.</p>
+     * @param method the WADL method element to process.
+     * @param resource the resource type.
+     * @param file the URI of the current WADL file being processed.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void addMethodToResourceType(ResourceTypeNode resource, Method method, 
             URI file) throws InvalidWADLException {
@@ -258,10 +287,12 @@ public class WadlAstBuilder {
     
     /**
      * Add a child resource to a resource type.
-     * Follow references to resources across WADL file boundaries
-     * @param resource the WADL resource element to process
-     * @param type the parent resource type
-     * @param file the URI of the current WADL file being processed
+     *
+     * <p>Follow references to resources across WADL file boundaries.</p>
+     * @param resource the WADL resource element to process.
+     * @param type the parent resource type.
+     * @param file the URI of the current WADL file being processed.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void addResourceToResourceType(ResourceTypeNode type, Resource resource, 
             URI file) throws InvalidWADLException {
@@ -286,7 +317,8 @@ public class WadlAstBuilder {
      * Check if the supplied Response represents an error or not. If any
      * of the possible HTTP status values is >= 400 the Response is considered
      * to represent a fault.
-     * @param response the response to check
+     *
+     * @param response the response to check.
      * @return true if the response represents a fault, false otherwise.
      */
     boolean isFaultResponse(Response response) {
@@ -302,10 +334,12 @@ public class WadlAstBuilder {
     
     /**
      * Add a method to a resource.
-     * Follow references to methods across WADL file boundaries
-     * @param method the WADL method element to process
-     * @param resource the resource
-     * @param file the URI of the current WADL file being processed
+     *
+     * <p>Follow references to methods across WADL file boundaries.</p>
+     * @param method the WADL method element to process.
+     * @param resource the resource.
+     * @param file the URI of the current WADL file being processed.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void addMethodToResource(ResourceNode resource, Method method, 
             URI file) throws InvalidWADLException {
@@ -314,10 +348,12 @@ public class WadlAstBuilder {
     
     /**
      * Add a method to a resource.
-     * Follow references to methods across WADL file boundaries
-     * @param method the WADL method element to process
-     * @param parent the parent object, can be resource or resource type
-     * @param file the URI of the current WADL file being processed
+     *
+     * <p>Follow references to methods across WADL file boundaries.</p>
+     * @param method the WADL method element to process.
+     * @param parent the parent object, can be resource or resource type.
+     * @param file the URI of the current WADL file being processed.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     private void addMethodToParent(Object parent, Method method, 
             URI file) throws InvalidWADLException {
@@ -411,10 +447,12 @@ public class WadlAstBuilder {
 
     /**
      * Add a representation to a method's input or output list.
-     * Follow references to representations across WADL file boundaries
-     * @param list the list to add the representation to
-     * @param representation the WADL representation element to process
-     * @param file the URI of the current WADL file being processed
+     *
+     * <p>Follow references to representations across WADL file boundaries.</p>
+     * @param list the list to add the representation to.
+     * @param representation the WADL representation element to process.
+     * @param file the URI of the current WADL file being processed.
+     * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
     protected void addRepresentation(List<RepresentationNode> list, Representation representation, 
             URI file) throws InvalidWADLException {
@@ -451,11 +489,12 @@ public class WadlAstBuilder {
      * Unmarshall a WADL file, process any schemas referenced in the WADL file, add 
      * any items with an ID to a global ID map, and follow any references to additional
      * WADL files.
+     *
      * @param desc the URI of the description file, the description is fetched by
      * converting the URI into a URL and then using a HTTP GET. Use
      * {@link #processDescription(java.net.URI, java.io.InputStream)} to
-     * supply the InputStream directly
-     * @return the unmarshalled WADL application element
+     * supply the InputStream directly.
+     * @return the unmarshalled WADL application element.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -470,9 +509,10 @@ public class WadlAstBuilder {
      * Unmarshall a WADL file, process any schemas referenced in the WADL file, add
      * any items with an ID to a global ID map, and follow any references to additional
      * WADL files.
-     * @param desc the URI of the description file
-     * @param is an input stream from which the description can be read
-     * @return the unmarshalled WADL application element
+     *
+     * @param desc the URI of the description file.
+     * @param is an input stream from which the description can be read.
+     * @return the unmarshalled WADL application element.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -543,8 +583,9 @@ public class WadlAstBuilder {
      * Build a map of all method, param, representation, fault and resource_type
      * elements that have an ID. These are used to dereference href values
      * when building the ast.
-     * @param desc the URI of the WADL file being processed
-     * @param a the root element of an unmarshalled WADL document
+     *
+     * @param desc the URI of the WADL file being processed.
+     * @param a the root element of an unmarshalled WADL document.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -639,12 +680,13 @@ public class WadlAstBuilder {
     /**
      * Adds the object to the ID map if it is identified and process any file pointed
      * to by href.
-     * @param desc The URI of the current file being processed, used when resolving relative paths in href
-     * @param id The identifier of o or null if o isn't identified
+     *
+     * @param desc The URI of the current file being processed, used when resolving relative paths in href.
+     * @param id The identifier of o or null if o isn't identified.
      * @param href A link to a another element, the document in which the element resides will
-     * be recursively processed
-     * @param o The object that is being identified or from which the link occurs
-     * @return a unique identifier for the element or null if not identified
+     * be recursively processed.
+     * @param o The object that is being identified or from which the link occurs.
+     * @return a unique identifier for the element or null if not identified.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -663,8 +705,9 @@ public class WadlAstBuilder {
     /**
      * Extract the id from a representation element and add to the
      * representation map.
-     * @param file the URI of the current WADL file being processed
-     * @param r the representation element
+     *
+     * @param file the URI of the current WADL file being processed.
+     * @param r the representation element.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -678,8 +721,9 @@ public class WadlAstBuilder {
     /**
      * Extract the id from a param element and add to the
      * representation map.
-     * @param file the URI of the current WADL file being processed
-     * @param p the param element
+     *
+     * @param file the URI of the current WADL file being processed.
+     * @param p the param element.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -692,8 +736,9 @@ public class WadlAstBuilder {
      * Extract the id from a method element and add to the
      * method map. Also extract the ids from any contained representation or
      * fault elements.
-     * @param file the URI of the current WADL file being processed
-     * @param m the method element
+     *
+     * @param file the URI of the current WADL file being processed.
+     * @param m the method element.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -721,8 +766,9 @@ public class WadlAstBuilder {
      * resource map then recurse into any contained resources.
      * Also extract the ids from any contained param, method and its
      * representation or fault elements.
-     * @param file the URI of the current WADL file being processed
-     * @param r the resource element
+     *
+     * @param file the URI of the current WADL file being processed.
+     * @param r the resource element.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -745,10 +791,11 @@ public class WadlAstBuilder {
     /**
      * Extract the id from a resource_type element and add to the
      * resource map.
-     * Also extract the ids from any contained method and its param,
-     * representation or fault elements.
-     * @param file the URI of the current WADL file being processed
-     * @param r the resource_type element
+     *
+     * <p>Also extract the ids from any contained method and its param,
+     * representation or fault elements.</p>
+     * @param file the URI of the current WADL file being processed.
+     * @param r the resource_type element.
      * @throws javax.xml.bind.JAXBException if the WADL file is invalid or if 
      * the code generator encounters a problem.
      * @throws java.io.IOException if the specified WADL file cannot be read.
@@ -773,17 +820,17 @@ public class WadlAstBuilder {
     /**
      * Get the referenced file, currentFile will be returned if href is a
      * fragment identifier, otherwise href is resolved against currentFile.
+     *
      * @param currentFile the uri of the file that contains the reference, used 
-     * to provide a base for relative paths
-     * @param href the reference
-     * @return the URI of the referenced file
+     * to provide a base for relative paths.
+     * @param href the reference.
+     * @return the URI of the referenced file.
      */
     protected static URI getReferencedFile(URI currentFile, String href) {
         if (href.startsWith("#"))
             return currentFile;
         // href references another file
-        URI ref = currentFile.resolve(href.substring(0, href.indexOf('#')));
-        return ref;
+        return currentFile.resolve(href.substring(0, href.indexOf('#')));
     }
     
 }
