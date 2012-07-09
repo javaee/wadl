@@ -117,6 +117,13 @@ public class Wadl2JavaMojo extends AbstractMojo {
      */
     private boolean failOnError = true;
 
+    /**
+     * A list of command line arguments to pass to the the xjc compiler
+     *
+     * @parameter
+     */
+    private List<String> xjcArguments = new ArrayList<String>();
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         doExecute(failOnError ? new FailOnErrorPolicy()
                 : new LogOnlyErrorPolicy());
@@ -224,6 +231,7 @@ public class Wadl2JavaMojo extends AbstractMojo {
         parameters.setPkg(packageName);
         parameters.setRootDir(targetDirectory.toURI());
         parameters.setCodeWriter(new FileCodeWriter(targetDirectory));
+        parameters.setXjcArguments(xjcArguments);
         Wadl2Java processor = new Wadl2Java(parameters);
 
         return processor;

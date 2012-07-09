@@ -74,6 +74,7 @@ public class Main {
             String pkg = null;
             boolean autoPackage = false;
             List<File> customizations = new ArrayList<File>();
+            List<String> xjcArguments = new ArrayList<String>();
             while (i<args.length-1) {
                 if (args[i].equals("-o")) {
                     outputDir = new File(args[i+1]);
@@ -87,6 +88,9 @@ public class Main {
                 } else if (args[i].equals("-a")) {
                     autoPackage = true;
                     i+=1;
+                } else if (args[i].equals("-xjcArgument")) {
+                    xjcArguments.add(args[i+1]);
+                    i+=2;
                 } else {
                     System.err.println(Wadl2JavaMessages.UNKNOWN_OPTION(args[i]));
                     printUsage();
@@ -120,7 +124,7 @@ public class Main {
                 }
                 wadlDesc = wadlFile.toURI();
             }
-            Wadl2Java w = new Wadl2Java(outputDir, pkg, autoPackage, customizations);
+            Wadl2Java w = new Wadl2Java(outputDir, pkg, autoPackage, customizations, xjcArguments);
             w.process(wadlDesc);
         } catch (InvalidWADLException ex) {
             ex.printStackTrace();
