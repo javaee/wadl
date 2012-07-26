@@ -1,0 +1,18 @@
+<project>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>wadl-client-plugin</artifactId>
+                <configuration>
+                    <targetDirectory>${basedir}/target/test-harness/no-response-content/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/no-response-content</sourceDirectory>
+                    <packageName>test</packageName>
+                    <includes>*.wadl</includes>
+                    <customizations></customizations>
+                    <autoPackaging>true</autoPackaging>
+                    <failOnError>false</failOnError>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

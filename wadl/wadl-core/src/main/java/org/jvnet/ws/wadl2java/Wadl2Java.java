@@ -125,6 +125,7 @@ public class Wadl2Java {
         };
 
 
+        @Override
         public Parameters clone()
         {
             try {
@@ -562,7 +563,7 @@ public class Wadl2Java {
         JFieldVar $base_uri = impl.field(
                 Modifier.PUBLIC
                         | Modifier.STATIC
-                        | Modifier.FINAL, String.class, "BASE_URI");
+                | Modifier.FINAL, URI.class, "BASE_URI");
 
         $base_uri.javadoc().append("The base URI for the resource represented by this proxy");
 
@@ -578,8 +579,10 @@ public class Wadl2Java {
 
         JBlock staticInit = impl.init();
 
+        
         JVar $originalURI = staticInit.decl($base_uri.type(), "originalURI")
-                .init(JExpr.lit(root.getUriTemplate()));
+                .init(
+                   codeModel.ref(URI.class).staticInvoke("create").arg(JExpr.lit(root.getUriTemplate())));
 
         staticInit.directStatement(
                 "// Look up to see if we have any indirection in the local copy"
@@ -594,7 +597,7 @@ public class Wadl2Java {
                         + "\n                    \"/*[name(.) = 'catalog']/*[name(.) = 'uri' and @name ='\" + originalURI +\"']/@uri\", "
                         + "\n                    new org.xml.sax.InputSource(is)); "
                         + "\n                if (found!=null && found.length()>0) {"
-                        + "\n                    originalURI = found;"
+                + "\n                    originalURI = java.net.URI.create(found);"
                         + "\n                }"
                         + "\n                "
                         + "\n            }"
@@ -626,14 +629,14 @@ public class Wadl2Java {
      * class. This indicates a structural problem with the WADL file, 
      * e.g. duplicate peer resource entries.
      */
-    protected void generateSubClass(JDefinedClass parent, JVar $base_uri, ResourceNode resource)
+    protected void generateSubClass(JDefinedClass parent, JVar $global_base_uri, ResourceNode resource)
             throws JClassAlreadyExistsException {
 
         ResourceClassGenerator rcGen = new ResourceClassGenerator(
                 parameters.messageListener,
                 resolver,
                 codeModel, jPkg, generatedPackages, javaDoc, resource);
-        JDefinedClass impl = rcGen.generateClass(parent, $base_uri);
+        JDefinedClass impl = rcGen.generateClass(parent, $global_base_uri);
 
         // generate Java methods for each resource method
         for (MethodNode m: resource.getMethods()) {
@@ -643,7 +646,7 @@ public class Wadl2Java {
 
         // generate sub classes for each child resource
         for (ResourceNode r: resource.getChildResources()) {
-            generateSubClass(impl, $base_uri, r);
+            generateSubClass(impl,$global_base_uri, r);
         }
     }
 

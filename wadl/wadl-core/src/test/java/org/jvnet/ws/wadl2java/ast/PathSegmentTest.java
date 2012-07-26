@@ -63,9 +63,9 @@ public class PathSegmentTest extends TestCase {
         List<Param> result = instance.getTemplateParameters();
         
         assertEquals(result.get(0).getName(), "param1");
-        assertTrue(result.get(0).isRequired());
+        assertTrue(result.get(0).isRequired() == Boolean.TRUE);
         assertEquals(result.get(1).getName(), "param2");
-        assertFalse(result.get(1).isRequired());
+        assertFalse(result.get(1).isRequired() == Boolean.TRUE);
     }
     
     public void testEvaluate() throws InvalidWADLException {

@@ -258,7 +258,7 @@ public class PathSegment {
             
             if (parameterValues.containsKey(paramName))
                 paramValue = parameterValues.get(paramName).toString();
-            else if (param.isRequired())
+            else if (param.isRequired() == Boolean.TRUE)
                 throw new IllegalArgumentException(
                     AstMessages.TEMPLATE_VALUE_MISSING(paramName));
             retVal = retVal.replaceAll("\\{"+paramName+"\\}", 
@@ -271,7 +271,7 @@ public class PathSegment {
             
             if (parameterValues.containsKey(paramName)) {
                 paramObject = parameterValues.get(paramName);
-            } else if (param.isRequired())
+            } else if (param.isRequired()  == Boolean.TRUE)
                 throw new IllegalArgumentException(
                     AstMessages.MATRIX_VALUE_MISSING(paramName));
 

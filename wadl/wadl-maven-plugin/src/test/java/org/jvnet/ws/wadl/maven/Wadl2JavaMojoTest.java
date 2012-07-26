@@ -13,6 +13,7 @@
 package org.jvnet.ws.wadl.maven;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import java.io.DataInputStream;
 import java.net.MalformedURLException;
@@ -29,11 +30,11 @@ import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.lang.Iterable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URLClassLoader;
 import java.net.URLStreamHandlerFactory;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 import javax.tools.DiagnosticCollector;
 import javax.tools.DiagnosticListener;
@@ -41,6 +42,8 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -176,7 +179,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // Check that the BASE_URI is correct
         Class $ProxyRoot = cl.loadClass("test.ApiSearchYahooCom_NewsSearchServiceV1");
         assertEquals(
-                "http://api.search.yahoo.com/NewsSearchService/V1/",
+                URI.create("http://api.search.yahoo.com/NewsSearchService/V1/"),
                 $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
         
         // Check that we have the expected number of methods
@@ -188,8 +191,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         Class $Output = cl.loadClass("test.Output");
 
         // Constructors
-        assertNotNull($NewsSearch.getConstructor());
-        assertNotNull($NewsSearch.getConstructor(Client.class));
+        assertNotNull($NewsSearch.getConstructor(Client.class, URI.class));
 
 
         // Check that we have two methods of the right name and parameters
@@ -293,13 +295,13 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // Check that the BASE_URI is correct with a / absolute path
         Class $ProxyRoot = cl.loadClass("test.Example_262RestServicesClassification");
         assertEquals(
-                "wadl://example/2.6.2/rest-services/classification/",
+                URI.create("wadl://example/2.6.2/rest-services/classification/"),
                 $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
         
         // Verify relative path version
         $ProxyRoot = cl.loadClass("test.Example_OpenPatentServicesWadlRelativePath");
         assertEquals(
-                "wadl://example/open-patent-services/wadl/relativePath/",
+                URI.create("wadl://example/open-patent-services/wadl/relativePath/"),
                 $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
 
         // Check the enumeration is correct
@@ -368,7 +370,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // Check that the BASE_URI is correct
         Class $ProxyRoot = cl.loadClass("test.ApiSearchYahooCom_NewsSearchServiceV1");
         assertEquals(
-                "http://otherhost/",
+                URI.create("http://otherhost/"),
                 $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
 
     }
@@ -444,8 +446,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld);
 
         // Constructors
-        assertNotNull($Helloworld.getConstructor());
-        assertNotNull($Helloworld.getConstructor(Client.class));
+        assertNotNull($Helloworld.getConstructor(Client.class, URI.class));
 
         // Check that we have two methods of the right name and parameters
         assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", Class.class));
@@ -496,8 +497,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld);
 
         // Constructors
-        assertNotNull($Helloworld.getConstructor());
-        assertNotNull($Helloworld.getConstructor(Client.class));
+        assertNotNull($Helloworld.getConstructor(Client.class, URI.class));
 
         // Check that we have two methods of the right name and parameters
         assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", Class.class));
@@ -564,8 +564,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld);
 
         // Constructors
-        assertNotNull($Helloworld.getConstructor());
-        assertNotNull($Helloworld.getConstructor(Client.class));
+        assertNotNull($Helloworld.getConstructor(Client.class, URI.class));
 
         // Check that we have two methods of the right name and parameters
         assertNotNull($Helloworld.getDeclaredMethod("getSomeClassAsApplicationXml"));
@@ -708,8 +707,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($PathParam1);
 
         // Constructors
-        assertNotNull($PathParam1.getConstructor(String.class));
-        assertNotNull($PathParam1.getConstructor(Client.class, String.class));
+        assertNotNull($PathParam1.getConstructor(Client.class, URI.class, String.class));
 
         // Check that we have two methods of the right name and parameters
         assertNotNull($PathParam1.getDeclaredMethod("getParam1"));
@@ -725,12 +723,11 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($PathParam2);
 
         // Constructors
-        assertNotNull($PathParam2.getConstructor(String.class, String.class));
-        assertNotNull($PathParam2.getConstructor(Client.class, String.class, String.class));
+        assertNotNull($PathParam2.getConstructor(Client.class, URI.class, String.class));
 
         // Check that we have two methods of the right name and parameters
-        assertNotNull($PathParam2.getDeclaredMethod("getParam1"));
-        assertNotNull($PathParam2.getDeclaredMethod("setParam1", String.class));
+//        assertNotNull($PathParam2.getDeclaredMethod("getParam1"));
+//        assertNotNull($PathParam2.getDeclaredMethod("setParam1", String.class));
         assertNotNull($PathParam2.getDeclaredMethod("getParam2"));
         assertNotNull($PathParam2.getDeclaredMethod("setParam2", String.class));
 
@@ -741,6 +738,84 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", GenericType.class));
     }
 
+
+    /**
+     * Tests the case where we have a response but no content type, previously
+     * this would have generated a void return type; but due to a bug in the
+     * code the return type was being used as the class type, this was not
+     * being detected by the other relevant unit tests because the methods are
+     * not symetrical.
+     */
+    public void testNoResponseContent() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("no-response-content.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", project);
+
+        // Record
+        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(project);
+        assertThat(targetDirectory, exists());
+
+        // Verify the files are in place
+
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Localhost_JerseySchemaGenExamplesContextRootJersey.java"));
+        assertThat(targetDirectory, contains("example/"));
+        assertThat(targetDirectory, contains("example/ObjectFactory.java"));
+        assertThat(targetDirectory, contains("example/SimpleInput.java"));
+
+
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Check top level accessor
+        Class $Root = cl.loadClass("test.Localhost_JerseySchemaGenExamplesContextRootJersey");
+
+        // Check that we have the expected number of methods
+        Class $PathParam1 = cl.loadClass("test.Localhost_JerseySchemaGenExamplesContextRootJersey$Path");
+        assertNotNull($PathParam1);
+
+        // Constructors
+        assertNotNull($PathParam1.getConstructor(Client.class, URI.class));
+
+        // Check that we have two methods of the right name and parameters
+        
+        Class $simpleInput = cl.loadClass("example.SimpleInput");
+
+        Method $putResponse = $PathParam1.getDeclaredMethod("putApplicationXml", $simpleInput);
+        assertNotNull($putResponse);
+        assertEquals(ClientResponse.class, $putResponse.getReturnType());
+        
+        // Check that the contents of the java file contains the correct
+        // JAXBElement, and doesn't incorrectly use the return type
+        String t = "new JAXBElement.new QName.\"urn:example\", \"simpleInput\"., SimpleInput.class, input..";
+        
+        
+        File proxyFile = new File(targetDirectory, "test/Localhost_JerseySchemaGenExamplesContextRootJersey.java");
+        DataInputStream input = new DataInputStream(new FileInputStream(proxyFile));
+        byte data[] = new byte[(int) proxyFile.length()];
+        input.readFully(data);
+        String contents = new String(data);
+        Matcher matcher = Pattern.compile(t).matcher(contents);
+        assertTrue(matcher.find());
+        assertFalse(matcher.find());
+        
+    }
+
+    
+    
     
     /**
      * Verify as per WADL-37 that query and header parameters are not inhereted

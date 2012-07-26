@@ -114,11 +114,11 @@ public class MethodNode extends AbstractNode {
     public List<Param> getRequiredParameters() {
         ArrayList<Param> required = new ArrayList<Param>();
         for (Param p: getQueryParameters()) {
-            if (p.isRequired())
+            if (p.isRequired()  == Boolean.TRUE)
                 required.add(p);
         }
         for (Param p: getHeaderParameters()) {
-            if (p.isRequired())
+            if (p.isRequired()  == Boolean.TRUE)
                 required.add(p);
         }
         return required;
@@ -131,11 +131,11 @@ public class MethodNode extends AbstractNode {
     public List<Param> getOptionalParameters() {
         ArrayList<Param> optional = new ArrayList<Param>();
         for (Param p: getQueryParameters()) {
-            if (!p.isRequired())
+            if (p.isRequired() == Boolean.FALSE)
                 optional.add(p);
         }
         for (Param p: getHeaderParameters()) {
-            if (!p.isRequired())
+            if (p.isRequired() == Boolean.FALSE)
                 optional.add(p);
         }
         return optional;
