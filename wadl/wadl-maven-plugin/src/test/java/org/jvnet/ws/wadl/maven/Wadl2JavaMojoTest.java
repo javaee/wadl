@@ -582,25 +582,37 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
      * @XmlRootElement so we need to generate some extra boilerplate code.
      */
     public void testHelloBeanInputOuputJAXB() throws Exception {
-        runBeanInputOuputJAXB(false);
+        runBeanInputOuputJAXB("hellobean-wadl.xml", "WwwExampleCom_Resource", "Bean");
     }
     /**
      * Test the case where we have the types generating as 
      * @XmlRootElement so we don't need to generate boilerplate code.
      */
     public void testHelloBeanInputOuputJAXBSimpleXJC() throws Exception {
-        runBeanInputOuputJAXB(true);
+        runBeanInputOuputJAXB("hellobean-wadl-simplexjc.xml", "WwwExampleCom_Resource", "Bean");
     }
+    
+    /**
+     * Test the case where we have the root element with the same name
+     * as the child element.
+     */
+    public void testHelloBeanSameNameWithCustomization() throws Exception {
+        runBeanInputOuputJAXB("hellobean-wadl-customname.xml", "Bean", "BeanBean");
+    }
+
     
     /**
      * Test the case where we have the types generating as @XmlType not
      * @XmlRootElement so we need to generate some extra boilerplate code.
      */
-    private void runBeanInputOuputJAXB(boolean simplexjc) throws Exception {
+    private void runBeanInputOuputJAXB(
+            String configurationFile,
+            String className,
+            String innerClassName) throws Exception {
     
         
         // Prepare
-        Wadl2JavaMojo mojo = getMojo(simplexjc ? "hellobean-wadl-simplexjc.xml" : "hellobean-wadl.xml");
+        Wadl2JavaMojo mojo = getMojo(configurationFile);
         
 
         
@@ -622,18 +634,19 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         EasyMock.verify(project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
-        assertThat(targetDirectory, contains("test/WwwExampleCom_Resource.java"));
+        assertThat(targetDirectory, contains("test/" + className + ".java"));
         assertThat(targetDirectory, contains("com/example/beans/Bean.java"));
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
 
         // Just check that the base class works
-        Class $ProxyRoot = cl.loadClass("test.WwwExampleCom_Resource");
+        Class $ProxyRoot = cl.loadClass("test." + className);
+        Class $ProxyInnerClass = cl.loadClass("test." + className + "$" + innerClassName);
         
         // Load the source for the Proxy and check we generated the correct new JAXBElement lines
         String contents ="";
-        File resource = new File(targetDirectory,"test/WwwExampleCom_Resource.java" );
+        File resource = new File(targetDirectory,"test/" + className + ".java" );
         FileInputStream fis = new FileInputStream(resource);
         try {
             byte data[] = new byte[(int)resource.length()];
@@ -649,7 +662,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // namespace
         
         boolean containsBinding = contents.contains("new JAXBElement(new QName(\"http://example.com/beans\", \"bean\"), com.example.beans.Bean.class, input)");
-        if (simplexjc) {
+        if (configurationFile.contains("simplexjc")) {
             assertFalse(
                  containsBinding);            
         }

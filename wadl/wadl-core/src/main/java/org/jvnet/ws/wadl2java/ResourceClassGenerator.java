@@ -45,6 +45,7 @@ import org.jvnet.ws.wadl.util.MessageListener;
  */
 public class ResourceClassGenerator {
 
+
     private static enum MethodType
     {
         JAXB, CLASS, GENERIC_TYPE
@@ -116,6 +117,30 @@ public class ResourceClassGenerator {
         return $class;
     }
     
+    
+    /**
+     * Look for an owner class that has the same name, if it has then fail
+     * @return true is this class name is valid
+     */
+    private boolean validClassName(JClass parentClass, String className) {
+        
+        while(parentClass!=null) {
+            // And inner class cannot have the same name as a sibling class
+            if (parentClass.name().equals(className)) {
+                return false;
+            }
+            
+            parentClass = parentClass.outer();
+            if (parentClass!=null)
+            {
+                int i=0;
+            }
+        }
+        
+        return true;
+    }
+    
+    
     /**
      * Generate a static member class that represents a WADL resource.
      *
@@ -127,7 +152,26 @@ public class ResourceClassGenerator {
      */
     public JDefinedClass generateClass(JDefinedClass parentClass, 
             JVar $global_base_uri) throws JClassAlreadyExistsException {
-        JDefinedClass $impl = parentClass._class(JMod.PUBLIC | JMod.STATIC, resource.getClassName());
+
+        String className = resource.getClassName();
+        String originalClassName  = className;
+        JClass owner = parentClass;
+        while (owner!=null && !validClassName(parentClass, className))
+        {
+            className = owner.name() + className;
+            owner = owner.outer();
+        }
+        
+        // Store the value if it has been updated;
+        if (!originalClassName.equals(className)) {
+            resource.setClassName(className);
+        }
+        
+        //
+        
+        JDefinedClass $impl = parentClass._class(JMod.PUBLIC | JMod.STATIC, className); 
+        
+        
         for (ResourceTypeNode t: resource.getResourceTypes()) {
             $impl._implements(t.getGeneratedInterface());
         }
@@ -184,7 +228,6 @@ public class ResourceClassGenerator {
             // Lower the first character to make it into a method name
             //
 
-            String className = resource.getClassName();
             String accessorName = 
                     Character.toLowerCase(className.charAt(0))
                     + className.substring(1);
