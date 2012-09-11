@@ -247,6 +247,7 @@ public class ResourceNode extends AbstractNode {
         methods.addAll(n.getMethods());
         childResources.addAll(n.getResources());
         pathSegment.getQueryParameters().addAll(n.getQueryParams());
+        // ?? No header params
         pathSegment.getMatrixParameters().addAll(n.getMatrixParams());
     }
     
@@ -312,6 +313,21 @@ public class ResourceNode extends AbstractNode {
 //            completeList.addAll(getParentResource().getHeaderParams());
         return completeList;
     }
+
+    /**
+     * Get a list of header parameters for this resource and its types.
+     *
+     * @return list of header parameters
+     */
+    public List<Param> getMatrixParams() {
+        ArrayList<Param> completeList = new ArrayList<Param>();
+        completeList.addAll(getPathSegment().getMatrixParameters());
+        // Included per WADL-32
+        if (getParentResource() != null)
+            completeList.addAll(getParentResource().getMatrixParams());
+        return completeList;
+    }    
+    
     
     /**
      * List of child documentation elements.

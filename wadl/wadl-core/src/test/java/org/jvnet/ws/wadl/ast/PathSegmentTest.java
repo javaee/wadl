@@ -17,7 +17,7 @@
  * Created on August 7, 2006, 2:32 PM
  */
 
-package org.jvnet.ws.wadl2java.ast;
+package org.jvnet.ws.wadl.ast;
 
 import org.jvnet.ws.wadl.ast.PathSegment;
 import org.jvnet.ws.wadl.ast.InvalidWADLException;

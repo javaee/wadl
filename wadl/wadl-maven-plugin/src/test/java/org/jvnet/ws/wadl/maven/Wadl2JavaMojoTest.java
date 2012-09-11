@@ -12,45 +12,31 @@
 
 package org.jvnet.ws.wadl.maven;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import java.io.DataInputStream;
-import java.net.MalformedURLException;
-import java.util.regex.Matcher;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-
-import static org.jvnet.ws.wadl.matchers.Matchers.*;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.PrintStream;
-import java.lang.Iterable;
-import java.lang.reflect.Field;
+import com.sun.jersey.api.client.*;
+import com.sun.jersey.core.header.InBoundHeaders;
+import java.io.*;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLClassLoader;
-import java.net.URLStreamHandlerFactory;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.tools.DiagnosticCollector;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
+import javax.tools.*;
 import org.apache.maven.plugin.MojoExecutionException;
-
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
+import static org.fest.reflect.core.Reflection.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import org.jvnet.ws.wadl.ast.InvalidWADLException;
+import static org.jvnet.ws.wadl.matchers.Matchers.contains;
+import static org.jvnet.ws.wadl.matchers.Matchers.exists;
 
 /**
  * A bunch of tests for the {@link Wadl2JavaMojo}.
@@ -60,27 +46,121 @@ import org.jvnet.ws.wadl.ast.InvalidWADLException;
  */
 public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
 
-
+    /**
+     * A class to store a canned response to a client request
+     */
+    
+    private static class CannedResponse
+    {
+        private int status;
+        private InBoundHeaders headers;
+        private byte[] content;
+        
+        public CannedResponse(int status, String contentType, String content)
+        {
+            this.status = status;
+            headers = new InBoundHeaders();
+            headers.add("Content-Type", contentType);
+            try
+            {
+                this.content = content.getBytes("UTF-8");
+            } catch (Exception ex) {
+                throw new RuntimeException("Problem converting text", ex);
+            }
+            
+            headers.add("Content-Length", Integer.toString(this.content.length));
+            
+        }
+    }
+    
+    
+    
     
     /**
      * A mock object representing the active project.
      */
-    private MavenProject project;
+    private MavenProject _project;
+    
+    /**
+     * A mock client that stores all request
+     * @throws Exception 
+     */
+    private Client _client;
+    
+    /**
+     * Store a list of client request
+     */
+    private List<ClientRequest> _requests = new ArrayList<ClientRequest>();
+    
+    /**
+     * Store a list of canned responses
+     */
+    private List<CannedResponse> _cannedResponse = new ArrayList<CannedResponse>();
+    
     
     // JavaDoc inherited
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        project = EasyMock.createMock(MavenProject.class);
+        _project = EasyMock.createMock(MavenProject.class);
         
         // Register the package for the stream handler
         System.setProperty("java.protocol.handler.pkgs", "org.jvnet.ws.wadl.maven");
+        
+        // Configure a mock click so we can capture any request
+        _client = new Client(new TerminatingClientHandler()
+        {
+            public ClientResponse handle(ClientRequest cr) throws ClientHandlerException {
+// Just for debugging purposes               
+//                if (cr.getEntity()!=null) {
+//                    ByteArrayOutputStream boas = new ByteArrayOutputStream();
+//                    try {
+//                        getRequestEntityWriter(cr).writeRequestEntity(boas);
+//                    } catch (IOException ex) {
+//                        Logger.getLogger(Wadl2JavaMojoTest.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//
+//                    String body = boas.toString();
+//                }
+                
+                // Store the request
+                _requests.add(cr);
+
+                ClientResponse resp;
+                if (_cannedResponse.size() > 0)
+                {
+                    CannedResponse cnr = _cannedResponse.remove(0);
+                    resp = new ClientResponse(
+                            cnr.status,
+                            new InBoundHeaders(
+                               cnr.headers),
+                            new ByteArrayInputStream(cnr.content),
+                            getMessageBodyWorkers());
+                }
+                else
+                {
+                    // Generate a generic response for the moment
+                    resp = new ClientResponse(
+                            200,
+                            new InBoundHeaders(),
+                            new ByteArrayInputStream("Hello".getBytes()),
+                            getMessageBodyWorkers());
+                }
+                return resp;
+            }
+        });
+        _requests.clear();
+        _cannedResponse.clear();
     }
 
     @Override
     protected void tearDown() throws Exception {
         //compiled code
         super.tearDown();
+        _project = null;
+        _client = null;
+        _requests.clear();
+        _cannedResponse.clear();
     }
     
     
@@ -97,17 +177,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             assertThat(targetDirectory.delete(), is(equalTo(true)));
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
     }
 
@@ -122,13 +202,13 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             assertThat(targetDirectory.delete(), is(equalTo(true)));
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         try {
             mojo.execute();
         } catch (MojoExecutionException mee) {
@@ -149,17 +229,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/ApiSearchYahooCom_NewsSearchServiceV1.java"));
@@ -222,13 +302,13 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         try
         {
             mojo.execute();
@@ -258,17 +338,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         
@@ -332,17 +412,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
  
         // Create a catalog file
         
@@ -372,7 +452,21 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertEquals(
                 URI.create("http://otherhost/"),
                 $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
-
+        
+        
+        // Check that the client also uses this URI at runtime
+        //
+        
+        Object newsService = staticMethod("newsSearch").withParameterTypes(Client.class)
+                .in($ProxyRoot).invoke(_client);
+        
+        String result = method("getAsApplicationXml").withReturnType(String.class).withParameterTypes(
+                String.class, String.class, Class.class).in(newsService)
+                .invoke("One", "Two", String.class);
+        
+        assertThat(result, not(nullValue()));
+        assertThat("http://otherhost/newsSearch?query=Two&appid=One",
+                equalTo(_requests.get(0).getURI().toString()));
     }
 
     /**
@@ -423,17 +517,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/" + expectedClassName + ".java"));
@@ -451,6 +545,25 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // Check that we have two methods of the right name and parameters
         assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", Class.class));
         assertNotNull($Helloworld.getDeclaredMethod("getAsTextPlain", GenericType.class));
+
+    
+        // Check that the client works at runtime
+        //
+        
+        Class root = type("test." + expectedClassName).withClassLoader(cl).load();
+        Object helloWorld = staticMethod("helloworld").withParameterTypes(Client.class)
+                .in(root).invoke(_client);
+        
+        String result = method("getAsTextPlain").withReturnType(String.class).withParameterTypes(
+                Class.class).in(helloWorld)
+                .invoke(String.class);
+        
+        assertThat(result, not(nullValue()));
+        assertThat("GET",
+                equalTo(_requests.get(0).getMethod()));
+        assertThat("http://localhost:9998/helloworld",
+                equalTo(_requests.get(0).getURI().toString()));
+    
     }
 
     
@@ -472,17 +585,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/Localhost_Project1Jersey.java"));
@@ -533,23 +646,23 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
 
         // Verify the files are in place
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/Localhost.java"));
@@ -575,6 +688,34 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationJson", Class.class));
         assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationJson", GenericType.class));
 
+        // Check that we can handle multiple content types
+        
+        Class root = type("test.Localhost").withClassLoader(cl).load();
+        Object helloWorld = staticMethod("helloworld").withParameterTypes(Client.class)
+                .in(root).invoke(_client);
+        
+        // Get some XML
+        
+        _cannedResponse.add(new CannedResponse(
+                200, "application/xml", "<someClass><integer>42</integer><string>hello</string></someClass>"));
+        
+        Object result = method("getSomeClassAsApplicationXml").withParameterTypes().in(helloWorld)
+                .invoke();
+        
+        assertThat("hello", equalTo(method("getString").withReturnType(String.class).in(result).invoke()));
+        assertThat(42, equalTo(method("getInteger").withReturnType(Integer.class).in(result).invoke()));
+
+        // Get some JSON
+        
+        _cannedResponse.add(new CannedResponse(
+                200, "application/json", "{ \"integer\" : \"42\", \"string\" : \"hello\" } "));
+        
+        result = method("getSomeClassAsApplicationJson").withParameterTypes().in(helloWorld)
+                .invoke();
+        
+        assertThat("hello", equalTo(method("getString").withReturnType(String.class).in(result).invoke()));
+        assertThat(42, equalTo(method("getInteger").withReturnType(Integer.class).in(result).invoke()));
+    
     }
 
     /**
@@ -582,14 +723,15 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
      * @XmlRootElement so we need to generate some extra boilerplate code.
      */
     public void testHelloBeanInputOuputJAXB() throws Exception {
-        runBeanInputOuputJAXB("hellobean-wadl.xml", "WwwExampleCom_Resource", "Bean");
+        runBeanInputOuputJAXB("hellobean-wadl.xml", "WwwExampleCom_Resource", "Bean", "bean");
     }
+    
     /**
      * Test the case where we have the types generating as 
      * @XmlRootElement so we don't need to generate boilerplate code.
      */
     public void testHelloBeanInputOuputJAXBSimpleXJC() throws Exception {
-        runBeanInputOuputJAXB("hellobean-wadl-simplexjc.xml", "WwwExampleCom_Resource", "Bean");
+        runBeanInputOuputJAXB("hellobean-wadl-simplexjc.xml", "WwwExampleCom_Resource", "Bean", "bean");
     }
     
     /**
@@ -597,7 +739,7 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
      * as the child element.
      */
     public void testHelloBeanSameNameWithCustomization() throws Exception {
-        runBeanInputOuputJAXB("hellobean-wadl-customname.xml", "Bean", "BeanBean");
+        runBeanInputOuputJAXB("hellobean-wadl-customname.xml", "Bean", "BeanBean", "beanBean");
     }
 
     
@@ -608,7 +750,8 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
     private void runBeanInputOuputJAXB(
             String configurationFile,
             String className,
-            String innerClassName) throws Exception {
+            String innerClassName,
+            String accesorName) throws Exception {
     
         
         // Prepare
@@ -621,17 +764,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/" + className + ".java"));
@@ -670,6 +813,31 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
             assertTrue(
                  containsBinding);            
         }
+        
+        // Okay let try to invoke the service
+        //
+        
+        Class root = type("test." + className).withClassLoader(cl).load();
+        Object bean = staticMethod(accesorName).withParameterTypes(Client.class).in(root).invoke(_client);
+        
+        // Invoke the service
+        
+        
+        Class beanObjClass = type("com.example.beans.Bean").withClassLoader(cl).load();
+        Object beanObj = constructor().in(beanObjClass).newInstance();
+        method("setMessage").withParameterTypes(String.class).in(beanObj).invoke("Bob");
+        
+        _cannedResponse.add(new CannedResponse(
+                200, "application/xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns2:bean xmlns:ns2=\"http://example.com/beans\"><message>Hello Bob</message></ns2:bean>"));
+        
+        Object returnObj = 
+                method("putApplicationXmlAsBean").withReturnType(beanObjClass)
+                .withParameterTypes(beanObjClass)
+                .in(bean).invoke(beanObj);
+        
+        assertEquals(beanObjClass,returnObj.getClass());
+        assertEquals("Hello Bob",
+            method("getMessage").withReturnType(String.class).in(returnObj).invoke());
     }    
     
     /**
@@ -683,17 +851,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
 
         // Verify the files are in place
@@ -749,6 +917,39 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertNotNull($PathParam2.getDeclaredMethod("getAsSimpleReturn"));
         assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", Class.class));
         assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", GenericType.class));
+        
+        
+        // Check that the service is invoked
+        
+        Class root = type("test.Localhost_JerseySchemaGenExamplesContextRootJersey").withClassLoader(cl)
+                .load();
+
+        // Set first parameter and then change it
+        //
+        Object pathParam1 = staticMethod("pathParam1").withParameterTypes(Client.class, String.class)
+                .in(root).invoke(_client, "OriginalParam1");
+        
+        Object pathParma1in2 = method("setParam1").withParameterTypes(String.class).in(pathParam1).invoke("ReplacementParam1");
+        
+        assertThat("Should be different instances",pathParam1, not(equalTo(pathParma1in2)));
+        
+        // Now set the second parameter
+        //
+        
+        Object param2 = method("param2").withParameterTypes(String.class).in(pathParma1in2).invoke("Param2");
+        
+        assertThat("Param2", equalTo(method("getParam2").withReturnType(String.class).in(param2).invoke()));
+        
+        // Now send the request, we really don't care abou the response
+        //
+        
+        String simpleReturn = method("getAsApplicationXml").withReturnType(String.class).withParameterTypes(Class.class).in(param2)
+                .invoke(String.class);
+        
+        // Check that the the URL is correct
+        
+        assertThat("http://localhost:7101/JerseySchemaGen-Examples-context-root/jersey/path/ReplacementParam1/Param2",
+                equalTo(_requests.get(0).getURI().toString()));
     }
 
 
@@ -767,17 +968,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
 
         // Verify the files are in place
@@ -825,6 +1026,23 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         assertTrue(matcher.find());
         assertFalse(matcher.find());
         
+        // Invoke the service and see that the object is consumed properly
+        //
+        
+        Class root = type("test.Localhost_JerseySchemaGenExamplesContextRootJersey")
+                .withClassLoader(cl).load();
+        Object path = staticMethod("path").withParameterTypes(Client.class)
+                .in(root).invoke(_client);
+        
+        Class simpleType = type("example.SimpleInput").withClassLoader(cl).load();
+        Object simpleObj = constructor().in(simpleType).newInstance();
+        
+        ClientResponse cr = method("putApplicationXml").withReturnType(ClientResponse.class).withParameterTypes(simpleType)
+                .in(path).invoke(simpleObj);
+                
+        // This will most likley be true if we reach this line, otherwise the
+        // original message will have been lost
+        assertThat(200, equalTo(cr.getStatus()));
     }
 
     
@@ -842,17 +1060,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
 
         // Verify the files are in place
@@ -863,20 +1081,87 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
 
-        // Check top level accessor
-        Class $Root = cl.loadClass("test.Nested$Root");
+//        // Check top level accessor
+//        Class $Root = cl.loadClass("test.Nested$Root");
+//
+//        
+//        // Check we have the matrix accessor on the sub matrix value
+//        assertNotNull($Root.getDeclaredMethod("setRootm", String.class));
+//        assertNotNull($Root.getDeclaredMethod("getRootm"));
+//        assertNotNull($Root.getDeclaredMethod("setRepeatingm", List.class));
+//        assertNotNull($Root.getDeclaredMethod("getRepeatingm"));
+//        
+//        
+//        // Check that we have the expected number of methods
+//        Class $Sub = cl.loadClass("test.Nested$Root$Sub");
+//        assertNotNull($Sub);
+//
+//        // Check we have the matrix accessor on the sub matrix value
+//        assertNotNull($Sub.getDeclaredMethod("setSubm", String.class));
+//        assertNotNull($Sub.getDeclaredMethod("getSubm"));
+//
+//        
+//        // Check that we have two methods of the right name and parameters
+//        // Should only have four string parametes as per WADL-32 the
+//        // root resource parametes are not inhereted
+//        assertNotNull($Sub.getDeclaredMethod("getAs", String.class, String.class, List.class,String.class,  String.class, List.class, Class.class));
+//        assertNotNull($Sub.getDeclaredMethod("getAs", String.class, String.class, List.class, String.class,  String.class, List.class, GenericType.class));
 
-        // Check that we have the expected number of methods
-        Class $Sub = cl.loadClass("test.Nested$Root$Sub");
-        assertNotNull($Sub);
+        // Right lets to to invoke the servuce using our fake client
+        //
+        
+        Class client = type("test.Nested").withClassLoader(cl).load();
+        Object root1 = staticMethod("root")
+                .withParameterTypes(Client.class, URI.class).in(client).invoke(
+                    _client, URI.create("http://example.com/"));
+        
+        // Set the rootm value and call
+        Object root2 = method("setRootm").withParameterTypes(String.class).in(root1).invoke("XXRootM");
+        assertEquals("XXRootM", method("getRootm").withReturnType(String.class).in(root2).invoke());
+        
+        // Set the repeatingm value
+        List<String> repatingMatrixValues = Arrays.asList("XXOne", "XXTwo");
+        Object root3 = method("setRepeatingm").withParameterTypes(List.class).in(root2).invoke(repatingMatrixValues);
+        assertEquals(repatingMatrixValues, method("getRepeatingm").withReturnType(List.class).in(root3).invoke());
+        
+        // Get hold of the sub
+        
+        Object sub = method("sub").in(root3).invoke();
+        
+        // Check we have modified the matrix property
 
-
-        // Check that we have two methods of the right name and parameters
-        // Should only have four string parametes as per WADL-32 the
-        // root resource parametes are not inhereted
-        assertNotNull($Sub.getDeclaredMethod("getAs", String.class, String.class, String.class, String.class, Class.class));
-        assertNotNull($Sub.getDeclaredMethod("getAs", String.class, String.class,String.class, String.class, GenericType.class));
-
+        sub = method("setSubm").withParameterTypes(String.class).in(sub).invoke("XXSubM");
+        assertEquals("XXSubM", method("getSubm").withReturnType(String.class).in(sub).invoke());
+    
+        // Now lets try to invoke the service
+        
+        List<String> repatingQueryValues = Arrays.asList("XXOne", "XXTwo");
+        List<String> repatingHeaderValues = Arrays.asList("XXOne", "XXTwo");
+        
+        // Populate a canned response
+        
+        _cannedResponse.add(new CannedResponse(
+                200, "text/plain", "Nested"));
+        
+        //
+        
+        String result = method("getAs").withReturnType(String.class)
+                .withParameterTypes(String.class, String.class, List.class,String.class,  String.class, List.class, Class.class)
+                .in(sub)
+                .invoke(
+                    "subq", "submethodq", repatingQueryValues,
+                    "subh", "submethodh", repatingHeaderValues,
+                    String.class);
+        // Check expected response seen
+        assertEquals("Check that our precanned response is used","Nested", result);
+        // Check URI
+        String uri = "http://example.com/root;rootM=XXRootM;repeatingM=XXOne;repeatingM=XXTwo/sub;subM=XXSubM;subM=XXSubM?subQ=subq&subMethodQ=submethodq&repeatingQ=XXOne&repeatingQ=XXTwo";
+        assertEquals("Should only have recorded one request",1, _requests.size());
+        String actualURI = _requests.get(0).getURI().toString();
+        
+        // Removed until Jersey-1369 is resolved
+        //assertEquals("We should have a really funky URI",uri, actualURI);
+        
     }
 
     
@@ -891,17 +1176,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/ApiSearchYahooCom_NewsSearchServiceV1.java"));
@@ -935,17 +1220,17 @@ public class Wadl2JavaMojoTest extends AbstractMojoTestCase {
         if (targetDirectory.exists()) {
             FileUtils.deleteDirectory(targetDirectory);
         }
-        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "project", _project);
 
         // Record
-        project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
 
         // Replay
-        EasyMock.replay(project);
+        EasyMock.replay(_project);
         mojo.execute();
 
         // Verify
-        EasyMock.verify(project);
+        EasyMock.verify(_project);
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/Localhost_REST_SanityEmpServiceContextRootResources.java"));

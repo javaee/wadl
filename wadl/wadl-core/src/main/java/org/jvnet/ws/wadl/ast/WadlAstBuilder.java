@@ -421,10 +421,14 @@ public class WadlAstBuilder {
                         p = idMap.resolve(file, href, p);
                     }
                     if (p != null) {
-                        if (p.getStyle()==ParamStyle.HEADER)
+                        if (p.getStyle()==ParamStyle.HEADER) {
                             n.getHeaderParameters().add(p);
-                        else
+                        } else if (p.getStyle()==ParamStyle.QUERY) {
                             n.getQueryParameters().add(p);
+                        } else {
+                            // Should we be ignoring or supporting other
+                            // types
+                        }
                     }
                 }
                 for (Representation r: request.getRepresentation()) {

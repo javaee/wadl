@@ -5,14 +5,20 @@
       <resource path="root">
          <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="rootQ" style="query" type="xs:string"/>
          <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="rootH" style="header" type="xs:string"/>
+         <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="rootM" style="matrix" type="xs:string"/>
+         <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="repeatingM" repeating="true" style="matrix" type="xs:string"/>
 
          <resource path="/sub">
             <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subQ" style="query" type="xs:string"/>
             <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subH" style="header" type="xs:string"/>
-            <method id="get" name="GET">
+            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subM" style="matrix" type="xs:string"/>
+            <method id="get" name="GET"> 
                <request>
                   <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subMethodQ" style="query" type="xs:string"/>
                   <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subMethodH" style="header" type="xs:string"/>
+                  <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="subMethodM" style="matrix" type="xs:string"/>
+                  <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="repeatingQ" repeating="true" style="query" type="xs:string"/>
+                  <param xmlns:xs="http://www.w3.org/2001/XMLSchema" name="repeatingH" repeating="true" style="header" type="xs:string"/>
                </request>
                <response>
                   <representation mediaType="*/*"/>

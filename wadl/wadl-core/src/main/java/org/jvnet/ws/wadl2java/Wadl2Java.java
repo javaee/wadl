@@ -19,67 +19,38 @@
 
 package org.jvnet.ws.wadl2java;
 
+import com.sun.codemodel.*;
+import com.sun.codemodel.writer.FileCodeWriter;
+import com.sun.tools.xjc.BadCommandLineException;
+import com.sun.tools.xjc.Options;
+import com.sun.tools.xjc.api.*;
+import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
+import com.sun.tools.xjc.model.Model;
+import com.sun.xml.xsom.XSElementDecl;
+import com.sun.xml.xsom.XSType;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.ws.rs.core.UriBuilder;
-
 import javax.annotation.Generated;
+import javax.ws.rs.core.UriBuilder;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
-
 import org.jvnet.ws.wadl.Param;
-import org.jvnet.ws.wadl.ast.ApplicationNode;
-import org.jvnet.ws.wadl.ast.InvalidWADLException;
-import org.jvnet.ws.wadl.ast.MethodNode;
-import org.jvnet.ws.wadl.ast.ResourceNode;
-import org.jvnet.ws.wadl.ast.ResourceTypeNode;
-import org.jvnet.ws.wadl.ast.WadlAstBuilder;
+import org.jvnet.ws.wadl.ast.*;
 import org.jvnet.ws.wadl.util.MessageListener;
+import org.jvnet.ws.wadl2java.common.BaseResourceClassGenerator;
+import org.jvnet.ws.wadl2java.jaxrs.JAXRS20ResourceClassGenerator;
+import org.jvnet.ws.wadl2java.jersey.Jersey1xResourceClassGenerator;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 
-import com.sun.codemodel.ClassType;
-import com.sun.codemodel.CodeWriter;
-import com.sun.codemodel.JAnnotationArrayMember;
-import com.sun.codemodel.JAnnotationUse;
-import com.sun.codemodel.JBlock;
-import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JExpr;
-import com.sun.codemodel.JFieldVar;
-import com.sun.codemodel.JMod;
-import com.sun.codemodel.JPackage;
-import com.sun.codemodel.JType;
-import com.sun.codemodel.JVar;
-import com.sun.codemodel.writer.FileCodeWriter;
-import com.sun.tools.xjc.BadCommandLineException;
-import com.sun.tools.xjc.Options;
-import com.sun.tools.xjc.api.ErrorListener;
-import com.sun.tools.xjc.api.Mapping;
-import com.sun.tools.xjc.api.S2JJAXBModel;
-import com.sun.tools.xjc.api.SchemaCompiler;
-import com.sun.tools.xjc.api.TypeAndAnnotation;
-import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
-import com.sun.tools.xjc.model.Model;
-import com.sun.xml.xsom.XSElementDecl;
-import com.sun.xml.xsom.XSType;
 
 /**
  * Processes a WADL file and generates client-side stubs for the resources and
@@ -88,6 +59,10 @@ import com.sun.xml.xsom.XSType;
  * @author mh124079
  */
 public class Wadl2Java {
+    
+    // Generation Styles
+    public static final String STYLE_JERSEY1X = "jersey1x";
+    public static final String STYLE_JAXRS20 = "jaxrs20";
 
     /**
      * A parameter object to make it easier to extend this class without
@@ -101,7 +76,7 @@ public class Wadl2Java {
         private List<URI> customizations;
         private List<String> xjcArguments;
         private String pkg;
-        private String generationStyle;
+        private String generationStyle = STYLE_JERSEY1X;
         private boolean autoPackage;
         private URI rootDir;
         private Map<String, String> baseURIToClassName = Collections.EMPTY_MAP;
@@ -426,9 +401,12 @@ public class Wadl2Java {
             }
             generatedPackages = buf.toString();
             jPkg = codeModel._package(parameters.pkg);
+
+            
             generateResourceTypeInterfaces();
             for (ResourceNode r: rs)
                 generateEndpointClass(rootDesc, r);
+
             codeModel.build(parameters.codeWriter);
         }
 
@@ -455,12 +433,51 @@ public class Wadl2Java {
         }
     }
 
+    
+    
+    private ResourceClassGenerator createGeneratorForResource(ResourceNode resource) {
+        
+        if (parameters.generationStyle==null || STYLE_JERSEY1X.equals(parameters.generationStyle)) {
+            return  new Jersey1xResourceClassGenerator(
+                parameters.messageListener,
+                resolver,
+                codeModel, jPkg, generatedPackages, javaDoc, resource);
+        }
+        else if (STYLE_JAXRS20.equals(parameters.generationStyle)) {
+            return  new JAXRS20ResourceClassGenerator(
+                parameters.messageListener,
+                resolver,
+                codeModel, jPkg, generatedPackages, javaDoc, resource);
+        }
+        else{
+            throw new IllegalStateException("Invalid generation style");
+        }
+    }
+
+    private ResourceClassGenerator createGeneratorForResourceType(JDefinedClass iface) {
+        if (parameters.generationStyle==null || STYLE_JERSEY1X.equals(parameters.generationStyle)) {
+            return new Jersey1xResourceClassGenerator(parameters.messageListener,
+                    resolver,
+                    codeModel, jPkg, generatedPackages, javaDoc, iface);
+        }
+        else if (STYLE_JAXRS20.equals(parameters.generationStyle)) {
+            return  new JAXRS20ResourceClassGenerator(
+                parameters.messageListener,
+                    resolver,
+                    codeModel, jPkg, generatedPackages, javaDoc, iface);
+        }
+        else {
+            throw new IllegalStateException("Invalid generation style");
+        }
+    }
+    
+    
     /**
      * Generate Java interfaces for WADL resource types
      * @throws com.sun.codemodel.JClassAlreadyExistsException if the interface to be generated already exists
      */
     protected void generateResourceTypeInterfaces()
-            throws JClassAlreadyExistsException {
+            throws JClassAlreadyExistsException{
 
         Map<String, ResourceTypeNode> ifaceMap = astBuilder.getInterfaceMap();
         for (String id: ifaceMap.keySet()) {
@@ -468,19 +485,19 @@ public class Wadl2Java {
             JDefinedClass iface = jPkg._class(JMod.PUBLIC, n.getClassName(), ClassType.INTERFACE);
             n.setGeneratedInterface(iface);
             javaDoc.generateClassDoc(n, iface);
-            ResourceClassGenerator rcGen = new ResourceClassGenerator(parameters.messageListener,
-                    resolver,
-                    codeModel, jPkg, generatedPackages, javaDoc, iface);
+            ResourceClassGenerator rcGen = createGeneratorForResourceType(iface);
             // generate Java methods for each resource method
             for (MethodNode m: n.getMethods()) {
                 rcGen.generateMethodDecls(m, true);
             }
+            List<Param> matrixParams = n.getMatrixParams();
             // generate bean properties for matrix parameters
-            for (Param p: n.getMatrixParams()) {
-                rcGen.generateBeanProperty(iface, p, true);
+            for (Param p: matrixParams) {
+                rcGen.generateBeanProperty(iface, matrixParams, p, true);
             }
         }
     }
+
 
     /**
      * Create a class that acts as a container for a hierarchy
@@ -632,16 +649,14 @@ public class Wadl2Java {
     protected void generateSubClass(JDefinedClass parent, JVar $global_base_uri, ResourceNode resource)
             throws JClassAlreadyExistsException {
 
-        ResourceClassGenerator rcGen = new ResourceClassGenerator(
-                parameters.messageListener,
-                resolver,
-                codeModel, jPkg, generatedPackages, javaDoc, resource);
+        ResourceClassGenerator rcGen = createGeneratorForResource(resource);
+        
         JDefinedClass impl = rcGen.generateClass(parent, $global_base_uri);
 
         // generate Java methods for each resource method
         for (MethodNode m: resource.getMethods()) {
             rcGen.generateMethodDecls(m, false);
-        }
+        } 
 
 
         // generate sub classes for each child resource

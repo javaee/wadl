@@ -38,6 +38,7 @@ public class MethodNode extends AbstractNode {
     private String name;
     private List<Param> queryParams;
     private List<Param> headerParams;
+    private List<Param> matrixParams;
     private List<RepresentationNode> supportedInputs;
     private List<RepresentationNode> supportedOutputs;
     private List<FaultNode> faults;
@@ -57,6 +58,8 @@ public class MethodNode extends AbstractNode {
         queryParams.addAll(parentResource.getQueryParams());
         headerParams = new ArrayList<Param>();
         headerParams.addAll(parentResource.getHeaderParams());
+        matrixParams = new ArrayList<Param>();
+        matrixParams.addAll(parentResource.getMatrixParams());
         supportedInputs = new ArrayList<RepresentationNode>();
         supportedOutputs = new ArrayList<RepresentationNode>();
         faults = new ArrayList<FaultNode>();
@@ -77,6 +80,8 @@ public class MethodNode extends AbstractNode {
         queryParams.addAll(r.getQueryParams());
         headerParams = new ArrayList<Param>();
         headerParams.addAll(r.getHeaderParams());
+        matrixParams = new ArrayList<Param>();
+        matrixParams.addAll(r.getMatrixParams());
         supportedInputs = new ArrayList<RepresentationNode>();
         supportedOutputs = new ArrayList<RepresentationNode>();
         faults = new ArrayList<FaultNode>();
@@ -89,6 +94,14 @@ public class MethodNode extends AbstractNode {
      */
     public String getName() {
         return name;
+    }
+    
+    /**
+     * @return The owning resource if this is avaliable, generally only
+     * avaliable for fully resolved types
+     */
+    public ResourceNode getOwningResource() {
+        return parentResource;
     }
     
     /**
@@ -106,6 +119,30 @@ public class MethodNode extends AbstractNode {
     public List<Param> getHeaderParameters() {
         return headerParams;
     }
+
+    /**
+     * Get all the matrix parameters for this and enclosing resources
+     * @return list of header parameters
+     */
+    public List<Param> getMatrixParameters() {
+        return matrixParams;
+    }
+
+    /**
+     * @param result The filtered output
+     * @param toFilter The list of filter
+     * @param required Whether the parameter should be required or not
+     * @return the value of result to aid chaining
+     */
+    private List<Param> filterParams(List<Param> result, List<Param> toFilter, boolean required)
+    {
+        Boolean bRequired = required;
+        for (Param p: toFilter) {
+            if (p.isRequired()  == bRequired)
+                result.add(p);
+        }
+        return result;
+    }
     
     /**
      * Get the parameters marked as required
@@ -113,14 +150,9 @@ public class MethodNode extends AbstractNode {
      */
     public List<Param> getRequiredParameters() {
         ArrayList<Param> required = new ArrayList<Param>();
-        for (Param p: getQueryParameters()) {
-            if (p.isRequired()  == Boolean.TRUE)
-                required.add(p);
-        }
-        for (Param p: getHeaderParameters()) {
-            if (p.isRequired()  == Boolean.TRUE)
-                required.add(p);
-        }
+        filterParams(required, getQueryParameters(), true);
+        filterParams(required, getHeaderParameters(), true);
+        filterParams(required, getMatrixParameters(), true);
         return required;
     }
     
@@ -130,14 +162,9 @@ public class MethodNode extends AbstractNode {
      */
     public List<Param> getOptionalParameters() {
         ArrayList<Param> optional = new ArrayList<Param>();
-        for (Param p: getQueryParameters()) {
-            if (p.isRequired() == Boolean.FALSE)
-                optional.add(p);
-        }
-        for (Param p: getHeaderParameters()) {
-            if (p.isRequired() == Boolean.FALSE)
-                optional.add(p);
-        }
+        filterParams(optional, getQueryParameters(), false);
+        filterParams(optional, getHeaderParameters(), false);
+        filterParams(optional, getMatrixParameters(), false);
         return optional;
     }
     

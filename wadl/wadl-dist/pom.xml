@@ -47,5 +47,12 @@
             <artifactId>wadl-ant</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Only in place to provide implemenation of UriBuilder -->
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+            <version>1.13</version>
+        </dependency>
+        
     </dependencies>
 </project>
