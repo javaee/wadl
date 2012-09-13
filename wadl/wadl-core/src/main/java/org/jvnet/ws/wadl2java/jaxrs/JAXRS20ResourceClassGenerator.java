@@ -91,7 +91,7 @@ public class JAXRS20ResourceClassGenerator
 
     @Override
     protected JClass resourceBuilderType() {
-        return codeModel.ref("javax.ws.rs.client.Invocation$Builder");
+        return codeModel.ref("javax.ws.rs.client.Invocation.Builder");
     }
 
     @Override

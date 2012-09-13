@@ -93,7 +93,7 @@ public class Jersey1xResourceClassGenerator
 
     @Override
     protected JClass resourceBuilderType() {
-        return codeModel.ref("com.sun.jersey.api.client.WebResource$Builder");
+        return codeModel.ref("com.sun.jersey.api.client.WebResource.Builder");
     }
 
     @Override
