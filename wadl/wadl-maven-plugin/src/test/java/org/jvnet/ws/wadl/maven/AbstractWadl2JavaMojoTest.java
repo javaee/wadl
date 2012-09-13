@@ -1099,6 +1099,49 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
 
  
 
+    /**
+     * The version of the Yahoo WADL was failing with a duplicate method
+     * problem on compilation. This was reported as oracle bug 14534583
+     * the problem was that the version of the Yahoo WADL from SoapUI website
+     * was using a fault element in the response and this was not being upgraded 
+     * properly to 2009 from 2006 and the status code was lost and it was not 
+     * transformed to a separate response element. This was causing compilation to
+     * fail as the fault condition was being mapped as another representation.
+     */
+    public void testSoapYahooWadl() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("soapui-yahoo-wadl-config.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
 
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/ApiSearchYahooCom_NewsSearchServiceV1.java"));
+        assertThat(targetDirectory, contains("test/Output.java"));
+        assertThat(targetDirectory, contains("test/Type.java"));
+        assertThat(targetDirectory, contains("test/Sort.java"));
+        assertThat(targetDirectory, contains("yahoo/api/ObjectFactory.java"));
+        assertThat(targetDirectory, contains("yahoo/api/Error.java"));
+        assertThat(targetDirectory, contains("yahoo/yn/ImageType.java"));
+        assertThat(targetDirectory, contains("yahoo/yn/ObjectFactory.java"));
+        assertThat(targetDirectory, contains("yahoo/yn/ResultSet.java"));
+        assertThat(targetDirectory, contains("yahoo/yn/ResultType.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+    }
     
 }

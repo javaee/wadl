@@ -6,6 +6,7 @@ package org.jvnet.ws.wadl.ast;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import org.junit.Test;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.w3c.dom.Element;
@@ -52,11 +53,19 @@ public class WadlAstBuilderTest {
         
         ApplicationNode an = 
                 builder.buildAst(WadlAstBuilderTest.class.getResource("SoapUIYahooSearch.wadl").toURI());
+        List<MethodNode> methods = an.getResources().get(0).getChildResources().get(0).getMethods();
         
         // Sanity check that the reference doesn't duplicate the values
         assertThat("Only one method",
-                an.getResources().get(0).getChildResources().get(0).getMethods().size(), equalTo(1));
-                
+                methods.size(), equalTo(1));
+
+        // Check that the status on the upgraded fault message
+        // has correctly been upgrade to the 2009 WADL version
+        assertThat("Only one output",
+                methods.get(0).getSupportedOutputs().size(), equalTo(1));
+        assertThat("Only one fault",
+                methods.get(0).getFaults().size(), equalTo(1));
+        
     }
     
 }
