@@ -12,6 +12,23 @@
         A Maven plugin to support working with WADL.
     </description>
     <dependencies>
+        <!-- Provide 2.x client for testing purposes put at front of list
+             so that everybody gets the new JAX-RS API -->
+        <dependency> 
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey2.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency> 
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-moxy</artifactId>
+            <version>${jersey2.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Normal stuff -->
+        
         <dependency>
             <groupId>org.jvnet.ws.wadl</groupId>
             <artifactId>wadl-core</artifactId>
@@ -56,23 +73,22 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-core</artifactId>
-            <version>1.13</version>
+            <version>${jersey1.version}</version>
         </dependency>
 
         <!-- Provide 1.x client for testing purposes -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.13</version>
+            <version>${jersey1.version}</version>
             <scope>test</scope>
         </dependency>
-        
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>1.13</version>
+            <version>${jersey1.version}</version>
             <scope>test</scope>
         </dependency>
-        
+
     </dependencies>
 </project>

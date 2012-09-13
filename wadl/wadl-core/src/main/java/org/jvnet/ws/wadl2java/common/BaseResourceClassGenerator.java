@@ -136,7 +136,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
     // Functional call outs
     protected abstract JVar createRequestBuilderAndAccept(JBlock $methodBody, JVar $resource, RepresentationNode outputRep);
-    protected abstract JInvocation postProcessInvocation(JInvocation $execute);
+    protected abstract JInvocation createProcessInvocation(JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JExpression $returnTypeExpr, JExpression $entityExpr);
     
     
     /**
@@ -237,9 +237,6 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         JBlock $ctorCopyBody = $ctorCopy.body();
         $ctorCopyBody.assign($clientReference, $clientCopyParam);
 
-        // Work around JERSEY-1368
-        // Perform a build before we clone
-        $ctorCopyBody.invoke($uriBuilderCopyParam, "build");
 
         $ctorCopyBody.assign($uriBuilder, $uriBuilderCopyParam.invoke("clone"));
         $ctorCopyBody.assign($templateMatrixParamValMap, $mapCopyParam);
@@ -824,11 +821,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             // add the method body
             JBlock $methodBody = $genMethod.body();
             JClass mapOfString = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
-            
-            // Work around JERSEY-1368
-            // Perform a build before we clone
-            $methodBody.invoke($uriBuilder, "build");
-            
+                       
             // codegen : UriBuilder localUriBuilder = $uriBuilder.clone();
             JVar $localUriBuilder = $methodBody.decl(
                     $uriBuilder.type(),
@@ -995,20 +988,32 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             final JVar $resourceBuilder, 
             final RepresentationNode inputRep, final JBlock $methodBody)
     {
+        // This code is quite different for jersey and jax-rs 2.0
+        // so we are going to collect these values as required and
+        // then let each generator sort it out
+        //
+        
+        String methodString = method.getName();
+        JExpression $returnTypeExpr = null;
+        JExpression $entityExpr = null;
+        
         // Content type
         //
         
         
-        JInvocation $execute = $resourceBuilder.invoke(buildMethod());
-        $execute.arg(method.getName());
+//        JInvocation $execute = $resourceBuilder.invoke(buildMethod());
+//        $execute.arg(method.getName());
+        
         
         // Return type if required
         
         if ($genericMethodParameter!=null) {
-            $execute.arg(JExpr.ref("returnType"));
+            $returnTypeExpr = JExpr.ref("returnType");
+//            $execute.arg(JExpr.ref("returnType"));
         }
         else if (returnType!=null) {
-            $execute.arg(toClassLiteral(returnType));
+            $returnTypeExpr = toClassLiteral(returnType);
+//            $execute.arg(toClassLiteral(returnType));
         }
 
         // Assume we can't be that picky about HTTP methods as there could
@@ -1021,9 +1026,6 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                 //
             } else {
                 
-                $methodBody.assign($resourceBuilder,
-                        $resourceBuilder.invoke("type")
-                        .arg(JExpr.lit(inputRep.getMediaType())));
                 
                 if (wrapInputTypeInJAXBElement) {
                     // So this is not a XmlRootElement but we can wrap it with
@@ -1041,17 +1043,18 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                                 toClassLiteral(inputType))
                             .arg(JExpr.ref("input"));
                     
-                    $execute.arg(jaxbe);
+                    $entityExpr = jaxbe;
                     
                 }
                 else {
-                    $execute.arg(JExpr.ref("input"));
+                    $entityExpr = JExpr.ref("input");
                 }
             }
         }
         
         // Allow JAX-RS to tag on
-        $execute = postProcessInvocation($execute);
+        JInvocation $execute = createProcessInvocation(
+               $methodBody, $resourceBuilder, methodString, inputRep, $returnTypeExpr, $entityExpr);
         
        
         // Generic variant always need to return the result
@@ -1120,9 +1123,6 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                    JExpr._new(hashMapOfStringObject).arg(
                         $templateMatrixParamValMap));
 
-            // Work around JERSEY-1368
-            // Perform a build before we clone
-            $setterBody.invoke($uriBuilder, "build");
             
             // Make a copy of URI builder so we can process any marix parameters
             // as required

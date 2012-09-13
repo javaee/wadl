@@ -6,7 +6,6 @@ package org.jvnet.ws.wadl2java.jaxrs;
 
 import com.sun.codemodel.*;
 import org.jvnet.ws.wadl.ast.RepresentationNode;
-import org.jvnet.ws.wadl2java.jersey.*;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.jvnet.ws.wadl2java.ElementToClassResolver;
@@ -77,22 +76,22 @@ public class JAXRS20ResourceClassGenerator
     
     @Override
     protected JClass clientResponseClientType() {
-        return codeModel.ref("com.sun.jersey.api.client.ClientResponse");
+        return codeModel.ref("javax.ws.rs.core.Response");
     }
 
     @Override
     protected JClass genericTypeType() {
-        return codeModel.ref("com.sun.jersey.api.client.GenericType");
+        return codeModel.ref("javax.ws.rs.core.GenericType");
     }
 
     @Override
     protected JClass resourceType() {
-        return codeModel.ref("javax.ws.rs.client.Invocation$Builder");
+        return codeModel.ref("javax.ws.rs.client.WebTarget"); // javax.ws.rs.client.Invocation$Builder");
     }
 
     @Override
     protected JClass resourceBuilderType() {
-        return codeModel.ref("com.sun.jersey.api.client.WebResource$Builder");
+        return codeModel.ref("javax.ws.rs.client.Invocation$Builder");
     }
 
     @Override
@@ -121,9 +120,33 @@ public class JAXRS20ResourceClassGenerator
         return "build";
     }
 
+    
+
     @Override
-    protected JInvocation postProcessInvocation(JInvocation $execute) {
-        return $execute;
-    }
+    protected JInvocation createProcessInvocation(JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JExpression $returnTypeExpr, JExpression $entityExpr) {
+        JInvocation $build = $resourceBuilder.invoke(buildMethod());
+
+        $build.arg(methodString);
+        
+        if ($entityExpr!=null)
+        {
+            JClass $entity = codeModel.ref("javax.ws.rs.client.Entity");
+            $build.arg(
+              $entity.staticInvoke("entity")
+                    .arg($entityExpr)
+                    .arg(JExpr.lit(inputRep.getMediaType()))); // TODO replace with proper call
+        }
+
+        
+        JInvocation $invoke  = $build.invoke("invoke");
+        
+        if ($returnTypeExpr!=null)
+        {
+            $invoke.arg($returnTypeExpr);
+        }
+
+        return $invoke;
+   }
+    
     
 }

@@ -252,7 +252,7 @@
         <repository>
             <id>wadl-repository</id>
             <name>WADL Maven Repository</name>
-            <url>https://wadl.dev.java.net/nonav/repository/</url>
+            <url>https://wadl.java.net/nonav/repository/</url>
         </repository>
         <repository>
             <id>maven2-repository.dev.java.net</id>
@@ -269,6 +269,19 @@
             </snapshots>
         </repository>
 
+        <repository>
+            <id>release.maven.java.net</id>
+            <name>Java.net Maven Release Repository</name>
+            <url>https://maven.java.net/content/groups/public</url>
+            <layout>default</layout>
+        </repository>
+        <repository>
+            <id>snapshot-repository.java.net</id>
+            <name>Java.net Snapshot Repository</name>
+            <url>https://maven.java.net/content/repositories/snapshots/</url>
+            <layout>default</layout>
+        </repository>
+
         <!-- used to serve dependencies if not yet in jvnet maven repo temporarily-->
         <!-- we're using a codehaus plugin snapshot -->
         <repository>
@@ -282,6 +295,7 @@
             </releases>
         </repository>
     </repositories>
+    
     <pluginRepositories>
         <pluginRepository>
             <id>maven2-repository.dev.java.net</id>
@@ -326,6 +340,9 @@
 
     <properties>
         <ant.version>1.6.5</ant.version>
+        <jersey1.version>1.13</jersey1.version>
+        <jersey2.version>2.0-SNAPSHOT</jersey2.version>
+        <junit.version>4.10</junit.version>
     </properties>
 
 </project>

@@ -31,6 +31,7 @@ import javax.xml.bind.JAXBException;
 import org.jvnet.ws.wadl.ast.InvalidWADLException;
 
 import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.writer.FileCodeWriter;
 
 /**
  * Command line support for WADL to Java tool
@@ -51,6 +52,8 @@ import com.sun.codemodel.JClassAlreadyExistsException;
  * <code>dir</code> must exist, subdirectories will be created as required.</dd>
  * <dt><code>file.wadl</code></dt>
  * <dd>The WADL file to process.</dd>
+ * <dt><code>-s jaxrs20</code></dt>
+ * <dd>Specifies the generation style for the code, defaults to jersey1x</dd>
  * </dl>
  * @author mh124079
  */
@@ -72,6 +75,7 @@ public class Main {
             int i=0;
             File outputDir = null;
             String pkg = null;
+            String generationStyle = Wadl2Java.STYLE_DEFAULT;
             boolean autoPackage = false;
             List<File> customizations = new ArrayList<File>();
             List<String> xjcArguments = new ArrayList<String>();
@@ -82,6 +86,9 @@ public class Main {
                 } else if (args[i].equals("-p")) {
                     pkg = args[i+1];
                     i+=2;
+                } else if (args[i].equals("-s")) {
+                    generationStyle = args[i+1];
+                    i+=2;                    
                 } else if (args[i].equals("-c")) {
                     customizations.add(new File(args[i+1]));
                     i+=2;
@@ -124,7 +131,15 @@ public class Main {
                 }
                 wadlDesc = wadlFile.toURI();
             }
-            Wadl2Java w = new Wadl2Java(outputDir, pkg, autoPackage, customizations, xjcArguments);
+            Wadl2Java w = new Wadl2Java(new Wadl2Java.Parameters()
+                .setRootDir(outputDir.toURI())
+                .setCodeWriter(new FileCodeWriter(outputDir))
+                .setPkg(pkg)
+                .setAutoPackage(autoPackage)
+                .setCustomizationsAsFiles(customizations)
+                .setXjcArguments(xjcArguments)
+                .setGenerationStyle(generationStyle));
+            
             w.process(wadlDesc);
         } catch (InvalidWADLException ex) {
             ex.printStackTrace();

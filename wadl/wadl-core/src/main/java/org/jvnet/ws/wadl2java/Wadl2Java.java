@@ -61,9 +61,16 @@ import org.xml.sax.SAXParseException;
 public class Wadl2Java {
     
     // Generation Styles
+    
     public static final String STYLE_JERSEY1X = "jersey1x";
     public static final String STYLE_JAXRS20 = "jaxrs20";
-
+    public static final String STYLE_DEFAULT = STYLE_JERSEY1X;
+    public static final Set<String> STYLE_SET = new HashSet<String>() {{
+            add(STYLE_JERSEY1X);
+            add(STYLE_JAXRS20);
+        }
+    };
+    
     /**
      * A parameter object to make it easier to extend this class without
      * having to add more constructors or parameters. Each setter is chained
@@ -76,7 +83,7 @@ public class Wadl2Java {
         private List<URI> customizations;
         private List<String> xjcArguments;
         private String pkg;
-        private String generationStyle = STYLE_JERSEY1X;
+        private String generationStyle = STYLE_DEFAULT;
         private boolean autoPackage;
         private URI rootDir;
         private Map<String, String> baseURIToClassName = Collections.EMPTY_MAP;
@@ -295,28 +302,17 @@ public class Wadl2Java {
         this.parameters = parameters.clone();
         assert parameters.codeWriter!=null;
         this.javaDoc = new JavaDocUtil();
+        
+        // Parameter validation
+        
+        if (!STYLE_SET.contains(parameters.generationStyle)) {
+            throw new IllegalArgumentException(
+                    Wadl2JavaMessages.INVALID_GENERATION_STYLE(parameters.generationStyle, STYLE_SET));
+        }
     }
 
 
-    /**
-     * Creates a new instance of a Wadl2Java processor.
-     *
-     * @param outputDir the directory in which to generate code.
-     * @param pkg the Java package in which to generate code.
-     * @param autoPackage whether to use JAXB auto package name generation
-     * @param customizations a list of JAXB customization files
-     * @throws java.io.IOException TODO.
-     */
-    public Wadl2Java(File outputDir, String pkg, boolean autoPackage,
-                     List<File> customizations, List<String> xjcArguments) throws IOException {
-        this(new Parameters()
-                .setRootDir(outputDir.toURI())
-                .setCodeWriter(new FileCodeWriter(outputDir))
-                .setPkg(pkg)
-                .setAutoPackage(autoPackage)
-                .setCustomizationsAsFiles(customizations)
-                .setXjcArguments(xjcArguments));
-    }
+
 
     /**
      * Process the root WADL file and generate code.

@@ -101,6 +101,7 @@ public class Jersey1xResourceClassGenerator
         return "resource";
     }
     
+
     @Override  
     protected JVar createRequestBuilderAndAccept(JBlock $methodBody, JVar $resource, RepresentationNode outputRep) {
         // codegen WebResource.Builder resourceBuilder = resource.getRequestBuilder();
@@ -123,9 +124,32 @@ public class Jersey1xResourceClassGenerator
     }
 
     @Override
-    protected JInvocation postProcessInvocation(JInvocation $execute) {
-        // do nothing
+    protected JInvocation createProcessInvocation(JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JExpression $returnTypeExpr, JExpression $entityExpr) {
+        
+        // Store the type
+        //
+        
+        if (inputRep!=null) {
+            $methodBody.assign($resourceBuilder,
+                    $resourceBuilder.invoke("type")
+                    .arg(JExpr.lit(inputRep.getMediaType())));
+        }
+        
+        //
+        JInvocation $execute = $resourceBuilder.invoke(buildMethod());
+        $execute.arg(methodString);
+        
+        if ($returnTypeExpr!=null)
+        {
+            $execute.arg($returnTypeExpr);
+        }
+        
+        if ($entityExpr!=null)
+        {
+            $execute.arg($entityExpr);
+        }
+        
         return $execute;
-    }
+   }
     
 }

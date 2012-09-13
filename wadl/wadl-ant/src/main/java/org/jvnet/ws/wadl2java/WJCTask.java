@@ -81,6 +81,9 @@ public class WJCTask extends Task {
     }
     
     
+    
+    // The generationStyle of the generated client, defaults to Jersey 1.x
+    private String generationStyle = Wadl2Java.STYLE_DEFAULT;
     private String pkg;
     private boolean autoPackage;
     private File target;
@@ -118,6 +121,13 @@ public class WJCTask extends Task {
      */
     public void setPackage(String pkg) {
         this.pkg = pkg;
+    }
+
+    /**
+     * Set the generationStyle for the code, defaults to jersey1x.
+     */
+    public void setGenerationStyle(String generationStyle) {
+        this.generationStyle = generationStyle;
     }
     
     /**
@@ -280,6 +290,7 @@ public class WJCTask extends Task {
                 .setCodeWriter(new FileCodeWriter(target))
                 .setPkg(pkg)
                 .setAutoPackage(autoPackage)
+                .setGenerationStyle(generationStyle)
                 .setCustomizationsAsFiles(customizations)
                 .setCustomClassNames(classCustomization));
             wadlProcessor.process(desc);
