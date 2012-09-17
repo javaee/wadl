@@ -18,13 +18,14 @@
  */
 
 package org.jvnet.ws.wadl.ast;
-
+ 
 import java.util.ArrayList;
 import java.util.List;
-
+import javax.ws.rs.core.MultivaluedMap;
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Method;
 import org.jvnet.ws.wadl.Param;
+import org.jvnet.ws.wadl.util.AbstractMultivaluedMap;
 import org.xml.sax.Locator;
 
 /**
@@ -41,7 +42,11 @@ public class MethodNode extends AbstractNode {
     private List<Param> matrixParams;
     private List<RepresentationNode> supportedInputs;
     private List<RepresentationNode> supportedOutputs;
-    private List<FaultNode> faults;
+    
+    // Need to keep the order of these elements
+    //
+    private MultivaluedMap<List<Long>, FaultNode> faults;
+            
     private Method method;
     
     /**
@@ -62,7 +67,8 @@ public class MethodNode extends AbstractNode {
         matrixParams.addAll(parentResource.getMatrixParams());
         supportedInputs = new ArrayList<RepresentationNode>();
         supportedOutputs = new ArrayList<RepresentationNode>();
-        faults = new ArrayList<FaultNode>();
+        faults = new AbstractMultivaluedMap<List<Long>, FaultNode>(
+               new java.util.LinkedHashMap<List<Long>, List<FaultNode>>()) {};
         r.getMethods().add(this);
     }
     
@@ -84,7 +90,8 @@ public class MethodNode extends AbstractNode {
         matrixParams.addAll(r.getMatrixParams());
         supportedInputs = new ArrayList<RepresentationNode>();
         supportedOutputs = new ArrayList<RepresentationNode>();
-        faults = new ArrayList<FaultNode>();
+        faults = new AbstractMultivaluedMap<List<Long>, FaultNode>(
+               new java.util.LinkedHashMap<List<Long>, List<FaultNode>>()) {};
         r.getMethods().add(this);
     }
     
@@ -198,7 +205,7 @@ public class MethodNode extends AbstractNode {
      * Get a list of the faults for this method
      * @return list of faults
      */
-    public List<FaultNode> getFaults() {
+    public MultivaluedMap<List<Long>, FaultNode> getFaults() {
         return faults;
     }
     
@@ -236,8 +243,11 @@ public class MethodNode extends AbstractNode {
             node.visit(visitor); 
         }
 
-        for (FaultNode node : getFaults()) {
-            node.visit(visitor); 
+        for (List<FaultNode> nodeList : getFaults().values()) {
+            for (FaultNode node : nodeList)
+            {
+                node.visit(visitor); 
+            }
         }
 
     }

@@ -10,7 +10,7 @@
  * permissions and limitations under the License.
  */
 package org.jvnet.ws.wadl.ast;
-
+ 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
@@ -31,19 +30,7 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-
-import org.jvnet.ws.wadl.Application;
-import org.jvnet.ws.wadl.Grammars;
-import org.jvnet.ws.wadl.Include;
-import org.jvnet.ws.wadl.Method;
-import org.jvnet.ws.wadl.Param;
-import org.jvnet.ws.wadl.ParamStyle;
-import org.jvnet.ws.wadl.Representation;
-import org.jvnet.ws.wadl.Request;
-import org.jvnet.ws.wadl.Resource;
-import org.jvnet.ws.wadl.ResourceType;
-import org.jvnet.ws.wadl.Resources;
-import org.jvnet.ws.wadl.Response;
+import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -440,7 +427,7 @@ public class WadlAstBuilder {
                 for (Representation o: response.getRepresentation()) {
                     if (isFault) {
                         FaultNode fn = new FaultNode(o);
-                        n.getFaults().add(fn);
+                        n.getFaults().add(response.getStatus(), fn); 
                     } else {
                         addRepresentation(n.getSupportedOutputs(), o, file);
                     }

@@ -148,7 +148,7 @@ public class Wadl2JavaMojoJAXRS20Test
      */
     @Override
     protected String getReturnStatmentRegex() {
-        return "return resourceBuilder.build.*invoke";
+        return "return response.readEntity";
     }
     
 }

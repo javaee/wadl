@@ -20,9 +20,7 @@
 package org.jvnet.ws.wadl.ast;
 
 import java.util.List;
-
 import javax.xml.namespace.QName;
-
 import org.jvnet.ws.wadl.Doc;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.Representation;

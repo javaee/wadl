@@ -15,20 +15,23 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.tools.*;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.xml.bind.JAXBElement;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
-
 import static org.fest.reflect.core.Reflection.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.jvnet.ws.wadl.matchers.Matchers.contains;
 import static org.jvnet.ws.wadl.matchers.Matchers.exists;
+import org.w3c.dom.Element;
 
 
 /**
@@ -269,6 +272,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/ApiSearchYahooCom_NewsSearchServiceV1.java"));
+        assertThat(targetDirectory, contains("test/SearchErrorException.java"));
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));
@@ -1133,6 +1137,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         assertThat(targetDirectory, contains("test/Output.java"));
         assertThat(targetDirectory, contains("test/Type.java"));
         assertThat(targetDirectory, contains("test/Sort.java"));
+        assertThat(targetDirectory, contains("test/SearchErrorException.java"));
         assertThat(targetDirectory, contains("yahoo/api/ObjectFactory.java"));
         assertThat(targetDirectory, contains("yahoo/api/Error.java"));
         assertThat(targetDirectory, contains("yahoo/yn/ImageType.java"));
@@ -1144,4 +1149,66 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         ClassLoader cl = compile(targetDirectory);
     }
     
+
+
+    /**
+     * Add a test to verify that exceptions are throw properly
+     */
+    public void testSimpleExceptionCase() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("soapui-yahoo-wadl-config.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+        
+        // Invoke the service to provoke and error
+        //
+        
+        Class client = type("test.ApiSearchYahooCom_NewsSearchServiceV1").withClassLoader(cl).load();
+        Object newsService = staticMethod("newsSearch")
+                .withParameterTypes(getClientClass(), URI.class).in(client).invoke(
+                    _client, URI.create("http://example.com/"));
+        
+        // Test out that the right exception is thrown
+        //
+        
+        
+        _cannedResponse.add(new CannedResponse(
+                400, "text/xml", "<Error xmlns=\"urn:yahoo:api\"><Message>42</Message></Error>"));
+        
+        try
+        {
+            String result = method("getAsTextXml").withReturnType(String.class)
+                    .withParameterTypes(String.class, String.class, Class.class)
+                    .in(newsService).invoke("not","at", String.class);
+            
+            assertThat("Should have thrown an exceptio and never reached this line", false, equalTo(true));
+        }
+        catch (WebApplicationException ex)
+        {
+            Object faultInfo = method("getFaultInfo").in(ex).invoke();
+            // Check the content if in the right place
+            List content = field("content").ofType(List.class).in(faultInfo).get();
+            assertThat(1, equalTo(content.size()));
+            //
+            String message = ((Element)((JAXBElement)content.get(0)).getValue()).getTextContent();
+            assertThat("42", equalTo(message));
+        }
+    }
 }

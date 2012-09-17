@@ -20,7 +20,6 @@
 package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.*;
-import com.sun.codemodel.writer.FileCodeWriter;
 import com.sun.tools.xjc.BadCommandLineException;
 import com.sun.tools.xjc.Options;
 import com.sun.tools.xjc.api.*;
@@ -44,7 +43,6 @@ import javax.xml.namespace.QName;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ast.*;
 import org.jvnet.ws.wadl.util.MessageListener;
-import org.jvnet.ws.wadl2java.common.BaseResourceClassGenerator;
 import org.jvnet.ws.wadl2java.jaxrs.JAXRS20ResourceClassGenerator;
 import org.jvnet.ws.wadl2java.jersey.Jersey1xResourceClassGenerator;
 import org.w3c.dom.Element;

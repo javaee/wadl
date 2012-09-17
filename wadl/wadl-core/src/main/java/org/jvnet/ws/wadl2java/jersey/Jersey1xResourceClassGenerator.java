@@ -5,6 +5,9 @@
 package org.jvnet.ws.wadl2java.jersey;
 
 import com.sun.codemodel.*;
+import javax.ws.rs.WebApplicationException;
+import org.jvnet.ws.wadl.ast.FaultNode;
+import org.jvnet.ws.wadl.ast.MethodNode;
 import org.jvnet.ws.wadl.ast.RepresentationNode;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
@@ -86,6 +89,7 @@ public class Jersey1xResourceClassGenerator
         return codeModel.ref("com.sun.jersey.api.client.GenericType");
     }
 
+
     @Override
     protected JClass resourceType() {
         return codeModel.ref("com.sun.jersey.api.client.WebResource");
@@ -99,6 +103,11 @@ public class Jersey1xResourceClassGenerator
     @Override
     protected String resourceFromClientMethod() {
         return "resource";
+    }
+    
+    @Override
+    protected String responseGetEntityMethod() {
+        return "getEntity";
     }
     
 
@@ -124,7 +133,7 @@ public class Jersey1xResourceClassGenerator
     }
 
     @Override
-    protected JInvocation createProcessInvocation(JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JExpression $returnTypeExpr, JExpression $entityExpr) {
+    protected JExpression createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr) {
         
         // Store the type
         //
@@ -136,20 +145,92 @@ public class Jersey1xResourceClassGenerator
         }
         
         //
+        
         JInvocation $execute = $resourceBuilder.invoke(buildMethod());
         $execute.arg(methodString);
+        $execute.arg(JExpr.dotclass(clientResponseClientType()));
         
-        if ($returnTypeExpr!=null)
-        {
-            $execute.arg($returnTypeExpr);
-        }
         
         if ($entityExpr!=null)
         {
             $execute.arg($entityExpr);
         }
         
-        return $execute;
+        // Assign to variable
+        //
+        
+        JVar $response = $methodBody.decl(clientResponseClientType(), "response");
+        $methodBody.assign($response, $execute);
+        
+        // For a given response process any fault nodes
+        generateConditionalForFaultNode(method, $methodBody, $response);
+        
+        // Right need to get entity from the response
+        if (clientResponseClientType() == returnType) {
+            // In the case when the reponse should be the client response
+            // we can return null because
+            
+            return $response;
+        }
+        else {
+            JInvocation $fetchEntity = $response.invoke("getEntity");
+            if ($returnTypeExpr!=null)
+            {
+                $fetchEntity.arg($returnTypeExpr);
+            }
+        
+            return $fetchEntity;
+        }
+        
    }
+
+    
+    /**
+     * Invoked when we need to throw a generic failure exception because
+     * we don't have an element mapped.
+     */
+    protected void generateThrowWebApplicationExceptionFromResponse(JBlock caseBody, JVar $response) {
+        // Just for a WebApplicationException in this case
+        // with the right status code, in RS 2.0 we can
+        
+        caseBody._throw(
+           JExpr._new(codeModel.ref(WebApplicationException.class))
+                .arg($response.invoke("getStatus")));
+    }
+
+
+    
+    /**
+     * Try to create a new exception class that is relevant for the platform
+     * @throws JClassAlreadyExistsException should it already exists
+     */
+    protected JDefinedClass generateExceptionClassInternal(String exName, FaultNode f) throws JClassAlreadyExistsException {
+        JDefinedClass $exCls = pkg._class( JMod.PUBLIC, exName);
+        $exCls._extends(WebApplicationException.class);
+        JType rawType = getTypeFromElement(f.getElement());
+        JType detailType = rawType==null ? codeModel._ref(Object.class) : rawType;
+        JVar $detailField = $exCls.field(JMod.PRIVATE, detailType, "m_faultInfo");
+        JVar $responseField = $exCls.field(JMod.PRIVATE, 
+                clientResponseClientType(), "m_response");
+        // Build a constructor
+        JMethod $ctor = $exCls.constructor(JMod.PUBLIC);
+        // Remove message
+        JVar $response = $ctor.param(clientResponseClientType(), "response");
+        JVar $detail = $ctor.param(detailType, "faultInfo");
+        JBlock $ctorBody = $ctor.body();
+
+        //
+        $ctorBody.directStatement("super(response.getStatus());");
+        $ctorBody.assign($detailField, $detail);
+        $ctorBody.assign($responseField, $response);
+        // Add getter for the body payload
+        JMethod $faultInfoGetter = $exCls.method(JMod.PUBLIC, detailType, "getFaultInfo");
+        $faultInfoGetter.body()._return($detailField);
+        // Add getter for the client response
+        JMethod $responseGetter = $exCls.method(JMod.PUBLIC, clientResponseClientType(), "getClientResponse");
+        $responseGetter.body()._return($responseField);
+        return $exCls;
+    }
     
 }
+

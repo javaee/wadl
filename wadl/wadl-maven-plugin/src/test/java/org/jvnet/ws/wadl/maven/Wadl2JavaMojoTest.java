@@ -14,8 +14,10 @@ package org.jvnet.ws.wadl.maven;
 
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.core.header.InBoundHeaders;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.net.URI;
+import javax.ws.rs.WebApplicationException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.plexus.util.FileUtils;
 import org.easymock.classextension.EasyMock;
@@ -129,7 +131,7 @@ public class Wadl2JavaMojoTest extends AbstractWadl2JavaMojoTest<Client> {
      */
     @Override
     protected String getReturnStatmentRegex() {
-        return "return resourceBuilder.method";
+        return "return response.getEntity";
     }
     
     
@@ -295,7 +297,7 @@ public class Wadl2JavaMojoTest extends AbstractWadl2JavaMojoTest<Client> {
 
         // Check the fault is correct
         Class $FE = cl.loadClass("test.FaultException");
-        assertTrue($FE.getSuperclass() == Exception.class);
+        assertTrue($FE.getSuperclass() == WebApplicationException.class);
         assertEquals($FE.getDeclaredFields()[0].getName(), "m_faultInfo");
 
     }

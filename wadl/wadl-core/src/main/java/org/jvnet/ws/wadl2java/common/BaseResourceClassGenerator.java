@@ -18,8 +18,7 @@
  */
 
 package org.jvnet.ws.wadl2java.common;
-
-import org.jvnet.ws.wadl2java.ResourceClassGenerator;
+ 
 import com.sun.codemodel.*;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -32,10 +31,7 @@ import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ParamStyle;
 import org.jvnet.ws.wadl.ast.*;
 import org.jvnet.ws.wadl.util.MessageListener;
-import org.jvnet.ws.wadl2java.ElementToClassResolver;
-import org.jvnet.ws.wadl2java.GeneratorUtil;
-import org.jvnet.ws.wadl2java.JavaDocUtil;
-import org.jvnet.ws.wadl2java.Wadl2JavaMessages;
+import org.jvnet.ws.wadl2java.*;
 
 /**
  * Generator class for nested static classes used to represent web resources.
@@ -46,13 +42,13 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
 
 
-    private static enum MethodType
+    protected static enum MethodType
     {
         JAXB, CLASS, GENERIC_TYPE
     };
 
     private ResourceNode resource;
-    private JPackage pkg;
+    protected JPackage pkg;
     private ElementToClassResolver resolver;
     protected JCodeModel codeModel;
     private JFieldVar $clientReference;
@@ -109,6 +105,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     }
 
 
+
     
     /**
      * Get the class for which methods will be generated.
@@ -133,10 +130,11 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     protected abstract String resourceFromClientMethod();    
     protected abstract JClass resourceBuilderType();
     protected abstract String buildMethod();
+    protected abstract String responseGetEntityMethod();
 
     // Functional call outs
     protected abstract JVar createRequestBuilderAndAccept(JBlock $methodBody, JVar $resource, RepresentationNode outputRep);
-    protected abstract JInvocation createProcessInvocation(JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JExpression $returnTypeExpr, JExpression $entityExpr);
+    protected abstract JExpression createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr);
     
     
     /**
@@ -453,6 +451,9 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
     }
     
+    
+    
+    
     /**
      * Create an exception class that wraps an element used for indicating a fault
      * condition.
@@ -464,24 +465,89 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         JDefinedClass $exCls;
         String exName = f.getClassName();
         try {
-            $exCls = pkg._class( JMod.PUBLIC, exName);
-            $exCls._extends(Exception.class);
-            JType rawType = getTypeFromElement(f.getElement());
-            JType detailType = rawType==null ? codeModel._ref(Object.class) : rawType;
-            JVar $detailField = $exCls.field(JMod.PRIVATE, detailType, "m_faultInfo");
-            JMethod $ctor = $exCls.constructor(JMod.PUBLIC);
-            JVar $msg = $ctor.param(String.class, "message");
-            JVar $detail = $ctor.param(detailType, "faultInfo");
-            JBlock $ctorBody = $ctor.body();
-            $ctorBody.directStatement("super(message);");
-            $ctorBody.assign($detailField, $detail);
-            JMethod $faultInfoGetter = $exCls.method(JMod.PUBLIC, detailType, "getFaultInfo");
-            $faultInfoGetter.body()._return($detailField);
+            $exCls = generateExceptionClassInternal(exName, f);
         } catch (JClassAlreadyExistsException ex) {
             $exCls = ex.getExistingClass();
         }
         return $exCls;
     }
+    
+    /**
+     * Try to create a new exception class that is relevant for the platform
+     * @throws JClassAlreadyExistsException should it already exists
+     */
+    protected abstract JDefinedClass generateExceptionClassInternal(String exName, FaultNode f) throws JClassAlreadyExistsException;
+    
+    /**
+     * Invoked when we need to throw a generic failure exception because
+     * we don't have an element mapped.
+     */
+    protected abstract void generateThrowWebApplicationExceptionFromResponse(JBlock caseBody, JVar $response);
+
+    
+    /**
+     * Generates the switch block based on status code that will
+     * throw exceptions for a specified failure
+     */
+    protected void generateConditionalForFaultNode(MethodNode method, JBlock $methodBody, JVar $response) {
+        // Right do we have any fault objects to deal with here
+        //
+        
+        Set<List<Long>> statusCodes = method.getFaults().keySet();
+        if (statusCodes.size() > 0)
+        {
+            // So we need to generate a switch statement of some kind
+            //
+            
+            JSwitch sw = $methodBody._switch(
+                    $response.invoke("getStatus"));
+            
+            for (List<Long> statusCode : statusCodes) {
+
+                JCase last = null;
+                
+                // Create a case statement for each code
+                //
+                for(Iterator<Long> it = statusCode.iterator(); it.hasNext();)
+                {
+                    int code = it.next().intValue();
+                    last = sw._case(JExpr.lit(code));
+                }
+                
+                if (last!=null)
+                {
+                    JBlock caseBody = last.body();
+                    
+                    // For the moment just proces the first fault
+                    //
+                    
+                    FaultNode fn = method.getFaults().getFirst(statusCode);
+                    if (fn.getElement()!=null) {
+                        
+                        
+                        JType rawType = (JClass)getTypeFromElement(fn.getElement());
+                        JClass exception = generateExceptionClass(fn);
+
+                        caseBody._throw(
+                        JExpr._new(exception)
+                                .arg($response)
+                                .arg($response.invoke(responseGetEntityMethod())
+                                        .arg(toClassLiteral(rawType)))
+                                );
+                    } else {
+                        
+                        generateThrowWebApplicationExceptionFromResponse(
+                           caseBody, $response);
+                        
+                        
+                        caseBody._break();
+                    }
+                }
+            }                
+            
+        }
+    }
+    
         
     /**
      * Generate a set of method declarations for a WADL <code>method</code> element.
@@ -502,20 +568,22 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         List<RepresentationNode> supportedInputs = method.getSupportedInputs();
         List<RepresentationNode> supportedOutputs = method.getSupportedOutputs();
         Map<JType, JDefinedClass> exceptionMap = new HashMap<JType, JDefinedClass>();
-        for (FaultNode f: method.getFaults()) {
-            if (f.getElement()==null) {// skip fault for which there's no XML
-                messageListener.info(Wadl2JavaMessages.FAULT_NO_ELEMENT());
-                continue;
+        for (List<FaultNode> fl: method.getFaults().values()) {
+            for (FaultNode f : fl){
+                if (f.getElement()==null) {// skip fault for which there's no XML
+                    messageListener.info(Wadl2JavaMessages.FAULT_NO_ELEMENT());
+                    continue;
+                }
+                JDefinedClass generatedException = generateExceptionClass(f);
+                JType rawType = getTypeFromElement(f.getElement());
+                JType faultType = rawType==null ? codeModel._ref(Object.class) : rawType;
+                exceptionMap.put(faultType, generatedException);
             }
-            JDefinedClass generatedException = generateExceptionClass(f);
-            JType rawType = getTypeFromElement(f.getElement());
-            JType faultType = rawType==null ? codeModel._ref(Object.class) : rawType;
-            exceptionMap.put(faultType, generatedException);
         }
-        if (supportedInputs.size()==0) {
+        if (supportedInputs.isEmpty()) {
             // no input representations, just query parameters
             // for each output representation
-            if (supportedOutputs.size() == 0) {
+            if (supportedOutputs.isEmpty()) {
                 generateMethodVariants(exceptionMap, method, false, null, null, isAbstract);
                 if (method.hasOptionalParameters())
                     generateMethodVariants(exceptionMap, method, true, null, null, isAbstract);
@@ -670,7 +738,8 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
 
         // work out the method return type and the type of any input representation
-        JType inputType=null, returnType=null;
+        JType inputType=null;
+        JType returnType;
         boolean wrapInputTypeInJAXBElement = false;
         boolean genericReturnType = false;
         if (isJAXB) {
@@ -705,7 +774,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                     catch (Exception ex)
                     {
                         // Ignore for the moment
-                        ex.printStackTrace();
+                        messageListener.warning("Internal error", ex);
                     }
                     
                     wrapInputTypeInJAXBElement = !isRootElement;
@@ -1053,8 +1122,8 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
         
         // Allow JAX-RS to tag on
-        JInvocation $execute = createProcessInvocation(
-               $methodBody, $resourceBuilder, methodString, inputRep, $returnTypeExpr, $entityExpr);
+        JExpression $execute = createProcessInvocation(
+               method, $methodBody, $resourceBuilder, methodString, inputRep, returnType, $returnTypeExpr, $entityExpr);
         
        
         // Generic variant always need to return the result
@@ -1062,7 +1131,9 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             $methodBody._return(
                     $execute);
         else {
-            $methodBody.add($execute);
+            // This is fine as we already have executed something
+            // need to modify RS-2.0 code to suit
+            // $methodBody.add($execute);
         }
     }
 

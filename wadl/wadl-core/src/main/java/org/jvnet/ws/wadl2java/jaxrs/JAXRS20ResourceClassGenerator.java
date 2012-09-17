@@ -5,6 +5,9 @@
 package org.jvnet.ws.wadl2java.jaxrs;
 
 import com.sun.codemodel.*;
+import javax.ws.rs.WebApplicationException;
+import org.jvnet.ws.wadl.ast.FaultNode;
+import org.jvnet.ws.wadl.ast.MethodNode;
 import org.jvnet.ws.wadl.ast.RepresentationNode;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
@@ -98,7 +101,12 @@ public class JAXRS20ResourceClassGenerator
     protected String resourceFromClientMethod() {
         return "target";
     }
-    
+
+    @Override
+    protected String responseGetEntityMethod() {
+        return "readEntity";
+    }
+
     
     @Override  
     protected JVar createRequestBuilderAndAccept(JBlock $methodBody, JVar $resource, RepresentationNode outputRep) {
@@ -123,30 +131,98 @@ public class JAXRS20ResourceClassGenerator
     
 
     @Override
-    protected JInvocation createProcessInvocation(JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JExpression $returnTypeExpr, JExpression $entityExpr) {
-        JInvocation $build = $resourceBuilder.invoke(buildMethod());
+    protected JExpression createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr) {
+        JInvocation $execute = $resourceBuilder.invoke(buildMethod());
 
-        $build.arg(methodString);
+        
+        // So we need to invoke the service and get a response back
+        // so we can throw any exceptions
+        $execute.arg(methodString);
         
         if ($entityExpr!=null)
         {
             JClass $entity = codeModel.ref("javax.ws.rs.client.Entity");
-            $build.arg(
+            $execute.arg(
               $entity.staticInvoke("entity")
                     .arg($entityExpr)
                     .arg(JExpr.lit(inputRep.getMediaType()))); // TODO replace with proper call
         }
 
-        
-        JInvocation $invoke  = $build.invoke("invoke");
-        
-        if ($returnTypeExpr!=null)
-        {
-            $invoke.arg($returnTypeExpr);
-        }
+        // Get the response object back so we can generate the switch based 
+        // on it
+        JInvocation $invoke  = $execute.invoke("invoke");
+        JVar $response = $methodBody.decl(clientResponseClientType(), "response");
+        $methodBody.assign($response, $invoke);
 
-        return $invoke;
+        // For a given response process any fault nodes
+        generateConditionalForFaultNode(method, $methodBody, $response);
+        
+        // So now we have to get the real answer back from the response
+        //
+        
+        
+        // Right need to get entity from the response
+        if (clientResponseClientType() == returnType) {
+            // In the case when the reponse should be the client response
+            // we can return null because
+            
+            return $response;
+        }
+        else {
+            JInvocation $fetchEntity = $response.invoke("readEntity");
+            if ($returnTypeExpr!=null)
+            {
+                $fetchEntity.arg($returnTypeExpr);
+            }
+        
+            return $fetchEntity;
+        }
    }
     
+
+    
+    
+    /**
+     * Invoked when we need to throw a generic failure exception because
+     * we don't have an element mapped.
+     */
+    protected void generateThrowWebApplicationExceptionFromResponse(JBlock caseBody, JVar $response) {
+        // In RS 2.0 we can pass in the response object as they
+        // are consistent across the API
+        
+        caseBody._throw(
+           JExpr._new(codeModel.ref(WebApplicationException.class))
+                .arg($response));
+    }
+
+
+    
+    /**
+     * Try to create a new exception class that is relevant for the platform
+     * @throws JClassAlreadyExistsException should it already exists
+     */
+    protected JDefinedClass generateExceptionClassInternal(String exName, FaultNode f) throws JClassAlreadyExistsException {
+        JDefinedClass $exCls = pkg._class( JMod.PUBLIC, exName);
+        $exCls._extends(WebApplicationException.class);
+        JType rawType = getTypeFromElement(f.getElement());
+        JType detailType = rawType==null ? codeModel._ref(Object.class) : rawType;
+        JVar $detailField = $exCls.field(JMod.PRIVATE, detailType, "m_faultInfo");
+        // Build a constructor
+        JMethod $ctor = $exCls.constructor(JMod.PUBLIC);
+
+        JVar $response = $ctor.param(clientResponseClientType(), "response");
+        JVar $detail = $ctor.param(detailType, "faultInfo");
+        JBlock $ctorBody = $ctor.body();
+
+        // In RS 2.0 the client API is harmonised so we can reuse this
+        //
+        $ctorBody.directStatement("super(response);");
+        $ctorBody.assign($detailField, $detail);
+        // Add getter for the body payload
+        JMethod $faultInfoGetter = $exCls.method(JMod.PUBLIC, detailType, "getFaultInfo");
+        $faultInfoGetter.body()._return($detailField);
+
+        return $exCls;
+    }
     
 }
