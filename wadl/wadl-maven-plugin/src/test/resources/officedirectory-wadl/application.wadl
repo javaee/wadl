@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:application xmlns:ns0="http://wadl.dev.java.net/2009/02">
+   <ns0:doc xmlns:ns1="http://jersey.java.net/" ns1:generatedBy="Jersey: 1.13 06/29/2012 05:14 PM"/>
+   <ns0:grammars>
+      <ns0:include href="xsd0.xsd">
+         <ns0:doc title="Generated" xml:lang="en"/>
+      </ns0:include>
+   </ns0:grammars>
+   <ns0:resources base="http://localhost:7001/OfficeDirectory/">
+      <ns0:resource path="/">
+         <ns0:resource path="add">
+            <ns0:method id="add" name="POST">
+               <ns0:request>
+                  <ns0:representation mediaType="application/x-www-form-urlencoded">
+                     <ns0:param name="name" style="query" xmlns:ns2="http://www.w3.org/2001/XMLSchema" type="ns2:string"/>
+                     <ns0:param name="title" style="query" xmlns:ns3="http://www.w3.org/2001/XMLSchema" type="ns3:string"/>
+                     <ns0:param name="phone" style="query" xmlns:ns4="http://www.w3.org/2001/XMLSchema" type="ns4:string"/>
+                     <ns0:param name="building" style="query" xmlns:ns5="http://www.w3.org/2001/XMLSchema" type="ns5:string"/>
+                     <ns0:param name="floor" style="query" xmlns:ns6="http://www.w3.org/2001/XMLSchema" type="ns6:string"/>
+                     <ns0:param name="office" style="query" xmlns:ns7="http://www.w3.org/2001/XMLSchema" type="ns7:string"/>
+                  </ns0:representation>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/html"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="addRecord" name="POST">
+               <ns0:request>
+                  <ns0:representation xmlns:ns8="urn:com.office.directory" element="ns8:Record" mediaType="application/xml"/>
+                  <ns0:representation xmlns:ns9="urn:com.office.directory" element="ns9:Record" mediaType="application/json"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/html"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="db/delete/{name}">
+            <ns0:param name="name" style="template" xmlns:ns10="http://www.w3.org/2001/XMLSchema" type="ns10:string"/>
+            <ns0:method id="delete" name="DELETE">
+               <ns0:response>
+                  <ns0:representation xmlns:ns11="urn:com.office.directory" element="ns11:Record" mediaType="application/xml"/>
+                  <ns0:representation xmlns:ns12="urn:com.office.directory" element="ns12:Record" mediaType="application/json"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="lookup/phone">
+            <ns0:method id="lookup" name="GET">
+               <ns0:request>
+                  <ns0:param name="name" style="query" xmlns:ns13="http://www.w3.org/2001/XMLSchema" type="ns13:string"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation xmlns:ns14="urn:com.office.directory" element="ns14:PhoneInfo" mediaType="application/xml"/>
+                  <ns0:representation xmlns:ns15="urn:com.office.directory" element="ns15:PhoneInfo" mediaType="application/json"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="db/update">
+            <ns0:method id="update" name="PUT">
+               <ns0:request>
+                  <ns0:representation xmlns:ns16="urn:com.office.directory" element="ns16:Record" mediaType="application/xml"/>
+                  <ns0:representation xmlns:ns17="urn:com.office.directory" element="ns17:Record" mediaType="application/json"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation xmlns:ns18="urn:com.office.directory" element="ns18:Record" mediaType="application/xml"/>
+                  <ns0:representation xmlns:ns19="urn:com.office.directory" element="ns19:Record" mediaType="application/json"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="db/count">
+            <ns0:method id="getDirectoySize" name="GET">
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="lookup/list">
+            <ns0:method id="getAllRecords" name="GET">
+               <ns0:response>
+                  <ns0:representation xmlns:ns20="urn:com.office.directory" element="ns20:Record" mediaType="application/xml"/>
+                  <ns0:representation xmlns:ns21="urn:com.office.directory" element="ns21:Record" mediaType="application/json"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="lookup/building">
+            <ns0:resource path="people">
+               <ns0:method id="getFloorPlan" name="GET">
+                  <ns0:request>
+                     <ns0:param name="bldg" style="query" xmlns:ns22="http://www.w3.org/2001/XMLSchema" type="ns22:string"/>
+                     <ns0:param name="floor" style="query" xmlns:ns23="http://www.w3.org/2001/XMLSchema" type="ns23:string"/>
+                  </ns0:request>
+                  <ns0:response>
+                     <ns0:representation xmlns:ns24="urn:com.office.directory" element="ns24:OfficeInfo" mediaType="application/xml"/>
+                     <ns0:representation xmlns:ns25="urn:com.office.directory" element="ns25:OfficeInfo" mediaType="application/json"/>
+                  </ns0:response>
+               </ns0:method>
+            </ns0:resource>
+         </ns0:resource>
+      </ns0:resource>
+   </ns0:resources>
+</ns0:application>

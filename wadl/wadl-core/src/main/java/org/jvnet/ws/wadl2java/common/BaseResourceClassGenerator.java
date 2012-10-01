@@ -26,6 +26,7 @@ import java.util.*;
 import javax.ws.rs.core.UriBuilder;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.namespace.QName;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ParamStyle;
@@ -44,7 +45,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
     protected static enum MethodType
     {
-        JAXB, CLASS, GENERIC_TYPE
+        OBJECT_MAPPING, CLASS, GENERIC_TYPE
     };
 
     private ResourceNode resource;
@@ -605,10 +606,31 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                         generateMethodVariants(exceptionMap, method, true, inputType, null, isAbstract);
                     
                 } else {
-                    for (RepresentationNode returnType: supportedOutputs) {
-                        generateMethodVariants(exceptionMap, method, false, inputType, returnType, isAbstract);
+
+                    // If there is a matcing output just generate that
+                    //
+                    
+                    RepresentationNode matchingReturn = null;
+                    findMatching: for (RepresentationNode returnType: supportedOutputs) {
+                        if (inputType.getMediaType().equals(returnType.getMediaType())) {
+                            matchingReturn = returnType;
+                            break findMatching;
+                        }
+                    }
+                    
+                    // Only generate one method if we have one matching return type
+                    //
+                    
+                    if (matchingReturn!=null) {
+                        generateMethodVariants(exceptionMap, method, false, inputType, matchingReturn, isAbstract);
                         if (method.hasOptionalParameters())
-                            generateMethodVariants(exceptionMap, method, true, inputType, returnType, isAbstract);
+                            generateMethodVariants(exceptionMap, method, true, inputType, matchingReturn, isAbstract);
+                    } else {
+                        for (RepresentationNode returnType: supportedOutputs) {
+                            generateMethodVariants(exceptionMap, method, false, inputType, returnType, isAbstract);
+                            if (method.hasOptionalParameters())
+                                generateMethodVariants(exceptionMap, method, true, inputType, returnType, isAbstract);
+                        }
                     }
                 }
             }
@@ -637,7 +659,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * <code>method</code>,
      * input <code>representation</code> and output <code>representation</code>
      * elements. Always generates one method that works with DataSources and
-     * generates an additional method that uses JAXB when XML representations are used
+     * generates an additional method that uses OBJECT_MAPPING when XML representations are used
      * and the document element is specified.
      * 
      * @param isAbstract controls whether the generated methods will have a body {@code false}
@@ -653,7 +675,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     protected void generateMethodVariants(Map<JType, JDefinedClass> exceptionMap,
             MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
             RepresentationNode outputRep, boolean isAbstract) {
-        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.JAXB, isAbstract);
+        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.OBJECT_MAPPING, isAbstract);
         generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.GENERIC_TYPE, isAbstract);
         generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.CLASS, isAbstract);
     }
@@ -671,6 +693,17 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             JType returnType) {
         StringBuilder buf = new StringBuilder();
         buf.append(method.getName().toLowerCase());
+
+        // If the input and output media types are the same, then generate
+        // slightly shorter method names
+        boolean outputMediaSameAsInput = false;
+        if (inputRep!=null && inputRep.getMediaType()!=null
+                && outputRep!=null && inputRep.getMediaType().equals(outputRep.getMediaType())) {
+            outputMediaSameAsInput = true;
+        }
+        
+        //
+        
         if (inputRep != null) {
             if (inputRep.getId() != null) {
                 buf.append(inputRep.getId().substring(0,1).toUpperCase());
@@ -681,23 +714,27 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
         if (returnType != null) {
             
+            
             if (returnType == clientResponseClientType()) {
                 // Don't both appending anything
             }
             // If we have mutliple supported content types, then we need to
             // differential by content type
             else if (method.getSupportedOutputs().size() > 1 && outputRep!=null) {
-                buf.append(returnType.name());
                 buf.append("As");
-                buf.append(outputRep.getMediaTypeAsClassName());
+                buf.append(returnType.name());
+                if (!outputMediaSameAsInput) {
+                    buf.append(outputRep.getMediaTypeAsClassName());
+                }
             }
-            else {
+            else  {
                 buf.append("As");
                 buf.append(returnType.name());
             }
             
             
-        } else if (outputRep != null) {
+        // This will fire in the case where there is no input type
+        } else if (outputRep != null && !outputMediaSameAsInput) {
             buf.append("As");
             buf.append(outputRep.getMediaTypeAsClassName());
         }
@@ -730,9 +767,9 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             MethodType methodType,
             boolean isAbstract) {
         
-        boolean isJAXB = methodType == MethodType.JAXB;
-        // check if JAXB can be used with available information
-        if (isJAXB) {
+        boolean isObjectMapping = methodType == MethodType.OBJECT_MAPPING;
+        // check if OBJECT_MAPPING can be used with available information
+        if (isObjectMapping) {
             if ((outputRep != null && outputRep.getElement() == null) || (inputRep != null && inputRep.getElement() == null))
                 return;
         }
@@ -742,13 +779,14 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         JType returnType;
         boolean wrapInputTypeInJAXBElement = false;
         boolean genericReturnType = false;
-        if (isJAXB) {
+        if (isObjectMapping) {
             if (inputRep != null) {
                 inputType = getTypeFromElement(inputRep.getElement());
                 
                 if (inputType instanceof JDefinedClass) {
 
                     boolean isRootElement = false;
+                    boolean isXmlType = false;
 
                     // The version of code model that comes with JAX-B
                     // doesn't include accessor methods, to get around this
@@ -767,7 +805,11 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                             if (annotationClass.fullName().equals(XmlRootElement.class.getName()))
                             {
                                 isRootElement = true;
-                                break found;
+                            }
+
+                            if (annotationClass.fullName().equals(XmlType.class.getName()))
+                            {
+                                isXmlType = true;
                             }
                         }
                     }
@@ -777,7 +819,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                         messageListener.warning("Internal error", ex);
                     }
                     
-                    wrapInputTypeInJAXBElement = !isRootElement;
+                    wrapInputTypeInJAXBElement = !isRootElement && isXmlType;
                 }
                 
                 if (inputType == null)
@@ -818,7 +860,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
         
         // generate a name for the method 
-        String methodName = getMethodName(method, inputRep, outputRep, isJAXB ? returnType : null);
+        String methodName = getMethodName(method, inputRep, outputRep, isObjectMapping ? returnType : null);
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);
@@ -1009,7 +1051,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             
             // Now deal with the method body
             
-            generateBody(method,isJAXB, exceptionMap, outputRep, 
+            generateBody(method,isObjectMapping, exceptionMap, outputRep, 
                     $genericMethodParameter, wrapInputTypeInJAXBElement, inputType, returnType, $resourceBuilder, inputRep, $methodBody);
         }
     }
@@ -1036,7 +1078,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * Generate a method body that uses a JAXBDispatcher, used when the payloads are XML.
      *
      * @param method the method to generate a body for.
-     * @param isJAXB, whether we are generating a generic of JAXB version.
+     * @param isJAXB, whether we are generating a generic of OBJECT_MAPPING version.
      * @param exceptionMap the generated exceptions that the method can raise.
      * @param outputRep the output representation.
      * @param $genericMethodParameter TODO.

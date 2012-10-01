@@ -11,10 +11,7 @@
  */
 package org.jvnet.ws.wadl.ast;
  
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -552,7 +549,8 @@ public class WadlAstBuilder {
                     continue;
                 processedDocs.add(incl.toString());
                 messageListener.info(AstMessages.PROCESSING(incl.toString()));
-                InputSource input = new InputSource(incl.toURL().openStream());
+                InputSource input = new InputSource(
+                        new BufferedInputStream(incl.toURL().openStream()));
                 input.setSystemId(incl.toString());
                 schemaCallback.processSchema(input);
             }

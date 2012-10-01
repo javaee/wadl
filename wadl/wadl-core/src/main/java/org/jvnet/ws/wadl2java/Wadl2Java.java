@@ -19,6 +19,7 @@
 
 package org.jvnet.ws.wadl2java;
 
+//import com.googlecode.jsonschema2pojo.SchemaMapper;
 import com.sun.codemodel.*;
 import com.sun.tools.xjc.BadCommandLineException;
 import com.sun.tools.xjc.Options;
@@ -27,11 +28,11 @@ import com.sun.tools.xjc.api.impl.s2j.SchemaCompilerImpl;
 import com.sun.tools.xjc.model.Model;
 import com.sun.xml.xsom.XSElementDecl;
 import com.sun.xml.xsom.XSType;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.nio.CharBuffer;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -224,6 +225,7 @@ public class Wadl2Java {
 
     private Parameters parameters;
     private JPackage jPkg;
+    private Map<QName, JType> jsonTypes = new HashMap<QName, JType>();
     private S2JJAXBModel s2jModel;
     private ElementToClassResolver resolver = new ElementToClassResolver()
     {
@@ -280,10 +282,11 @@ public class Wadl2Java {
                 }
             }
 
-            // Even then we might fail on this
+            // Even then we might fail on this, but finally check the json
+            // types
             //
 
-            return null;
+            return jsonTypes.get(element);
         }
     };
 
@@ -329,6 +332,10 @@ public class Wadl2Java {
     public void process(URI rootDesc) throws JAXBException, IOException,
             JClassAlreadyExistsException, InvalidWADLException {
 
+        // Store a list of JSON schemas
+        
+        final List<String> jsonSchemas = new ArrayList<String>();
+        
         // read in root WADL file
         s2j = new SchemaCompilerImpl();
 
@@ -341,7 +348,44 @@ public class Wadl2Java {
                 new WadlAstBuilder.SchemaCallback() {
 
                     public void processSchema(InputSource input) {
-                        s2j.parseSchema(input);
+                        
+                        // Assume that the stream is a buffered stream at this point
+                        // and mark a position
+                        InputStream is = input.getByteStream();
+                        is.mark(8192);
+                        
+                        // Read the first bytes and look for the xml header
+                        //
+                        String peakContent = null;
+                        
+                        try {
+                            Reader r = new InputStreamReader(is, "UTF-8");
+                            
+                            CharBuffer cb = CharBuffer.allocate(20);
+                            r.read(cb);
+                            cb.flip();
+                            peakContent = cb.toString();
+                        }
+                        catch (IOException e) {
+                            throw new RuntimeException("Internal problem pushing back buffer", e);
+                        } finally {
+                            try {
+                                is.reset();
+                            } catch (IOException ex) {
+                                throw new RuntimeException("Internal problem pushing back buffer", ex);
+                            }
+                            
+                        }
+                            
+                        // By default assume a xml schema
+                        if (peakContent==null || peakContent.contains("<?xml")) {
+                            s2j.parseSchema(input);
+                        // Otherwise assume 
+                        } else if (peakContent.contains("{")) {
+                            // We are guessing this is a json type
+                            jsonSchemas.add(input.getSystemId());
+                        }
+
                     }
 
                     public void processSchema(String uri, Element node) {
@@ -394,6 +438,32 @@ public class Wadl2Java {
                 buf.append(genPkg.name());
             }
             generatedPackages = buf.toString();
+            
+            // Generate the json classes
+            //
+            
+            // Commented out until we work out what to about JSON Schema
+            //
+//            SchemaMapper sm = new SchemaMapper();
+//            for (String jsonSchema : jsonSchemas)
+//            {
+//                URL schemaURL = new URL(jsonSchema);
+//                String name = jsonSchema.substring(jsonSchema.lastIndexOf('/')+1);
+//                String className = Character.toUpperCase(name.charAt(0))
+//                        + ((name.length() > 1 ? name.substring(1) : ""));
+//                
+//                sm.generate(codeModel, 
+//                        className, parameters.pkg, schemaURL);
+//                
+//                // Store this as we would any other json type
+//                jsonTypes.put(
+//                        new QName("http://wadl.dev.java.net/2009/02/json",name), 
+//                        codeModel._getClass(parameters.pkg + "." + className));
+//            }
+            
+            
+            // Generate the resource interface
+            //
             jPkg = codeModel._package(parameters.pkg);
 
             

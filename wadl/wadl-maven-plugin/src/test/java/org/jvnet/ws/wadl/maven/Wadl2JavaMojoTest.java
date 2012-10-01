@@ -13,6 +13,9 @@
 package org.jvnet.ws.wadl.maven;
 
 import com.sun.jersey.api.client.*;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.core.header.InBoundHeaders;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -43,6 +46,9 @@ public class Wadl2JavaMojoTest extends AbstractWadl2JavaMojoTest<Client> {
     @Override
     protected Client createClient()
     {
+        ClientConfig config = new DefaultClientConfig();
+        config.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        
         return new Client(new TerminatingClientHandler()
         {
             public ClientResponse handle(final ClientRequest cr) throws ClientHandlerException {
@@ -95,7 +101,7 @@ public class Wadl2JavaMojoTest extends AbstractWadl2JavaMojoTest<Client> {
                 }
                 return resp; 
             }
-        });        
+        }, config);        
     }            
 
     

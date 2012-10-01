@@ -84,8 +84,20 @@ public class GeneratorUtil {
      * @return a string suitable for use as a Java class name.
      */
     public static String makeClassName(String input) {
-        if (input==null || input.length()==0)
+        if (input==null || input.length()==0) 
+        {
             return("Index");
+        }
+        
+        // In the really simple case where the relative path is /
+        // then we probably want something that maps to the root
+        // not sure if this should be translated or not, previous
+        // example is not
+        if (input.equals("/")) {
+            return "Root";
+        }
+        
+        
         StringBuffer buf = new StringBuffer();
         for(String segment: input.split("[^a-zA-Z0-9_]")) {
             if (segment.length()<1)

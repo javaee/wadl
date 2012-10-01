@@ -306,14 +306,14 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
 
         // Check that we have two methods of the right name and parameters
         assertNotNull($NewsSearch.getDeclaredMethod("getAsResultSet", String.class, String.class));
-        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class, Class.class));
-        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class, getGenericTypeClass()));
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsXml", String.class, String.class, Class.class));
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsXml", String.class, String.class, getGenericTypeClass()));
 
         assertNotNull($NewsSearch.getDeclaredMethod("getAsResultSet", String.class, String.class,
                 $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class));
-        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class,
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsXml", String.class, String.class,
                 $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, Class.class));
-        assertNotNull($NewsSearch.getDeclaredMethod("getAsApplicationXml", String.class, String.class,
+        assertNotNull($NewsSearch.getDeclaredMethod("getAsXml", String.class, String.class,
                 $Type, Integer.class, Integer.class, $Sort, String.class, $Output, String.class, getGenericTypeClass()));
 
 
@@ -381,7 +381,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         Object newsService = staticMethod("newsSearch").withParameterTypes(getClientClass())
                 .in($ProxyRoot).invoke(_client);
         
-        String result = method("getAsApplicationXml").withReturnType(String.class).withParameterTypes(
+        String result = method("getAsXml").withReturnType(String.class).withParameterTypes(
                 String.class, String.class, Class.class).in(newsService)
                 .invoke("One", "Two", String.class);
         
@@ -539,13 +539,13 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         assertNotNull($Helloworld.getConstructor(getClientClass(), URI.class));
 
         // Check that we have two methods of the right name and parameters
-        assertNotNull($Helloworld.getDeclaredMethod("getSomeClassAsApplicationXml"));
-        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", Class.class));
-        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", getGenericTypeClass()));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsSomeClassXml"));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsXml", Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsXml", getGenericTypeClass()));
 
-        assertNotNull($Helloworld.getDeclaredMethod("getSomeClassAsApplicationJson"));
-        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationJson", Class.class));
-        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationJson", getGenericTypeClass()));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsSomeClassJson"));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsJson", Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsJson", getGenericTypeClass()));
 
         // Check that we can handle multiple content types
         
@@ -558,7 +558,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         _cannedResponse.add(new CannedResponse(
                 200, "application/xml", "<someClass><integer>42</integer><string>hello</string></someClass>"));
         
-        Object result = method("getSomeClassAsApplicationXml").withParameterTypes().in(helloWorld)
+        Object result = method("getAsSomeClassXml").withParameterTypes().in(helloWorld)
                 .invoke();
         
         assertThat("hello", equalTo(method("getString").withReturnType(String.class).in(result).invoke()));
@@ -569,7 +569,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         _cannedResponse.add(new CannedResponse(
                 200, "application/json", "{ \"integer\" : \"42\", \"string\" : \"hello\" } "));
         
-        result = method("getSomeClassAsApplicationJson").withParameterTypes().in(helloWorld)
+        result = method("getAsSomeClassJson").withParameterTypes().in(helloWorld)
                 .invoke();
         
         assertThat("hello", equalTo(method("getString").withReturnType(String.class).in(result).invoke()));
@@ -577,6 +577,106 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
     
     }
     
+    
+
+// Commented out until we work out the right thign to do with JSON schema  
+//    /**
+//     * Tests the case in which a method has multiple representations but this
+//     * time using json-schema rather than xml schema for the json types
+//     */
+//    public void testValidMutlipleContentJsonSchemaTypes() throws Exception {
+//        // Prepare
+//        Wadl2JavaMojo mojo = getMojo("multiple-contenttypes-jsonschema-wadl.xml");
+//        File targetDirectory = (File) getVariableValueFromObject(mojo,
+//                "targetDirectory");
+//        if (targetDirectory.exists()) {
+//            FileUtils.deleteDirectory(targetDirectory);
+//        }
+//        setVariableValueToObject(mojo, "project", _project);
+//
+//        // Record
+//        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+//
+//        // Replay
+//        EasyMock.replay(_project);
+//        mojo.execute();
+//
+//        // Verify
+//        EasyMock.verify(_project);
+//        assertThat(targetDirectory, exists());
+//
+//        // Verify the files are in place
+//
+//        // Verify
+//        EasyMock.verify(_project);
+//        assertThat(targetDirectory, exists());
+//        assertThat(targetDirectory, contains("test"));
+//        assertThat(targetDirectory, contains("test/Localhost.java"));
+//
+//        // Check that the generated code compiles
+//        ClassLoader cl = compile(targetDirectory);
+//
+//
+//
+//        // Check that we have the expected number of methods
+//        Class $Root = cl.loadClass("test.Localhost$Root");
+//        assertNotNull($Root);
+//
+//        // Constructors
+//        assertNotNull($Root.getConstructor(getClientClass(), URI.class));
+//
+//        // We should only have six methods, removing duplicates
+//        assertEquals(6, $Root.getDeclaredMethods().length);
+//        
+//        //
+//        Class $JsonRequestMessage = cl.loadClass("test.RequestMessage");
+//        Class $XmlRequestMessage = cl.loadClass("message.RequestMessage");
+//        
+//        // Check that we have two methods of the right name and parameters
+//        assertNotNull($Root.getDeclaredMethod("putJsonAsResponseMessage", $JsonRequestMessage));
+//        assertNotNull($Root.getDeclaredMethod("putJson", Object.class, Class.class));
+//        assertNotNull($Root.getDeclaredMethod("putJson", Object.class, getGenericTypeClass()));
+//
+//        assertNotNull($Root.getDeclaredMethod("putXmlAsResponseMessage", $XmlRequestMessage));
+//        assertNotNull($Root.getDeclaredMethod("putXml", Object.class, Class.class));
+//        assertNotNull($Root.getDeclaredMethod("putXml", Object.class, getGenericTypeClass()));
+//
+//        // Check that we can handle multiple content types
+//        
+//        Class root = type("test.Localhost").withClassLoader(cl).load();
+//        Object rootClient = staticMethod("root").withParameterTypes(getClientClass())
+//                .in(root).invoke(_client);
+//        
+//        // Get some XML
+//        
+//        _cannedResponse.add(new CannedResponse(
+//                200, "application/xml", "<ns:responseMessage xmlns:ns=\"urn:message\"><text>hello</text></ns:responseMessage>"));
+//        
+//        Object xmlRequestMessage = constructor().in($XmlRequestMessage).newInstance();
+//        method("setText").withParameterTypes(String.class).in(xmlRequestMessage).invoke("Hello");
+//        
+//        Object result = method("putXmlAsResponseMessageXml").withParameterTypes(
+//                $XmlRequestMessage).in(rootClient)
+//                .invoke(xmlRequestMessage);
+//        
+//        assertThat("hello", equalTo(method("getText").withReturnType(String.class).in(result).invoke()));
+//
+//        // Get some JSON
+//        
+//        _cannedResponse.add(new CannedResponse(
+//                200, "application/json", "{  \"text\" : \"hello\" } "));
+//
+//        Object jsonRequestMessage = constructor().in($JsonRequestMessage).newInstance();
+//        method("setText").withParameterTypes(String.class).in(jsonRequestMessage).invoke("Hello");
+//        
+//        
+//        result = method("putJsonAsResponseMessageJson").withParameterTypes($JsonRequestMessage).in(rootClient)
+//                .invoke(jsonRequestMessage);
+//        
+//        assertThat("hello", equalTo(method("getText").withReturnType(String.class).in(result).invoke()));
+//    
+//    }
+//    
     
     
 
@@ -648,6 +748,27 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         // Just check that the base class works
         Class $ProxyRoot = cl.loadClass("test." + className);
         Class $ProxyInnerClass = cl.loadClass("test." + className + "$" + innerClassName);
+        Class $BeanClass = cl.loadClass("com.example.beans.Bean");
+        
+        
+        // Check we have the right mesage format
+        
+        assertEquals(11, $ProxyInnerClass.getDeclaredMethods().length);
+        
+        $ProxyInnerClass.getDeclaredMethod("getAsBean");
+        $ProxyInnerClass.getDeclaredMethod("getAsXml", Class.class);
+        $ProxyInnerClass.getDeclaredMethod("getAsXml", getGenericTypeClass());
+        
+        $ProxyInnerClass.getDeclaredMethod("putXmlAsBean",$BeanClass);
+        $ProxyInnerClass.getDeclaredMethod("putXml", Object.class, Class.class);
+        $ProxyInnerClass.getDeclaredMethod("putXml", Object.class, getGenericTypeClass());
+        
+        $ProxyInnerClass.getDeclaredMethod("postXmlAsBean",$BeanClass);
+        $ProxyInnerClass.getDeclaredMethod("postXml", Object.class, Class.class);
+        $ProxyInnerClass.getDeclaredMethod("postXml", Object.class, getGenericTypeClass());
+
+        $ProxyInnerClass.getDeclaredMethod("deleteAsXml", Class.class);
+        $ProxyInnerClass.getDeclaredMethod("deleteAsXml", getGenericTypeClass());
         
         // Load the source for the Proxy and check we generated the correct new JAXBElement lines
         String contents ="";
@@ -693,7 +814,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
                 200, "application/xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns2:bean xmlns:ns2=\"http://example.com/beans\"><message>Hello Bob</message></ns2:bean>"));
         
         Object returnObj = 
-                method("putApplicationXmlAsBean").withReturnType(beanObjClass)
+                method("putXmlAsBean").withReturnType(beanObjClass)
                 .withParameterTypes(beanObjClass)
                 .in(bean).invoke(beanObj);
         
@@ -780,8 +901,8 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
 
         // Check that we have two methods of the right name and parameters
         assertNotNull($PathParam2.getDeclaredMethod("getAsSimpleReturn"));
-        assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", Class.class));
-        assertNotNull($PathParam2.getDeclaredMethod("getAsApplicationXml", getGenericTypeClass()));
+        assertNotNull($PathParam2.getDeclaredMethod("getAsXml", Class.class));
+        assertNotNull($PathParam2.getDeclaredMethod("getAsXml", getGenericTypeClass()));
         
         
         // Check that the service is invoked
@@ -808,7 +929,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         // Now send the request, we really don't care abou the response
         //
         
-        String simpleReturn = method("getAsApplicationXml").withReturnType(String.class).withParameterTypes(Class.class).in(param2)
+        String simpleReturn = method("getAsXml").withReturnType(String.class).withParameterTypes(Class.class).in(param2)
                 .invoke(String.class);
         
         // Check that the the URL is correct
@@ -873,7 +994,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         
         Class $simpleInput = cl.loadClass("example.SimpleInput");
 
-        Method $putResponse = $PathParam1.getDeclaredMethod("putApplicationXml", $simpleInput);
+        Method $putResponse = $PathParam1.getDeclaredMethod("putXml", $simpleInput);
         assertNotNull($putResponse);
         assertEquals(getResponseClass(), $putResponse.getReturnType());
         
@@ -902,7 +1023,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         Class simpleType = type("example.SimpleInput").withClassLoader(cl).load();
         Object simpleObj = constructor().in(simpleType).newInstance();
         
-        Object cr = method("putApplicationXml").withReturnType(getResponseClass()).withParameterTypes(simpleType)
+        Object cr = method("putXml").withReturnType(getResponseClass()).withParameterTypes(simpleType)
                 .in(path).invoke(simpleObj);
                 
         // This will most likley be true if we reach this line, otherwise the
@@ -1073,11 +1194,11 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         assertNotNull($Helloworld.getConstructor(getClientClass(), URI.class));
 
         // Check that we have two methods of the right name and parameters
-        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", Class.class));
-        assertNotNull($Helloworld.getDeclaredMethod("getAsApplicationXml", getGenericTypeClass()));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsXml", Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("getAsXml", getGenericTypeClass()));
 
-        assertNotNull($Helloworld.getDeclaredMethod("putApplicationXml", Object.class, Class.class));
-        assertNotNull($Helloworld.getDeclaredMethod("putApplicationXml", Object.class, getGenericTypeClass()));
+        assertNotNull($Helloworld.getDeclaredMethod("putXml", Object.class, Class.class));
+        assertNotNull($Helloworld.getDeclaredMethod("putXml", Object.class, getGenericTypeClass()));
 
         // Verify that in both cases the method is actually invoked, in
         // liu of functional tests for the moment
@@ -1211,4 +1332,46 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
             assertThat("42", equalTo(message));
         }
     }
+    
+    
+    
+    /**
+     * In this case there is a resource path of / which would result in
+     * an empty string after converting to a classname, instead this now
+     * get converted to "Root".
+     */
+    public void testValidWadlOfficeDirectory() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("officedirectory-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Verify the files are in place
+
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Localhost_OfficeDirectory.java"));
+        
+        // Verify that the / path has been mapped to the name root
+        
+        Class $Root = cl.loadClass("test.Localhost_OfficeDirectory$Root");
+        
+    }    
 }

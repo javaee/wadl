@@ -54,7 +54,11 @@ public class RepresentationNode extends AbstractNode {
      * @return a suitable name.
      */
     public String getMediaTypeAsClassName() {
-        return GeneratorUtil.makeClassName(getMediaType());
+        String mediaType = getMediaType();
+        if (mediaType.startsWith("application/")) {
+            mediaType = mediaType.substring("application/".length());
+        }
+        return GeneratorUtil.makeClassName(mediaType);
     }
     
     /**
