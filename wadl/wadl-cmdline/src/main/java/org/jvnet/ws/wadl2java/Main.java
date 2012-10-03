@@ -38,7 +38,7 @@ import com.sun.codemodel.writer.FileCodeWriter;
  *
  * <p>Usage:</p>
  *
- * <pre>java ws.wadl2java.Main -p package -o directory file.wadl</pre>
+ * <pre>java ws.wadl2java.Main -p package -o directory -s jaxrs20 file.wadl</pre>
  *
  * <p>where:</p>
  * 
@@ -50,10 +50,10 @@ import com.sun.codemodel.writer.FileCodeWriter;
  * is <code>com.example.test</code> and the directory is <code>gen-src</code> then
  * files will be written to <code>./gen-src/com/example/test</code>. The directory
  * <code>dir</code> must exist, subdirectories will be created as required.</dd>
- * <dt><code>file.wadl</code></dt>
- * <dd>The WADL file to process.</dd>
  * <dt><code>-s jaxrs20</code></dt>
  * <dd>Specifies the generation style for the code, defaults to jersey1x</dd>
+ * <dt><code>file.wadl</code></dt>
+ * <dd>The WADL file to process.</dd>
  * </dl>
  * @author mh124079
  */
