@@ -39,6 +39,10 @@ public class Wadl2JavaMojoJAXRS20Test
         cc.register(new MoxyJsonFeature());
         cc.connector(new Connector() 
         {
+            public String getName() {
+                return "TestConnector";
+            }
+            
             public ClientResponse apply(final ClientRequest cr) throws ClientException {
 
                 // Store the request

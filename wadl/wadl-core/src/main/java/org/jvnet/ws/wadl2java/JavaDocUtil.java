@@ -43,6 +43,8 @@ import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JEnumConstant;
 import com.sun.codemodel.JMethod;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
 
 /**
  * Utility class containing methods for generating JavaDoc from XML documentation
@@ -124,8 +126,10 @@ public class JavaDocUtil {
         
         StringWriter sw = new StringWriter();
         try {
-            TransformerFactory.newInstance().newTransformer()
-                    .transform(new DOMSource(e), new StreamResult(sw));
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer
+                    .transform(new DOMSource(normalizedDoc), new StreamResult(sw));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
