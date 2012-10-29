@@ -580,103 +580,104 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
     
 
 // Commented out until we work out the right thign to do with JSON schema  
-//    /**
-//     * Tests the case in which a method has multiple representations but this
-//     * time using json-schema rather than xml schema for the json types
-//     */
-//    public void testValidMutlipleContentJsonSchemaTypes() throws Exception {
-//        // Prepare
-//        Wadl2JavaMojo mojo = getMojo("multiple-contenttypes-jsonschema-wadl.xml");
-//        File targetDirectory = (File) getVariableValueFromObject(mojo,
-//                "targetDirectory");
-//        if (targetDirectory.exists()) {
-//            FileUtils.deleteDirectory(targetDirectory);
-//        }
-//        setVariableValueToObject(mojo, "project", _project);
-//
-//        // Record
-//        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
-//
-//        // Replay
-//        EasyMock.replay(_project);
-//        mojo.execute();
-//
-//        // Verify
-//        EasyMock.verify(_project);
-//        assertThat(targetDirectory, exists());
-//
-//        // Verify the files are in place
-//
-//        // Verify
-//        EasyMock.verify(_project);
-//        assertThat(targetDirectory, exists());
-//        assertThat(targetDirectory, contains("test"));
-//        assertThat(targetDirectory, contains("test/Localhost.java"));
-//
-//        // Check that the generated code compiles
-//        ClassLoader cl = compile(targetDirectory);
-//
-//
-//
-//        // Check that we have the expected number of methods
-//        Class $Root = cl.loadClass("test.Localhost$Root");
-//        assertNotNull($Root);
-//
-//        // Constructors
-//        assertNotNull($Root.getConstructor(getClientClass(), URI.class));
-//
-//        // We should only have six methods, removing duplicates
-//        assertEquals(6, $Root.getDeclaredMethods().length);
-//        
-//        //
-//        Class $JsonRequestMessage = cl.loadClass("test.RequestMessage");
-//        Class $XmlRequestMessage = cl.loadClass("message.RequestMessage");
-//        
-//        // Check that we have two methods of the right name and parameters
-//        assertNotNull($Root.getDeclaredMethod("putJsonAsResponseMessage", $JsonRequestMessage));
-//        assertNotNull($Root.getDeclaredMethod("putJson", Object.class, Class.class));
-//        assertNotNull($Root.getDeclaredMethod("putJson", Object.class, getGenericTypeClass()));
-//
-//        assertNotNull($Root.getDeclaredMethod("putXmlAsResponseMessage", $XmlRequestMessage));
-//        assertNotNull($Root.getDeclaredMethod("putXml", Object.class, Class.class));
-//        assertNotNull($Root.getDeclaredMethod("putXml", Object.class, getGenericTypeClass()));
-//
-//        // Check that we can handle multiple content types
-//        
-//        Class root = type("test.Localhost").withClassLoader(cl).load();
-//        Object rootClient = staticMethod("root").withParameterTypes(getClientClass())
-//                .in(root).invoke(_client);
-//        
-//        // Get some XML
-//        
-//        _cannedResponse.add(new CannedResponse(
-//                200, "application/xml", "<ns:responseMessage xmlns:ns=\"urn:message\"><text>hello</text></ns:responseMessage>"));
-//        
-//        Object xmlRequestMessage = constructor().in($XmlRequestMessage).newInstance();
-//        method("setText").withParameterTypes(String.class).in(xmlRequestMessage).invoke("Hello");
-//        
-//        Object result = method("putXmlAsResponseMessageXml").withParameterTypes(
-//                $XmlRequestMessage).in(rootClient)
-//                .invoke(xmlRequestMessage);
-//        
-//        assertThat("hello", equalTo(method("getText").withReturnType(String.class).in(result).invoke()));
-//
-//        // Get some JSON
-//        
-//        _cannedResponse.add(new CannedResponse(
-//                200, "application/json", "{  \"text\" : \"hello\" } "));
-//
-//        Object jsonRequestMessage = constructor().in($JsonRequestMessage).newInstance();
-//        method("setText").withParameterTypes(String.class).in(jsonRequestMessage).invoke("Hello");
-//        
-//        
-//        result = method("putJsonAsResponseMessageJson").withParameterTypes($JsonRequestMessage).in(rootClient)
-//                .invoke(jsonRequestMessage);
-//        
-//        assertThat("hello", equalTo(method("getText").withReturnType(String.class).in(result).invoke()));
-//    
-//    }
-//    
+    /**
+     * Tests the case in which a method has multiple representations but this
+     * time using json-schema rather than xml schema for the json types
+     */
+    public void testValidMutlipleContentJsonSchemaTypes() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("multiple-contenttypes-jsonschema-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+
+        // Verify the files are in place
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Localhost.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+
+
+        // Check that we have the expected number of methods
+        Class $Root = cl.loadClass("test.Localhost$Root");
+        assertNotNull($Root);
+
+        // Constructors
+        assertNotNull($Root.getConstructor(getClientClass(), URI.class));
+
+        // We should only have six methods, removing duplicates
+        assertEquals(7, $Root.getDeclaredMethods().length);
+        
+        //
+        Class $JsonRequestMessage = cl.loadClass("test.RequestMessage");
+        Class $XmlRequestMessage = cl.loadClass("message.RequestMessage");
+        
+        // Check that we have two methods of the right name and parameters
+        assertNotNull($Root.getDeclaredMethod("putJsonAsResponseMessage", $XmlRequestMessage));
+        assertNotNull($Root.getDeclaredMethod("putJsonAsResponseMessage", $JsonRequestMessage));
+        assertNotNull($Root.getDeclaredMethod("putJson", Object.class, Class.class));
+        assertNotNull($Root.getDeclaredMethod("putJson", Object.class, getGenericTypeClass()));
+
+        assertNotNull($Root.getDeclaredMethod("putXmlAsResponseMessage", $XmlRequestMessage));
+        assertNotNull($Root.getDeclaredMethod("putXml", Object.class, Class.class));
+        assertNotNull($Root.getDeclaredMethod("putXml", Object.class, getGenericTypeClass()));
+
+        // Check that we can handle multiple content types
+        
+        Class root = type("test.Localhost").withClassLoader(cl).load();
+        Object rootClient = staticMethod("root").withParameterTypes(getClientClass())
+                .in(root).invoke(_client);
+        
+        // Get some XML
+        
+        _cannedResponse.add(new CannedResponse(
+                200, "application/xml", "<ns:responseMessage xmlns:ns=\"urn:message\"><text>hello</text></ns:responseMessage>"));
+        
+        Object xmlRequestMessage = constructor().in($XmlRequestMessage).newInstance();
+        method("setText").withParameterTypes(String.class).in(xmlRequestMessage).invoke("Hello");
+        
+        Object result = method("putXmlAsResponseMessage").withParameterTypes(
+                $XmlRequestMessage).in(rootClient)
+                .invoke(xmlRequestMessage);
+        
+        assertThat("hello", equalTo(method("getText").withReturnType(String.class).in(result).invoke()));
+
+        // Get some JSON
+        
+        _cannedResponse.add(new CannedResponse(
+                200, "application/json", "{  \"text\" : \"hello\" } "));
+
+        Object jsonRequestMessage = constructor().in($JsonRequestMessage).newInstance();
+        method("setText").withParameterTypes(String.class).in(jsonRequestMessage).invoke("Hello");
+        
+        
+        result = method("putJsonAsResponseMessage").withParameterTypes($JsonRequestMessage).in(rootClient)
+                .invoke(jsonRequestMessage);
+        
+        assertThat("hello", equalTo(method("getText").withReturnType(String.class).in(result).invoke()));
+    
+    }
+    
     
     
 

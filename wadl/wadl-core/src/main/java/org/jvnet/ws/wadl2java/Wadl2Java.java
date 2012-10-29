@@ -19,7 +19,7 @@
 
 package org.jvnet.ws.wadl2java;
 
-//import com.googlecode.jsonschema2pojo.SchemaMapper;
+import com.googlecode.jsonschema2pojo.SchemaMapper;
 import com.sun.codemodel.*;
 import com.sun.tools.xjc.BadCommandLineException;
 import com.sun.tools.xjc.Options;
@@ -32,6 +32,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.net.URL;
 import java.nio.CharBuffer;
 import java.util.*;
 import java.util.logging.Level;
@@ -43,12 +44,14 @@ import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ast.*;
+import org.jvnet.ws.wadl.ast.AbstractNode.NodeVisitor;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.jvnet.ws.wadl2java.jaxrs.JAXRS20ResourceClassGenerator;
 import org.jvnet.ws.wadl2java.jersey.Jersey1xResourceClassGenerator;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
+import sun.misc.BASE64Decoder;
 
 
 /**
@@ -69,6 +72,9 @@ public class Wadl2Java {
             add(STYLE_JAXRS20);
         }
     };
+    
+    public static final QName JSON_SCHEMA_DESCRIBEDBY
+            = new QName("http://wadl.dev.java.net/2009/02/json-schema","describedby");
     
     /**
      * A parameter object to make it easier to extend this class without
@@ -225,8 +231,9 @@ public class Wadl2Java {
 
     private Parameters parameters;
     private JPackage jPkg;
-    private Map<QName, JType> jsonTypes = new HashMap<QName, JType>();
+    private Map<URI, JType> jsonTypes = new HashMap<URI, JType>();
     private S2JJAXBModel s2jModel;
+    private URI currentBaseUri;
     private ElementToClassResolver resolver = new ElementToClassResolver()
     {
         private Model _model;
@@ -251,42 +258,60 @@ public class Wadl2Java {
             return _model;
         }
 
-        public JType resolve(QName element) {
+        public JType resolve(Object input) {
 
-            // Use the default method to resolve an element
-
-            Mapping map = s2jModel.get(element);
-            if (map!=null)
+            if (input instanceof QName)
             {
-                return map.getType().getTypeClass();
-            }
+                QName element = (QName) input;
+                
+                // Use the default method to resolve an element
 
-            // This can fail with certain customizations where the element
-            // and type class are seperate, so instead look up the 
-            // type class directly from the model
-            //
-
-            Model model = getModel();
-            XSElementDecl xelement =  model.schemaComponent.getElementDecl(element.getNamespaceURI(), element.getLocalPart());
-            if (xelement!=null)
-            {
-                XSType type = xelement.getType();
-                if (type!=null && type.isGlobal())
+                Mapping map = s2jModel.get(element);
+                if (map!=null)
                 {
-                    QName qname = new QName(type.getTargetNamespace(), type.getName());
-                    TypeAndAnnotation taa = s2jModel.getJavaType(qname);
-                    if (taa!=null)
+                    return map.getType().getTypeClass();
+                }
+
+                // This can fail with certain customizations where the element
+                // and type class are seperate, so instead look up the 
+                // type class directly from the model
+                //
+
+                Model model = getModel();
+                XSElementDecl xelement =  model.schemaComponent.getElementDecl(element.getNamespaceURI(), element.getLocalPart());
+                if (xelement!=null)
+                {
+                    XSType type = xelement.getType();
+                    if (type!=null && type.isGlobal())
                     {
-                        return taa.getTypeClass();
+                        QName qname = new QName(type.getTargetNamespace(), type.getName());
+                        TypeAndAnnotation taa = s2jModel.getJavaType(qname);
+                        if (taa!=null)
+                        {
+                            return taa.getTypeClass();
+                        }
                     }
                 }
+                
+                return null;
+            }
+            else if (input instanceof URI){
+                URI element = (URI) input;
+
+                // Even then we might fail on this, but finally check the json
+                // types
+                //
+
+                return jsonTypes.get(element);
+            }
+            else {
+                throw new IllegalArgumentException("input value not of type URI or QName");
             }
 
-            // Even then we might fail on this, but finally check the json
-            // types
-            //
+        }
 
-            return jsonTypes.get(element);
+        public URI resolveURI(AbstractNode context, String path) {
+            return currentBaseUri.resolve(path);
         }
     };
 
@@ -329,12 +354,16 @@ public class Wadl2Java {
      * peer resource entries.
      * @throws org.jvnet.ws.wadl.ast.InvalidWADLException TODO.
      */
-    public void process(URI rootDesc) throws JAXBException, IOException,
+    public void process(final URI rootDesc) throws JAXBException, IOException,
             JClassAlreadyExistsException, InvalidWADLException {
 
+        // Just store the current location so we can resolve more easily
+        
+        currentBaseUri = rootDesc;
+        
         // Store a list of JSON schemas
         
-        final List<String> jsonSchemas = new ArrayList<String>();
+        final Set<URI> jsonSchemas = new LinkedHashSet<URI>();
         
         // read in root WADL file
         s2j = new SchemaCompilerImpl();
@@ -383,7 +412,7 @@ public class Wadl2Java {
                         // Otherwise assume 
                         } else if (peakContent.contains("{")) {
                             // We are guessing this is a json type
-                            jsonSchemas.add(input.getSystemId());
+                            jsonSchemas.add(URI.create(input.getSystemId()));
                         }
 
                     }
@@ -439,27 +468,49 @@ public class Wadl2Java {
             }
             generatedPackages = buf.toString();
             
-            // Generate the json classes
+            // Generate the json classes, first find any references in the 
+            // elements themselves
             //
+            
+            an.visit(new NodeVisitor() {
+
+                public void visit(AbstractNode node) {
+                    
+                    if (node instanceof RepresentationNode) {
+                        RepresentationNode rn = (RepresentationNode) node;
+                        String uriStr = rn.getOtherAttribute(JSON_SCHEMA_DESCRIBEDBY);
+                        if (uriStr!=null)
+                        {
+                            URI uri = rootDesc.resolve(uriStr);
+                            if (uri!=null) {
+                                jsonSchemas.add(uri);
+                            }
+                        }
+                    }
+                        
+                }
+                
+            });
+            
             
             // Commented out until we work out what to about JSON Schema
             //
-//            SchemaMapper sm = new SchemaMapper();
-//            for (String jsonSchema : jsonSchemas)
-//            {
-//                URL schemaURL = new URL(jsonSchema);
-//                String name = jsonSchema.substring(jsonSchema.lastIndexOf('/')+1);
-//                String className = Character.toUpperCase(name.charAt(0))
-//                        + ((name.length() > 1 ? name.substring(1) : ""));
-//                
-//                sm.generate(codeModel, 
-//                        className, parameters.pkg, schemaURL);
-//                
-//                // Store this as we would any other json type
-//                jsonTypes.put(
-//                        new QName("http://wadl.dev.java.net/2009/02/json",name), 
-//                        codeModel._getClass(parameters.pkg + "." + className));
-//            }
+            SchemaMapper sm = new SchemaMapper();
+            for (URI jsonSchema : jsonSchemas)
+            {
+                String jsonSchemaStr = jsonSchema.toString();
+                String name = jsonSchemaStr.substring(jsonSchemaStr.lastIndexOf('/')+1);
+                String className = Character.toUpperCase(name.charAt(0))
+                        + ((name.length() > 1 ? name.substring(1) : ""));
+                
+                sm.generate(codeModel, 
+                        className, parameters.pkg, jsonSchema.toURL());
+                
+                // Store this as we would any other json type
+                jsonTypes.put(
+                        jsonSchema, 
+                        codeModel._getClass(parameters.pkg + "." + className));
+            }
             
             
             // Generate the resource interface
@@ -481,7 +532,7 @@ public class Wadl2Java {
             throw new JAXBException(
                     Wadl2JavaMessages.JAXB_PROCESSING_FAILED(),
                     errorListener.getFirstFatalError());
-        }
+        } 
     }
 
     private void applyXjcArguments(Options options) {

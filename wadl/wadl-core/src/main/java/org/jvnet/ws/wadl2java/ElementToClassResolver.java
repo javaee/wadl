@@ -14,6 +14,8 @@ package org.jvnet.ws.wadl2java;
 import javax.xml.namespace.QName;
 
 import com.sun.codemodel.JType;
+import java.net.URI;
+import org.jvnet.ws.wadl.ast.AbstractNode;
 
 /**
  * This is a simple interface to replace reference to the S2JJAXModel
@@ -25,10 +27,21 @@ import com.sun.codemodel.JType;
 public interface ElementToClassResolver {
    
     /**
-     * @param element The element to resolve.
+     * @param element The element to resolve, can be a QName in the case
+     *   of a JAX-B xml definition or a URI in the case of a JSON-Schema
+     *   reference
      *
      * @return the java type that is used to represent this element, might
      *   actually be a XmlType rather than a XmlElement
      */
-    public JType resolve (QName element);
+    public JType resolve (Object element);
+    
+    
+    /**
+     * @param context The object that we are loading relative to
+     * @return A URI relative to the base URI of the document that context
+     *   is loaded from
+     */
+    
+    public URI resolveURI(AbstractNode context, String path);
 }

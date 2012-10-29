@@ -125,6 +125,11 @@ public class RepresentationNode extends AbstractNode {
         return rep.sourceLocation();
     }
     
-    
-
+    /**
+     * @param attribute The QName of the attribute to be found
+     * @return An extension attribute if it is found
+     */
+    public String getOtherAttribute(QName attribute) {
+        return rep.getOtherAttributes().get(attribute);
+    }
 }

@@ -45,7 +45,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
     protected static enum MethodType
     {
-        OBJECT_MAPPING, CLASS, GENERIC_TYPE
+        JAXB_MAPPING, JSON_POJO_MAPPING, CLASS, GENERIC_TYPE
     };
 
     private ResourceNode resource;
@@ -653,13 +653,28 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
         return type;
     }
+
+    
+    /**
+     * Get the Java type generated for the specified JSON URI
+     *
+     * @return the Java type that was generated for the specified uri or {@code null}
+     * if no matching generated type was found.
+     */
+    protected JType getTypeFromURI(String path) {
+        URI uri = resolver.resolveURI(resource, path);
+        JType type = resolver.resolve(uri);
+        if (type==null)
+            messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(uri.toString()));
+        return type;
+    }
     
     /**
      * Generate one or two Java methods for a specified combination of WADL 
      * <code>method</code>,
      * input <code>representation</code> and output <code>representation</code>
      * elements. Always generates one method that works with DataSources and
-     * generates an additional method that uses OBJECT_MAPPING when XML representations are used
+     * generates an additional method that uses JAXB_MAPPING when XML representations are used
      * and the document element is specified.
      * 
      * @param isAbstract controls whether the generated methods will have a body {@code false}
@@ -675,7 +690,8 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     protected void generateMethodVariants(Map<JType, JDefinedClass> exceptionMap,
             MethodNode method, boolean includeOptionalParams, RepresentationNode inputRep,
             RepresentationNode outputRep, boolean isAbstract) {
-        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.OBJECT_MAPPING, isAbstract);
+        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.JAXB_MAPPING, isAbstract);
+        generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.JSON_POJO_MAPPING, isAbstract);
         generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.GENERIC_TYPE, isAbstract);
         generateMethodDecl(exceptionMap, method, includeOptionalParams, inputRep, outputRep, MethodType.CLASS, isAbstract);
     }
@@ -767,11 +783,27 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             MethodType methodType,
             boolean isAbstract) {
         
-        boolean isObjectMapping = methodType == MethodType.OBJECT_MAPPING;
-        // check if OBJECT_MAPPING can be used with available information
-        if (isObjectMapping) {
+        boolean isJAXBMapping = methodType == MethodType.JAXB_MAPPING;
+        boolean isJSONPOJOMapping = methodType == MethodType.JSON_POJO_MAPPING;
+        // check if JAXB_MAPPING can be used with available information
+        if (isJAXBMapping) {
             if ((outputRep != null && outputRep.getElement() == null) || (inputRep != null && inputRep.getElement() == null))
                 return;
+        }
+        // Bail if no obvious mapping
+        if (isJSONPOJOMapping) {
+            if ((outputRep != null && outputRep.getOtherAttribute(Wadl2Java.JSON_SCHEMA_DESCRIBEDBY) == null) 
+                    || (inputRep != null && inputRep.getOtherAttribute(Wadl2Java.JSON_SCHEMA_DESCRIBEDBY) == null)) {
+                return;
+            }
+            else if (inputRep==null && outputRep==null) {
+                // Otherwise we get two ClientResponse method() instances
+                // one for this and one for jaxb mapping
+                return;
+            }
+            else {
+                int i = 0;
+            }
         }
 
         // work out the method return type and the type of any input representation
@@ -779,7 +811,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         JType returnType;
         boolean wrapInputTypeInJAXBElement = false;
         boolean genericReturnType = false;
-        if (isObjectMapping) {
+        if (isJAXBMapping) {
             if (inputRep != null) {
                 inputType = getTypeFromElement(inputRep.getElement());
                 
@@ -835,6 +867,26 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                 returnType = clientResponseClientType();
             }
         }
+        else if (isJSONPOJOMapping) {
+
+            if (inputRep != null) {
+                inputType = getTypeFromURI(
+                        inputRep.getOtherAttribute(Wadl2Java.JSON_SCHEMA_DESCRIBEDBY));
+                
+                if (inputType == null)
+                    return;
+            }
+
+            if (outputRep != null) {
+                returnType = getTypeFromURI(outputRep.getOtherAttribute(Wadl2Java.JSON_SCHEMA_DESCRIBEDBY));
+                if (returnType == null)
+                    return;
+            }
+            else {
+                // Default to just response
+                returnType = clientResponseClientType();
+            }
+        }
         else {
             
             // We need to map to a generic return type, but we have to
@@ -860,7 +912,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
         
         // generate a name for the method 
-        String methodName = getMethodName(method, inputRep, outputRep, isObjectMapping ? returnType : null);
+        String methodName = getMethodName(method, inputRep, outputRep, isJAXBMapping || isJSONPOJOMapping ? returnType : null);
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);
@@ -1051,7 +1103,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             
             // Now deal with the method body
             
-            generateBody(method,isObjectMapping, exceptionMap, outputRep, 
+            generateBody(method,isJAXBMapping, exceptionMap, outputRep, 
                     $genericMethodParameter, wrapInputTypeInJAXBElement, inputType, returnType, $resourceBuilder, inputRep, $methodBody);
         }
     }
@@ -1078,7 +1130,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * Generate a method body that uses a JAXBDispatcher, used when the payloads are XML.
      *
      * @param method the method to generate a body for.
-     * @param isJAXB, whether we are generating a generic of OBJECT_MAPPING version.
+     * @param isJAXB, whether we are generating a generic of JAXB_MAPPING version.
      * @param exceptionMap the generated exceptions that the method can raise.
      * @param outputRep the output representation.
      * @param $genericMethodParameter TODO.
