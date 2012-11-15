@@ -579,7 +579,6 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
     
     
 
-// Commented out until we work out the right thign to do with JSON schema  
     /**
      * Tests the case in which a method has multiple representations but this
      * time using json-schema rather than xml schema for the json types
@@ -675,7 +674,99 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
                 .invoke(jsonRequestMessage);
         
         assertThat("hello", equalTo(method("getText").withReturnType(String.class).in(result).invoke()));
+        
+    }
     
+
+    /**
+     * Tests that we get an exception if we have a >=400 status code as before
+     * or the (Client)Response back if this is what the client has asked for
+     */
+    public void testFailureModes() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("multiple-contenttypes-jsonschema-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+
+        // Verify the files are in place
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, contains("test/Localhost.java"));
+
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+        
+        //
+        Class $JsonRequestMessage = cl.loadClass("test.RequestMessage");
+        
+
+        // Check that we can handle multiple content types
+        
+        Class root = type("test.Localhost").withClassLoader(cl).load();
+        Object rootClient = staticMethod("root").withParameterTypes(getClientClass())
+                .in(root).invoke(_client);
+        
+
+        // Get some JSON
+        
+
+        Object jsonRequestMessage = constructor().in($JsonRequestMessage).newInstance();
+        method("setText").withParameterTypes(String.class).in(jsonRequestMessage).invoke("Hello");
+        
+        // Make sure we get an exception with a 404 response with a normal request
+        //
+        
+        _cannedResponse.add(new CannedResponse(
+                404, "text/plain", "Not Found"));
+        
+        try {
+            method("putJsonAsResponseMessage").withParameterTypes($JsonRequestMessage).in(rootClient)
+                    .invoke(jsonRequestMessage);
+            
+            assertTrue("Should have thrown an exception", false);
+        }
+        catch (WebApplicationException ex) {
+            assertThat(404, equalTo(ex.getResponse().getStatus()));
+        }
+
+
+        // Make sure we get no exception with a 404 response if we ask
+        // for the (Client)Response object
+        //
+        
+        _cannedResponse.add(new CannedResponse(
+                404, "text/plain", "Not Found"));
+        
+        try {
+            Object response = method("putJson").withParameterTypes(Object.class, Class.class).in(rootClient)
+                    .invoke(jsonRequestMessage, getResponseClass());
+            
+            assertThat(404, equalTo(
+                    method("getStatus").withReturnType(int.class).in(response).invoke()));
+        }
+        catch (WebApplicationException ex) {
+            assertTrue("Should not have thrown an exception", false);
+        }
+
+        
+        
     }
     
     

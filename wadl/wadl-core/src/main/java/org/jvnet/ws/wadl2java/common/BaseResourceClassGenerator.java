@@ -50,7 +50,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
     private ResourceNode resource;
     protected JPackage pkg;
-    private ElementToClassResolver resolver;
+    private Resolver resolver;
     protected JCodeModel codeModel;
     private JFieldVar $clientReference;
     private JFieldVar $uriBuilder;
@@ -71,7 +71,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      */
     public BaseResourceClassGenerator(
             MessageListener messageListener,
-            ElementToClassResolver resolver, JCodeModel codeModel, 
+            Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
         this.messageListener = messageListener;
         this.resource = resource;
@@ -93,7 +93,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      */
     public BaseResourceClassGenerator(
             MessageListener messageListener,
-            ElementToClassResolver resolver, JCodeModel codeModel, 
+            Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
         this.messageListener = messageListener;
         this.resource = null;
@@ -104,6 +104,20 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         this.$class = clazz;
         this.generatedPackages = generatedPackages;
     }
+
+    
+    /**
+     * This method should create a static private method called _client that
+     * generate the right factory code for this particular implementation
+     * @param parentClass The root class to add the method to
+     */
+    protected void generateClientFactoryMethod(JDefinedClass parentClass) {
+        JMethod $clientFactory = parentClass.method(
+            JMod.PRIVATE | JMod.STATIC, clientType(), "_client");
+        JBlock body = $clientFactory.body();
+        body._return(clientFactoryType().staticInvoke(clientFactoryMethod()));
+    }
+
 
 
 
@@ -135,7 +149,11 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
     // Functional call outs
     protected abstract JVar createRequestBuilderAndAccept(JBlock $methodBody, JVar $resource, RepresentationNode outputRep);
-    protected abstract JExpression createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr);
+    /**
+     * @return A list of expressions, the first being a getEntity like call
+     *  and the second if present the straight (Client)Response object
+     */
+    protected abstract JExpression[] createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr);
     
     
     /**
@@ -303,6 +321,26 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
                 // Generate the version without client or baseURI parameter
                 {
+                    // Put in place method to create the client, this way
+                    // we can centralize the creating, this code need to move
+                    // to the create subclass method in Wadl2Java; but that in turn
+                    // reall needs to be move into here
+                    
+                    boolean found = false;
+                    found: for (JMethod next : parentClass.methods()) {
+                        if (next.name().equals("_client")) {
+                            found = true;
+                            break found;
+                        }
+                    }
+                    
+                    if (!found) {
+                        generateClientFactoryMethod(parentClass);
+                    }
+                    
+                
+                    // Accessor method
+                    
                     JMethod $accessorMethodNoClient = parentClass.method(
                             JMod.PUBLIC | JMod.STATIC, $impl, accessorName);
 
@@ -322,7 +360,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
                     // Create a client and invoke
                     $invokeOther.arg(
-                            clientFactoryType().staticInvoke(clientFactoryMethod()));
+                            JExpr.invoke("_client"));
                     $invokeOther.arg(
                             $global_base_uri);
 
@@ -490,7 +528,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * Generates the switch block based on status code that will
      * throw exceptions for a specified failure
      */
-    protected void generateConditionalForFaultNode(MethodNode method, JBlock $methodBody, JVar $response) {
+    protected void generateConditionalForFaultNode(MethodNode method, JBlock $methodBody, JVar $response, JType returnType, JExpression $returnTypeExpr) {
         // Right do we have any fault objects to deal with here
         //
         
@@ -544,8 +582,53 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                         caseBody._break();
                     }
                 }
-            }                
+            }  
             
+            // Put in place the default case
+            
+            JCase defaultCase = sw._default();
+            JBlock caseBody = defaultCase.body();
+            generateIfOnStatus(
+                caseBody, $response, returnType, $returnTypeExpr);
+            
+            
+        }
+        else {
+            generateIfOnStatus(
+                $methodBody, $response,returnType, $returnTypeExpr);
+        }
+    }
+
+    /**
+     * Create a  if statement in a block that will throw an exception if the 
+     * status is >= 400 is the returnType and return expression are not
+     * if the type clientReponseType
+     * @param block
+     * @param $response 
+     */
+    protected void generateIfOnStatus(JBlock block, JVar $response,
+            JType returnType, JExpression $returnTypeExpr) {
+        
+        if (returnType != clientResponseClientType()) {
+            
+            
+            
+            JBlock body = block;
+
+            // If the parameter is a class then the return value might be
+            // a ClientResponse or Reponse object
+            if ($returnTypeExpr instanceof JVar) {
+                JVar rType = (JVar)$returnTypeExpr;
+                JType type = rType.type().erasure();
+                if (type == codeModel._ref(Class.class)) {
+                    body = block._if(JExpr.dotclass(clientResponseClientType()).invoke("isAssignableFrom").arg($returnTypeExpr).not())
+                        ._then();
+                }
+            }
+            
+            JBlock then = body._if($response.invoke("getStatus").gte(JExpr.lit(400)))._then();
+            generateThrowWebApplicationExceptionFromResponse(
+                then, $response);
         }
     }
     
@@ -1171,7 +1254,8 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         // Return type if required
         
         if ($genericMethodParameter!=null) {
-            $returnTypeExpr = JExpr.ref("returnType");
+            $returnTypeExpr = $genericMethodParameter;
+//                    JExpr.ref("returnType");
 //            $execute.arg(JExpr.ref("returnType"));
         }
         else if (returnType!=null) {
@@ -1216,14 +1300,39 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
         
         // Allow JAX-RS to tag on
-        JExpression $execute = createProcessInvocation(
+        JExpression executeDetails[] = createProcessInvocation(
                method, $methodBody, $resourceBuilder, methodString, inputRep, returnType, $returnTypeExpr, $entityExpr);
         
        
         // Generic variant always need to return the result
-        if (outputRep != null || !isJAXB || !returnType.equals(codeModel.VOID))
-            $methodBody._return(
-                    $execute);
+        if (outputRep != null || !isJAXB || !returnType.equals(codeModel.VOID)) {
+ 
+            JBlock body = $methodBody;
+
+            // Just return what-every we got back
+            if (executeDetails.length==2) {
+            
+                // If the parameter is a class then the return value might be
+                // a ClientResponse or Reponse object
+                if ($returnTypeExpr instanceof JVar) {
+                    JVar rType = (JVar)$returnTypeExpr;
+                    JType type = rType.type().erasure();
+                    if (type == codeModel._ref(Class.class)) {
+                        JConditional _if = $methodBody._if(JExpr.dotclass(clientResponseClientType()).invoke("isAssignableFrom").arg($returnTypeExpr).not());
+                        body = _if
+                            ._then();
+                        // Do is the class field is Class which is assignable
+                        // to the Response class then well return that instead
+                        _if._else()._return(
+                                rType.invoke("cast").arg(executeDetails[1]));
+                    }
+                }
+                
+            }
+            
+            body._return(
+                    executeDetails[0]);
+        }            
         else {
             // This is fine as we already have executed something
             // need to modify RS-2.0 code to suit

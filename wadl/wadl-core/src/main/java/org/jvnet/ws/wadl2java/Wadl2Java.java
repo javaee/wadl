@@ -19,7 +19,8 @@
 
 package org.jvnet.ws.wadl2java;
 
-import com.googlecode.jsonschema2pojo.SchemaMapper;
+import com.googlecode.jsonschema2pojo.*;
+import com.googlecode.jsonschema2pojo.rules.RuleFactory;
 import com.sun.codemodel.*;
 import com.sun.tools.xjc.BadCommandLineException;
 import com.sun.tools.xjc.Options;
@@ -234,7 +235,7 @@ public class Wadl2Java {
     private Map<URI, JType> jsonTypes = new HashMap<URI, JType>();
     private S2JJAXBModel s2jModel;
     private URI currentBaseUri;
-    private ElementToClassResolver resolver = new ElementToClassResolver()
+    private Resolver resolver = new Resolver()
     {
         private Model _model;
 
@@ -312,6 +313,10 @@ public class Wadl2Java {
 
         public URI resolveURI(AbstractNode context, String path) {
             return currentBaseUri.resolve(path);
+        }
+
+        public boolean isThereJsonMapping() {
+            return !jsonTypes.isEmpty();
         }
     };
 
@@ -495,7 +500,26 @@ public class Wadl2Java {
             
             // Commented out until we work out what to about JSON Schema
             //
-            SchemaMapper sm = new SchemaMapper();
+            
+            final AnnotationStyle sa = STYLE_JERSEY1X.equals(parameters.generationStyle) ?
+                    AnnotationStyle.JACKSON1 : AnnotationStyle.JACKSON2;
+            GenerationConfig gc = new DefaultGenerationConfig() {
+                public AnnotationStyle getAnnotationStyle() {
+                    return sa;
+                }
+                
+            };
+            AnnotatorFactory af = new AnnotatorFactory();
+            
+            SchemaMapper sm = new SchemaMapper(
+                    new RuleFactory(
+                        gc, 
+                        af.getAnnotator(sa),
+                        new SchemaStore()), 
+                    new SchemaGenerator());
+            
+            
+            
             for (URI jsonSchema : jsonSchemas)
             {
                 String jsonSchemaStr = jsonSchema.toString();

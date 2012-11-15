@@ -19,13 +19,13 @@ import org.jvnet.ws.wadl.ast.AbstractNode;
 
 /**
  * This is a simple interface to replace reference to the S2JJAXModel
- * class that is passed around to resolve QName element references to type
- * references.
+ * class that is passed around to resolve QName element or URI references 
+ * to type references.
  * 
  * @author gdavison
  */
-public interface ElementToClassResolver {
-   
+public interface Resolver {
+    
     /**
      * @param element The element to resolve, can be a QName in the case
      *   of a JAX-B xml definition or a URI in the case of a JSON-Schema
@@ -44,4 +44,11 @@ public interface ElementToClassResolver {
      */
     
     public URI resolveURI(AbstractNode context, String path);
+    
+    
+    /**
+     * Do we need to configure the client for JSON
+     * @return true if required
+     */
+    public boolean isThereJsonMapping();
 }

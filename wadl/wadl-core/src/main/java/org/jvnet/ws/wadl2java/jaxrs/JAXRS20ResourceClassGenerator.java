@@ -11,7 +11,7 @@ import org.jvnet.ws.wadl.ast.MethodNode;
 import org.jvnet.ws.wadl.ast.RepresentationNode;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
-import org.jvnet.ws.wadl2java.ElementToClassResolver;
+import org.jvnet.ws.wadl2java.Resolver;
 import org.jvnet.ws.wadl2java.JavaDocUtil;
 import org.jvnet.ws.wadl2java.common.BaseResourceClassGenerator;
 
@@ -36,7 +36,7 @@ public class JAXRS20ResourceClassGenerator
      */
     public JAXRS20ResourceClassGenerator(
             MessageListener messageListener,
-            ElementToClassResolver resolver, JCodeModel codeModel, 
+            Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
         super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, resource);
     }
@@ -52,7 +52,7 @@ public class JAXRS20ResourceClassGenerator
      */
     public JAXRS20ResourceClassGenerator(
             MessageListener messageListener,
-            ElementToClassResolver resolver, JCodeModel codeModel, 
+            Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
         super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, clazz);
     }
@@ -131,7 +131,7 @@ public class JAXRS20ResourceClassGenerator
     
 
     @Override
-    protected JExpression createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr) {
+    protected JExpression[] createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr) {
         JInvocation $execute = $resourceBuilder.invoke(buildMethod());
 
         
@@ -155,7 +155,7 @@ public class JAXRS20ResourceClassGenerator
         $methodBody.assign($response, $invoke);
 
         // For a given response process any fault nodes
-        generateConditionalForFaultNode(method, $methodBody, $response);
+        generateConditionalForFaultNode(method, $methodBody, $response, returnType, $returnTypeExpr);
         
         // So now we have to get the real answer back from the response
         //
@@ -166,7 +166,7 @@ public class JAXRS20ResourceClassGenerator
             // In the case when the reponse should be the client response
             // we can return null because
             
-            return $response;
+            return new JExpression[] {$response};
         }
         else {
             JInvocation $fetchEntity = $response.invoke("readEntity");
@@ -175,7 +175,7 @@ public class JAXRS20ResourceClassGenerator
                 $fetchEntity.arg($returnTypeExpr);
             }
         
-            return $fetchEntity;
+            return new JExpression[] {$fetchEntity, $response};
         }
    }
     

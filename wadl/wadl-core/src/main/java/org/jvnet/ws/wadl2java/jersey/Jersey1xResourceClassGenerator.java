@@ -6,12 +6,13 @@ package org.jvnet.ws.wadl2java.jersey;
 
 import com.sun.codemodel.*;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import org.jvnet.ws.wadl.ast.FaultNode;
 import org.jvnet.ws.wadl.ast.MethodNode;
 import org.jvnet.ws.wadl.ast.RepresentationNode;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
-import org.jvnet.ws.wadl2java.ElementToClassResolver;
+import org.jvnet.ws.wadl2java.Resolver;
 import org.jvnet.ws.wadl2java.JavaDocUtil;
 import org.jvnet.ws.wadl2java.common.BaseResourceClassGenerator;
 
@@ -36,7 +37,7 @@ public class Jersey1xResourceClassGenerator
      */
     public Jersey1xResourceClassGenerator(
             MessageListener messageListener,
-            ElementToClassResolver resolver, JCodeModel codeModel, 
+            Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
         super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, resource);
     }
@@ -52,7 +53,7 @@ public class Jersey1xResourceClassGenerator
      */
     public Jersey1xResourceClassGenerator(
             MessageListener messageListener,
-            ElementToClassResolver resolver, JCodeModel codeModel, 
+            Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
         super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, clazz);
     }
@@ -133,7 +134,7 @@ public class Jersey1xResourceClassGenerator
     }
 
     @Override
-    protected JExpression createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr) {
+    protected JExpression[] createProcessInvocation(MethodNode method, JBlock $methodBody, JVar $resourceBuilder, String methodString, RepresentationNode inputRep, JType returnType, JExpression $returnTypeExpr, JExpression $entityExpr) {
         
         // Store the type
         //
@@ -163,14 +164,14 @@ public class Jersey1xResourceClassGenerator
         $methodBody.assign($response, $execute);
         
         // For a given response process any fault nodes
-        generateConditionalForFaultNode(method, $methodBody, $response);
+        generateConditionalForFaultNode(method, $methodBody, $response, returnType, $returnTypeExpr);
         
         // Right need to get entity from the response
         if (clientResponseClientType() == returnType) {
             // In the case when the reponse should be the client response
             // we can return null because
             
-            return $response;
+            return new JExpression[] {$response};
         }
         else {
             JInvocation $fetchEntity = $response.invoke("getEntity");
@@ -179,7 +180,7 @@ public class Jersey1xResourceClassGenerator
                 $fetchEntity.arg($returnTypeExpr);
             }
         
-            return $fetchEntity;
+            return new JExpression[] {$fetchEntity, $response};
         }
         
    }
@@ -191,11 +192,14 @@ public class Jersey1xResourceClassGenerator
      */
     protected void generateThrowWebApplicationExceptionFromResponse(JBlock caseBody, JVar $response) {
         // Just for a WebApplicationException in this case
-        // with the right status code, in RS 2.0 we can
+        // with the right status code, in RS 2.0 we can provide
+        // the entire reponse
         
         caseBody._throw(
            JExpr._new(codeModel.ref(WebApplicationException.class))
-                .arg($response.invoke("getStatus")));
+                .arg(
+                  codeModel.ref(Response.class).staticInvoke("status")
+                    .arg($response.invoke("getClientResponseStatus")).invoke("build")));
     }
 
 
