@@ -480,7 +480,7 @@ public class Wadl2Java {
             an.visit(new NodeVisitor() {
 
                 public void visit(AbstractNode node) {
-                    
+                     
                     if (node instanceof RepresentationNode) {
                         RepresentationNode rn = (RepresentationNode) node;
                         String uriStr = rn.getOtherAttribute(JSON_SCHEMA_DESCRIBEDBY);

@@ -40,7 +40,23 @@ import org.jvnet.ws.wadl2java.*;
  * @author mh124079
  */
 public abstract class BaseResourceClassGenerator implements ResourceClassGenerator {
+    
+    /**
+     * The method that can be called to create a fully configured client
+     */
+    protected static final String CREATE_CLIENT_METHOD = "createClient";
 
+    /**
+     * The method that can be called so that generators have a simple
+     * template to customise the client
+     */
+    protected static final String CUSTOMIZE_CLIENT_METHOD = "customizeClientConfiguration";
+
+    /**
+     * The method that can be called to create the client instance so that
+     * generators can override factory methods
+     */
+    protected static final String CREATE_CLIENT_INSTANCE = "createClientInstance";
 
 
     protected static enum MethodType
@@ -107,16 +123,11 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
     
     /**
-     * This method should create a static private method called _client that
+     * This method should create a static private method called CREATE_CLIENT_METHOD that
      * generate the right factory code for this particular implementation
      * @param parentClass The root class to add the method to
      */
-    protected void generateClientFactoryMethod(JDefinedClass parentClass) {
-        JMethod $clientFactory = parentClass.method(
-            JMod.PRIVATE | JMod.STATIC, clientType(), "_client");
-        JBlock body = $clientFactory.body();
-        body._return(clientFactoryType().staticInvoke(clientFactoryMethod()));
-    }
+    protected abstract void generateClientFactoryMethod(JDefinedClass parentClass);
 
 
 
@@ -328,7 +339,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                     
                     boolean found = false;
                     found: for (JMethod next : parentClass.methods()) {
-                        if (next.name().equals("_client")) {
+                        if (next.name().equals(CREATE_CLIENT_METHOD)) {
                             found = true;
                             break found;
                         }
@@ -360,7 +371,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 
                     // Create a client and invoke
                     $invokeOther.arg(
-                            JExpr.invoke("_client"));
+                            JExpr.invoke(CREATE_CLIENT_METHOD));
                     $invokeOther.arg(
                             $global_base_uri);
 

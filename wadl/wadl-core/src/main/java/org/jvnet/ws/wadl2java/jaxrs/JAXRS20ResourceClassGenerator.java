@@ -13,6 +13,7 @@ import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.jvnet.ws.wadl2java.Resolver;
 import org.jvnet.ws.wadl2java.JavaDocUtil;
+import org.jvnet.ws.wadl2java.Wadl2JavaMessages;
 import org.jvnet.ws.wadl2java.common.BaseResourceClassGenerator;
 
 /**
@@ -223,6 +224,60 @@ public class JAXRS20ResourceClassGenerator
         $faultInfoGetter.body()._return($detailField);
 
         return $exCls;
+    }
+
+
+    
+    
+    /**
+     * This method should create a static private method called CREATE_CLIENT_METHOD that
+     * generate the right factory code for this particular implementation
+     * @param parentClass The root class to add the method to
+     */
+    @Override
+    protected void generateClientFactoryMethod(JDefinedClass parentClass) {
+
+        JClass $clientConfig = codeModel.ref("javax.ws.rs.core.Configurable");
+        
+        // These are the template methods that tooling might override
+        
+        JMethod $custMethod = parentClass.method(
+            JMod.PRIVATE | JMod.STATIC, codeModel.VOID, CUSTOMIZE_CLIENT_METHOD);
+        $custMethod.param($clientConfig, "cc");
+        $custMethod.javadoc().append(Wadl2JavaMessages.CREATE_CLIENT_CUSTOMIZE());
+
+        JMethod $clientInstance = parentClass.method(
+            JMod.PRIVATE | JMod.STATIC, clientType(), CREATE_CLIENT_INSTANCE);
+        $clientInstance.javadoc().append(Wadl2JavaMessages.CREATE_CLIENT_INSTANCE());
+        
+        // This is the public method people will call
+        //
+        
+        JMethod $clientFactory = parentClass.method(
+            JMod.PUBLIC | JMod.STATIC, clientType(), CREATE_CLIENT_METHOD);
+        $clientFactory.javadoc().append(Wadl2JavaMessages.CREATE_CLIENT());
+
+        
+        JBlock body = $clientFactory.body();
+        // Create configuration
+        
+        // Invoke the new instance method
+        
+        JVar client = body.decl(clientType(), "client", JExpr.invoke($clientInstance));
+        
+        // Invoke customization method
+        
+        body.invoke($custMethod).arg(
+                client.invoke("configuration"));
+
+        // Return a client
+        body._return(client);
+
+        
+        // Popuplate the create client instance method
+        
+        JBlock iBody = $clientInstance.body();
+        iBody._return(clientFactoryType().staticInvoke(clientFactoryMethod()));
     }
     
 }
