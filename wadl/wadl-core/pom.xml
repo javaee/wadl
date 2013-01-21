@@ -41,7 +41,8 @@
 
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jvnet.ws.wadl</groupId>
@@ -78,7 +79,7 @@
             <version>1.1</version>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
@@ -101,12 +102,77 @@
             <artifactId>jersey-common</artifactId>
             <version>${jersey2.version}</version>
         </dependency>
-       <dependency>
+        <dependency>
             <groupId>com.googlecode.jsonschema2pojo</groupId>
             <artifactId>jsonschema2pojo-core</artifactId>
             <version>0.3.3</version>
-        </dependency>  
+        </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>jdk1.6</id>
+            <activation>
+                <jdk>1.6</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>2.3.2</version>
+                        <configuration>
+                            <compilerArguments>
+                                <endorseddirs>${endorsed.dir}</endorseddirs>
+                            </compilerArguments>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.1</version>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>copy</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${endorsed.dir}</outputDirectory>
+                                    <silent>true</silent>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>javax.xml.bind</groupId>
+                                            <artifactId>jaxb-api</artifactId>
+                                            <version>${jaxb.version}</version>
+                                            <type>jar</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.sun.xml.bind</groupId>
+                                            <artifactId>jaxb-impl</artifactId>
+                                            <version>${jaxb.version}</version>
+                                            <type>jar</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.sun.xml.bind</groupId>
+                                            <artifactId>jaxb-xjc</artifactId>
+                                            <version>${jaxb.version}</version>
+                                            <type>jar</type>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+
+            <properties>
+                <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
@@ -161,7 +227,8 @@
                                 -->
                                 <mkdir dir="${basedir}/target/resources"/>
                                 <property name="compile_classpath" refid="maven.compile.classpath"/>
-                                <taskdef name="resourcegen" classname="com.sun.tools.localizer.resourcegen.ResourceGenTask">
+                                <taskdef name="resourcegen"
+                                         classname="com.sun.tools.localizer.resourcegen.ResourceGenTask">
                                     <classpath>
                                         <path refid="maven.compile.classpath"></path>
                                         <path refid="maven.runtime.classpath"></path>

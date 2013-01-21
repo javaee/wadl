@@ -4,17 +4,31 @@
  */
 package org.jvnet.ws.wadl2java.jaxrs;
 
-import com.sun.codemodel.*;
 import javax.ws.rs.WebApplicationException;
+
 import org.jvnet.ws.wadl.ast.FaultNode;
 import org.jvnet.ws.wadl.ast.MethodNode;
 import org.jvnet.ws.wadl.ast.RepresentationNode;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
-import org.jvnet.ws.wadl2java.Resolver;
 import org.jvnet.ws.wadl2java.JavaDocUtil;
+import org.jvnet.ws.wadl2java.Resolver;
 import org.jvnet.ws.wadl2java.Wadl2JavaMessages;
 import org.jvnet.ws.wadl2java.common.BaseResourceClassGenerator;
+
+import com.sun.codemodel.JBlock;
+import com.sun.codemodel.JClass;
+import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JExpression;
+import com.sun.codemodel.JInvocation;
+import com.sun.codemodel.JMethod;
+import com.sun.codemodel.JMod;
+import com.sun.codemodel.JPackage;
+import com.sun.codemodel.JType;
+import com.sun.codemodel.JVar;
 
 /**
  * The specific implementation for JAX-RS 2.0 static client

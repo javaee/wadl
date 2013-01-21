@@ -41,7 +41,8 @@
 
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jvnet.ws.wadl</groupId>
@@ -57,13 +58,13 @@
     <dependencies>
         <!-- Provide 2.x client for testing purposes put at front of list
              so that everybody gets the new JAX-RS API -->
-        <dependency> 
+        <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
             <version>${jersey2.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency> 
+        <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-moxy</artifactId>
             <version>${jersey2.version}</version>
@@ -71,7 +72,7 @@
         </dependency>
 
         <!-- Normal stuff -->
-        
+
         <dependency>
             <groupId>org.jvnet.ws.wadl</groupId>
             <artifactId>wadl-core</artifactId>
@@ -112,7 +113,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Only in place to provide implemenation of UriBuilder -->
+        <!-- Only in place to provide implementation of UriBuilder -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-core</artifactId>
@@ -134,4 +135,77 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>jdk1.6</id>
+            <activation>
+                <jdk>1.6</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>2.3.2</version>
+                        <configuration>
+                            <compilerArguments>
+                                <endorseddirs>${endorsed.dir}</endorseddirs>
+                            </compilerArguments>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.1</version>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>copy</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${endorsed.dir}</outputDirectory>
+                                    <silent>true</silent>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>javax.xml.bind</groupId>
+                                            <artifactId>jaxb-api</artifactId>
+                                            <version>${jaxb.version}</version>
+                                            <type>jar</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.sun.xml.bind</groupId>
+                                            <artifactId>jaxb-impl</artifactId>
+                                            <version>${jaxb.version}</version>
+                                            <type>jar</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.sun.xml.bind</groupId>
+                                            <artifactId>jaxb-xjc</artifactId>
+                                            <version>${jaxb.version}</version>
+                                            <type>jar</type>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <argLine>-Djava.endorsed.dirs="${endorsed.dir}"</argLine>
+                        </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+
+            <properties>
+                <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+            </properties>
+        </profile>
+    </profiles>
+
 </project>
