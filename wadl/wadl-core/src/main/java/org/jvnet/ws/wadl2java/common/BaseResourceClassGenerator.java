@@ -23,6 +23,10 @@ import com.sun.codemodel.*;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -158,6 +162,88 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     protected abstract String buildMethod();
     protected abstract String responseGetEntityMethod();
 
+    /**
+     * @return Eventually this will return just WebApplicationException; but
+     * until JAX_RS_SPEC-312 is resolved we need to aid the user by overriding
+     * some of the methods and providing an alternative
+     */
+    protected JClass webApplicationExceptionType()
+    {
+        // Get the class that contains this one
+        JDefinedClass owningClass = $class;
+        while (!(owningClass.parentContainer() instanceof JPackage)) {
+            owningClass = (JDefinedClass) owningClass.parentContainer();
+        }
+        
+        // We only want the one copy of the exception created
+        try {
+            // Create us a new exception class
+            JDefinedClass $exception = owningClass._class(JMod.PRIVATE | JMod.STATIC, "WebApplicationExceptionMessage");
+            $exception._extends(codeModel.ref(WebApplicationException.class));
+            $exception.javadoc().append("Workaround for JAX_RS_SPEC-312");
+            
+            JClass $responseClass = codeModel.ref(Response.class);
+
+            // Create a contructor that takes a response
+            {
+                JMethod $constructor = $exception.constructor(JMod.PRIVATE);
+                JVar param = $constructor.param($responseClass, "response");
+                $constructor.body().directStatement("super(response);");
+            }
+            
+            // Override the getMessage function
+            overrideMessageOnException($exception);
+
+            // Hide the fact that we are shaddowing the exception from the user
+            {
+                JMethod $toString = $exception.method(JMod.PUBLIC, String.class, "toString");
+                JBlock $body = $toString.body();
+                JVar $s = $body.decl(codeModel.ref(String.class), "s", JExpr.lit(WebApplicationException.class.getName()));
+                
+                JVar $message = $body.decl(
+                        codeModel.ref(String.class), "message", JExpr.invoke("getLocalizedMessage"));
+
+                
+                $body._return(
+                        JOp.plus($s,
+                                 JOp.plus(JExpr.lit(": "),$message)));
+            }
+            
+            return $exception;
+        } catch (JClassAlreadyExistsException ex) {
+            return ex.getExistingClass();
+        }
+    }
+
+    /**
+     * Override the getMessage class on an exception to make sure the 
+     * status code is displayed
+     * @param $exception 
+     */
+    protected void overrideMessageOnException(JDefinedClass $exception) {
+        JClass $responseClass = codeModel.ref(Response.class);
+
+        // Create a new version of getMessage, adding on the reason phrase
+        // if it is a standard message
+        JMethod $getMessage = $exception.method(JMod.PUBLIC, String.class, "getMessage");
+        $getMessage.javadoc().append("Workaround for JAX_RS_SPEC-312");
+        JBlock $body = $getMessage.body();
+        JVar $response = $body.decl($responseClass, "response", JExpr.invoke("getResponse"));
+        JClass $statusClass = codeModel.ref(Response.Status.class);
+        JVar $status = $body.decl(
+                $statusClass, "status", $statusClass.staticInvoke("fromStatusCode")
+                    .arg($response.invoke("getStatus")));
+        JConditional $if = $body._if(JOp.ne($status, JExpr._null()));
+        $if._then()._return(
+                JOp.plus($response.invoke("getStatus"),
+                            JOp.plus(JExpr.lit(" "),$status.invoke("getReasonPhrase"))));
+        $if._else()._return(
+                codeModel.ref(Integer.class).staticInvoke("toString")
+                    .arg(
+                        $response.invoke("getStatus")));
+    }
+
+    
     // Functional call outs
     protected abstract JVar createRequestBuilderAndAccept(JBlock $methodBody, JVar $resource, RepresentationNode outputRep);
     /**

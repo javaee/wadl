@@ -16,6 +16,13 @@
             <artifactId>wadl-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Only in place to provide implemenation of UriBuilder -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>${jersey2.version}</version>
+        </dependency>
+        
     </dependencies>
     <profiles>
         <profile>

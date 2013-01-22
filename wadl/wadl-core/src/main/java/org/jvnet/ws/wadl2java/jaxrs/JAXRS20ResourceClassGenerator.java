@@ -206,7 +206,7 @@ public class JAXRS20ResourceClassGenerator
         // are consistent across the API
         
         caseBody._throw(
-           JExpr._new(codeModel.ref(WebApplicationException.class))
+           JExpr._new(webApplicationExceptionType())
                 .arg($response));
     }
 
@@ -236,6 +236,10 @@ public class JAXRS20ResourceClassGenerator
         // Add getter for the body payload
         JMethod $faultInfoGetter = $exCls.method(JMod.PUBLIC, detailType, "getFaultInfo");
         $faultInfoGetter.body()._return($detailField);
+        
+        // Override getMessage
+        overrideMessageOnException($exCls);
+
 
         return $exCls;
     }
@@ -282,7 +286,7 @@ public class JAXRS20ResourceClassGenerator
         // Invoke customization method
         
         body.invoke($custMethod).arg(
-                client.invoke("configuration"));
+                client);
 
         // Return a client
         body._return(client);

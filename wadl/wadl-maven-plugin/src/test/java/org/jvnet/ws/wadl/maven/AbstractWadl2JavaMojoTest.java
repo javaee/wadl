@@ -744,6 +744,7 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         }
         catch (WebApplicationException ex) {
             assertThat(404, equalTo(ex.getResponse().getStatus()));
+            assertThat(ex.toString(), containsString("404"));
         }
 
 
@@ -1422,9 +1423,78 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
             //
             String message = ((Element)((JAXBElement)content.get(0)).getValue()).getTextContent();
             assertThat("42", equalTo(message));
+            //
+            assertThat(ex.toString(), containsString("400"));
         }
     }
     
+    /**
+     * Add a test to verify that if there is a regular expression in the 
+     * parameter that we generate just the parameter name
+     */
+    public void testRegExTemplate() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("regex-template-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+        
+        // Invoke the service to provoke and error
+        //
+        
+        Class client = type("test.Localhost_Resources").withClassLoader(cl).load();
+        Object hello = staticMethod("hello")
+                .withParameterTypes(getClientClass(), URI.class).in(client).invoke(
+                    _client, URI.create("http://example.com/"));
+        
+        
+        // Test out that the right exception is thrown
+        //
+
+        Object name = method("name")
+            .withParameterTypes(String.class).in(hello).invoke(
+            "Bob");
+
+        _cannedResponse.add(new CannedResponse(
+                200, "text/plain", "Bob"));
+        
+        String result = method("getAsTextPlain").withReturnType(String.class)
+                .withParameterTypes(Class.class)
+                .in(name).invoke(String.class);
+            
+        assertThat("Bob should be in the URL", 
+                _requests.get(0).getURI(), 
+                equalTo(
+                    URI.create("http://example.com/hello/Bob")));
+
+
+        // TODO UriBuilder doesn't enforce the regular expression
+        // on the parameters
+//        // Test out that the right exception is thrown
+//        //
+//
+//
+//        name = method("name")
+//            .withParameterTypes(String.class).in(hello).invoke(
+//            "111111");
+        
+    }
     
     
     /**

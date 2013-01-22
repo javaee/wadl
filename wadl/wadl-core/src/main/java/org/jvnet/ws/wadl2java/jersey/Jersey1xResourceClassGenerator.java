@@ -197,7 +197,7 @@ public class Jersey1xResourceClassGenerator
         // the entire reponse
         
         caseBody._throw(
-           JExpr._new(codeModel.ref(WebApplicationException.class))
+           JExpr._new(webApplicationExceptionType())
                 .arg(
                   codeModel.ref(Response.class).staticInvoke("status")
                     .arg($response.invoke("getClientResponseStatus")).invoke("build")));
@@ -234,6 +234,10 @@ public class Jersey1xResourceClassGenerator
         // Add getter for the client response
         JMethod $responseGetter = $exCls.method(JMod.PUBLIC, clientResponseClientType(), "getClientResponse");
         $responseGetter.body()._return($responseField);
+        
+        // Override getMessage
+        overrideMessageOnException($exCls);
+        
         return $exCls;
     }
 

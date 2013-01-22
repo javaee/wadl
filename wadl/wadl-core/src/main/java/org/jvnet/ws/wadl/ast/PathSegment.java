@@ -42,6 +42,15 @@ import org.jvnet.ws.wadl.ResourceType;
  */
 public class PathSegment {
     
+    /**
+     * A regular expression to extra out templates from a URI
+     */
+    public static final String PARAM_WITH_REGEX_PATTERN = "(\\{(\\w*)(\\s*:.*?)?\\})";
+    /**
+     * The string to use with PARAM_WITH_REGEX_PATTERN to extract the name
+     */
+    public static final String PARAM_WITH_REGEX_NAME = "$2";
+    
     private String template;
     private List<Param> templateParameters;
     private List<Param> matrixParameters;
@@ -128,8 +137,16 @@ public class PathSegment {
         Pattern embeddedParamPattern = Pattern.compile("\\{.*?\\}");
         Matcher matcher = embeddedParamPattern.matcher(template);
         while (matcher.find()) {
-            String paramName = matcher.group();
-            paramName = paramName.substring(1,paramName.length()-1);
+            String paramText = matcher.group();
+            
+            // It is not as simple as just removing the braces, the
+            // parameter might also have a regular expression in it, we need
+            // to remove of this for the purposes of code generation
+            //
+            //paramName = paramName.substring(1,paramName.length()-1);
+            String paramName = paramText.replaceAll(
+                PARAM_WITH_REGEX_PATTERN, PARAM_WITH_REGEX_NAME);
+            
             // if embedded parameter is annotated by child param then use that
             // otherwise create a new empty param for it
             if (pathParameters.containsKey(paramName))

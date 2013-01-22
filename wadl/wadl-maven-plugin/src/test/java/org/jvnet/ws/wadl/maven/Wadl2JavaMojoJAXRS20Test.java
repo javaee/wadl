@@ -37,8 +37,8 @@ public class Wadl2JavaMojoJAXRS20Test
     protected Client createClient() {
 
         JerseyClient client = (JerseyClient) ClientFactory.newClient();
-        ClientConfig cc = client.configuration();
-        cc.register(new MoxyJsonFeature());
+        ClientConfig cc = client.getConfiguration();
+        cc.register(new MoxyJsonFeature()); 
         cc.connector(new Connector() {
             public String getName() {
                 return "TestConnector";

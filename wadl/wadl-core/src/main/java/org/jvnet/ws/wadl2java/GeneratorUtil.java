@@ -37,6 +37,7 @@ import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JVar;
+import org.jvnet.ws.wadl.ast.PathSegment;
 
 /**
  * Utility functions for code generators.
@@ -97,6 +98,15 @@ public class GeneratorUtil {
             return "Root";
         }
         
+        // Remove any path parameters and replace with the parameter name
+        // follow by a space to keep the capitalization going
+        
+        input =  input.replaceAll(
+                PathSegment.PARAM_WITH_REGEX_PATTERN, 
+                PathSegment.PARAM_WITH_REGEX_NAME + " ");
+ 
+        
+        //
         
         StringBuffer buf = new StringBuffer();
         for(String segment: input.split("[^a-zA-Z0-9_]")) {
