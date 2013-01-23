@@ -245,6 +245,7 @@
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>
                 <version>${jaxb.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

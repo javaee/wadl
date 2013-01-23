@@ -119,7 +119,7 @@ goto Win9xApp
 SET WADL_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 
 @REM Start Wadl2java
-%WADL_JAVA_EXE% %WADL_OPTS% "-Dwadl.home=%WADL_HOME%" -jar "%WADL_HOME%\lib\wadl-cmdline-${project.version}.jar" %WADL_CMD_LINE_ARGS%
+%WADL_JAVA_EXE% %WADL_OPTS% "-Djava.endorsed.dirs=%WADL_HOME%\lib\endorsed" "-Dwadl.home=%WADL_HOME%" -jar "%WADL_HOME%\lib\wadl-cmdline-${project.version}.jar" %WADL_CMD_LINE_ARGS%
 if ERRORLEVEL 1 goto error
 goto end
 

@@ -98,19 +98,15 @@
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>${jaxb.version}</version>
+            <scope>provided</scope>
         </dependency>
-        <!-- UriBuilder 
-            (Wadl2java.generateEndpointClass)
-            Actual dependency on a work implmentation is
-            in the cmdline and mavent and dist modules as this 
-            make it safe for JDeveloper which is stuck on Jersey
-            to continue -->
+        <!-- Only in place to provide implemenation of UriBuilder -->
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <!--<artifactId>javax.ws.rs-api</artifactId> -->
-            <artifactId>jsr311-api</artifactId>
-            <version>1.1.1</version>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>${jersey2.version}</version>
         </dependency>
+        
         <dependency>
             <groupId>com.googlecode.jsonschema2pojo</groupId>
             <artifactId>jsonschema2pojo-core</artifactId>
@@ -153,18 +149,6 @@
                                         <artifactItem>
                                             <groupId>javax.xml.bind</groupId>
                                             <artifactId>jaxb-api</artifactId>
-                                            <version>${jaxb.version}</version>
-                                            <type>jar</type>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>com.sun.xml.bind</groupId>
-                                            <artifactId>jaxb-impl</artifactId>
-                                            <version>${jaxb.version}</version>
-                                            <type>jar</type>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>com.sun.xml.bind</groupId>
-                                            <artifactId>jaxb-xjc</artifactId>
                                             <version>${jaxb.version}</version>
                                             <type>jar</type>
                                         </artifactItem>
@@ -211,6 +195,7 @@
                         <groupId>javax.xml.bind</groupId>
                         <artifactId>jaxb-api</artifactId>
                         <version>${jaxb.version}</version>
+                        <scope>compile</scope>
                     </dependency>
                     <dependency>
                         <groupId>com.sun.xml.bind</groupId>

@@ -124,6 +124,7 @@ fi
 
 exec "$JAVACMD" \
   $WADL_OPTS \
+  "-Djava.endorsed.dirs=%WADL_HOME%/lib/endorsed" \
   "-Dwadl.home=${WADL_HOME}"  \
   -jar ${WADL_HOME}/lib/wadl-cmdline-${project.version}.jar \
   "$@"

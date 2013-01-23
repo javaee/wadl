@@ -69,6 +69,7 @@
       <directory>${basedir}/src/main/resources/samples/cmdline</directory>
       <outputDirectory>samples/cmdline</outputDirectory>
       <excludes>
+        <exclude>*.formatted</exclude>
         <exclude>*.cmd</exclude>
         <exclude>*.bat</exclude>
       </excludes>
@@ -78,11 +79,21 @@
     <fileSet>
       <directory>${basedir}/src/main/resources/samples/cmdline</directory>
       <outputDirectory>samples/cmdline</outputDirectory>
+      <excludes>
+        <exclude>*.formatted</exclude>
+      </excludes>
       <includes>
         <include>*.cmd</include>
         <include>*.bat</include>
       </includes>
       <lineEnding>dos</lineEnding>
+    </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}/endorsed</directory>
+      <outputDirectory>lib/endorsed</outputDirectory>
+      <includes>
+        <include>*.jar</include>
+      </includes>
     </fileSet>
   </fileSets>
   <dependencySets>
