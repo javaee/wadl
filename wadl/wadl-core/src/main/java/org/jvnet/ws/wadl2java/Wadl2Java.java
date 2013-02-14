@@ -52,7 +52,6 @@ import org.jvnet.ws.wadl2java.jersey.Jersey1xResourceClassGenerator;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
-import sun.misc.BASE64Decoder;
 
 
 /**

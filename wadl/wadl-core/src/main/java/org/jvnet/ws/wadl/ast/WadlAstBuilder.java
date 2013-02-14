@@ -29,6 +29,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import org.jvnet.ws.wadl.*;
 import org.jvnet.ws.wadl.util.MessageListener;
+import org.jvnet.ws.wadl.xslt.WadlXsltUtils;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
@@ -527,7 +528,7 @@ public class WadlAstBuilder {
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
             StreamSource stylesheet = new StreamSource(
-                this.getClass().getResourceAsStream("upgrade.xsl"));
+                WadlXsltUtils.getUpgradeTransformAsStream());
             Transformer t = tf.newTransformer(stylesheet);
             t.transform(new StreamSource(is), result);
         } catch (Exception ex) {
