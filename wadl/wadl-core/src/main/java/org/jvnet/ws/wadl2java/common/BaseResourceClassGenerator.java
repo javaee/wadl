@@ -157,6 +157,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     protected abstract JClass clientResponseClientType();
     protected abstract JClass genericTypeType();
     protected abstract JClass resourceType();
+    protected abstract JClass uriTemplateType();
     protected abstract String resourceFromClientMethod();    
     protected abstract JClass resourceBuilderType();
     protected abstract String buildMethod();
@@ -321,25 +322,12 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         $uriBuilder = $impl.field(JMod.PRIVATE, uriBuilderClass, "_uriBuilder");        
         
         
-        JClass mapOfStringObject = codeModel.ref(Map.class).narrow(String.class, Object.class);
-        JClass hashMapOfStringObject = codeModel.ref(HashMap.class).narrow(String.class, Object.class);
+        JClass mapOfStringObject = codeModel.ref(Map.class).narrow(
+                String.class, Object.class);
+        JClass hashMapOfStringObject = codeModel.ref(HashMap.class).narrow(
+                String.class, Object.class);
         $templateMatrixParamValMap = $impl.field(JMod.PRIVATE, mapOfStringObject, "_templateAndMatrixParameterValues");
 
-        // Store the base URI
-        JVar $uri = $impl.field(JMod.PRIVATE, codeModel.ref(URI.class), "_uri");
-        
-        // generate constructor with parameters 
-        // for the client and each WADL defined path parameter
-        JMethod $ctor = $impl.constructor(JMod.PUBLIC);
-        JDocComment jdoc = $ctor.javadoc();
-        jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE_CLIENT());
-        
-        // Client reference
-        JVar $clientParam = $ctor.param($clientReference.type(), "client");
-        JVar $uriParam = $ctor.param(codeModel.ref(java.net.URI.class), "uri");
-        
-        // Only generate entries for current path segement
-        generateParameterForPathSegment(resource.getPathSegment(), $ctor, true, $impl);
         
 
         // Private constructor for copying
@@ -514,42 +502,118 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         
         // Create a body for the primary constructor
         
-        JBlock $ctorBody = $ctor.body();
-
-        
-        // code gen _client = client
-        //
-        $ctorBody.assign($clientReference, $clientParam); 
-
-        
-        // Store the uri base value
-        $ctorBody.assign($uri, $uriParam);
-        
-        // Only need to process the current path segment
-
-        $ctorBody.assign($uriBuilder,
-                uriBuilderClass.staticInvoke("fromUri").arg($uriParam));
         PathSegment segment = resource.getPathSegment();
-        $ctorBody.assign($uriBuilder, 
-                $uriBuilder.invoke("path").arg(JExpr.lit(segment.getTemplate())));
+        boolean contructorHasParameters = false;
         
-        
-        // codegen: templateAndMatrixParameterValues = new HashMap<String, Object>();
-        $ctorBody.assign($templateMatrixParamValMap, JExpr._new(hashMapOfStringObject));
-        //for (PathSegment segment: resource.getPathSegments()) {
         {
-            for (Param p: segment.getTemplateParameters()) {
-                // codegen: templateAndMatrixParameterValues.put(name, value);
-                $ctorBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(GeneratorUtil.makeParamName(p.getName())));
-            }
-            for (Param p: segment.getMatrixParameters()) {
-                if (p.isRequired()  == Boolean.TRUE) {
+            // generate constructor with parameters 
+            // for the client and each WADL defined path parameter
+            JMethod $ctor = $impl.constructor(JMod.PUBLIC);
+            JDocComment jdoc = $ctor.javadoc();
+            jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE_CLIENT());
+
+            // Client reference
+            JVar $clientParam = $ctor.param($clientReference.type(), "client");
+            JVar $uriParam = $ctor.param(codeModel.ref(java.net.URI.class), "baseUri");
+
+            // Only generate entries for current path segement
+            contructorHasParameters = generateParameterForPathSegment(resource.getPathSegment(), $ctor, true, $impl);
+
+            //
+            JBlock $ctorBody = $ctor.body();
+
+            // Generate a contructor with cliet,baseUri and parameters
+            //
+            $ctorBody.assign($clientReference, $clientParam); 
+
+            // Only need to process the current path segment
+
+            $ctorBody.assign($uriBuilder,
+                    uriBuilderClass.staticInvoke("fromUri").arg($uriParam));
+            $ctorBody.assign($uriBuilder, 
+                    $uriBuilder.invoke("path").arg(JExpr.lit(segment.getTemplate())));
+
+
+            // codegen: templateAndMatrixParameterValues = new HashMap<String, Object>();
+            $ctorBody.assign($templateMatrixParamValMap, JExpr._new(hashMapOfStringObject));
+            //for (PathSegment segment: resource.getPathSegments()) {
+            {
+                for (Param p: segment.getTemplateParameters()) {
                     // codegen: templateAndMatrixParameterValues.put(name, value);
                     $ctorBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(GeneratorUtil.makeParamName(p.getName())));
+                }
+                for (Param p: segment.getMatrixParameters()) {
+                    if (p.isRequired()  == Boolean.TRUE) {
+                        // codegen: templateAndMatrixParameterValues.put(name, value);
+                        $ctorBody.invoke($templateMatrixParamValMap, "put").arg(JExpr.lit(p.getName())).arg(JExpr.ref(GeneratorUtil.makeParamName(p.getName())));
+                    }
                 }
             }
         }
 
+        // If we have parameters then generate another constructor that tries
+        // to extract the parameters from the URI
+        if (contructorHasParameters)
+        {
+            // generate constructor without parameters
+            // buildig a template to extract them where necessary
+            JMethod $ctor = $impl.constructor(JMod.PUBLIC);
+            JDocComment jdoc = $ctor.javadoc();
+            jdoc.append(Wadl2JavaMessages.CREATE_INSTANCE_CLIENT_URI());
+
+            // Client reference
+            JVar $clientParam = $ctor.param($clientReference.type(), "client");
+            JVar $uriParam = $ctor.param(codeModel.ref(java.net.URI.class), "uri");
+
+            //
+            JBlock $ctorBody = $ctor.body();
+
+            // Generate a contructor with cliet,baseUri and parameters
+            //
+            $ctorBody.assign($clientReference, $clientParam); 
+
+            // Build us the full template
+
+            String uriPart = resource.getAllResourceUriTemplate();
+            JVar $template = $ctorBody.decl(codeModel._ref(StringBuilder.class), "template",
+                    JExpr._new(codeModel._ref(StringBuilder.class))
+                    .arg($global_base_uri.invoke("toString")));
+            JConditional $endsWithSlash = $ctorBody._if(
+                    JOp.ne(
+                        $template.invoke("charAt").arg(
+                           JOp.minus($template.invoke("length"), JExpr.lit(1))),
+                    JExpr.lit('/')));
+            $endsWithSlash._then().invoke($template, "append").arg( 
+                    uriPart);
+            $endsWithSlash._else().invoke($template, "append").arg( 
+                    uriPart.substring(1));
+
+            // Only need to process the current path segment
+
+            $ctorBody.assign($uriBuilder,
+                    uriBuilderClass.staticInvoke("fromPath").arg($template.invoke("toString")));
+            
+            // codegen: templateAndMatrixParameterValues = new HashMap<String, Object>();
+            $ctorBody.assign($templateMatrixParamValMap, JExpr._new(hashMapOfStringObject));
+
+            // Extract the parameters using UriTemplate
+            
+            JClass hashMapOfStringString = codeModel.ref(HashMap.class).narrow(
+                    String.class, String.class);
+            
+            JType $uriTemplate = uriTemplateType(); //codeModel.ref("com.sun.jersey.api.uri.UriTemplate");
+            JVar $uriTemplateInstance = $ctorBody.decl($uriTemplate, "uriTemplate",
+                    JExpr._new($uriTemplate).arg($template.invoke("toString")));
+            JVar $extractedParameters = $ctorBody.decl(hashMapOfStringString, "parameters",
+                    JExpr._new(hashMapOfStringString));
+            $ctorBody.invoke($uriTemplateInstance, "match")
+                    .arg($uriParam.invoke("toString"))
+                    .arg($extractedParameters);
+            $ctorBody.invoke($templateMatrixParamValMap,"putAll").arg($extractedParameters);
+        }
+
+        
+        
         $class = $impl;
         return $class;
     }
@@ -561,15 +625,19 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * @param method the method we are working on.
      * @param generateBeanDefinitions when {@link true}, bean definitions will be generated.
      * @param contextClass the class we are generating in the context of.
+     * @return true if any parameters are needed
      */
-    private void generateParameterForPathSegment(
+    private boolean generateParameterForPathSegment(
             PathSegment segment, JMethod method, 
             boolean generateBeanDefinitions, JDefinedClass contextClass) {
+        
+        boolean required = false;
         List<Param> matrixParameters = segment.getMatrixParameters();
 
         for (Param p: segment.getTemplateParameters()) {
             method.param(GeneratorUtil.getJavaType(p, codeModel, contextClass, javaDoc),
                     GeneratorUtil.makeParamName(p.getName()));
+            required = true;
             javaDoc.generateParamDoc(p, method);
             if (generateBeanDefinitions) {
                 generateBeanProperty(contextClass, matrixParameters, p, false);
@@ -577,6 +645,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
         for (Param p: matrixParameters) {
             if (p.isRequired() == Boolean.TRUE) {
+                required = true;
                 method.param(GeneratorUtil.getJavaType(p, codeModel, contextClass, javaDoc),
                         GeneratorUtil.makeParamName(p.getName()));
                 javaDoc.generateParamDoc(p, method);
@@ -585,6 +654,8 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                 generateBeanProperty(contextClass, matrixParameters,p, false);
             }
         }
+        
+        return required;
     }
     
     

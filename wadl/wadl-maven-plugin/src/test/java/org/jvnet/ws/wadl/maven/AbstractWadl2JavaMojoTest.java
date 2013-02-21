@@ -1029,6 +1029,28 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         
         assertThat("http://localhost:7101/JerseySchemaGen-Examples-context-root/jersey/path/ReplacementParam1/Param2",
                 equalTo(_requests.get(0).getURI().toString()));
+        
+
+        // Now lets try to create from a URI
+        // then modify that properly
+        
+        Object param3 = constructor().withParameterTypes(getClientClass(), URI.class).in(
+                param2.getClass())
+                .newInstance(_client, URI.create("http://localhost:7101/JerseySchemaGen-Examples-context-root/jersey/path/ReplacementParam1/Param2"));
+        
+        Object param4 = method("setParam2").withParameterTypes(String.class).in(param2).invoke("Param2Revision2");
+        
+        // Now send the request, we really don't care abou the response
+        //
+        
+        simpleReturn = method("getAsXml").withReturnType(String.class).withParameterTypes(Class.class).in(param4)
+                .invoke(String.class);
+        
+        // Check that the the URL is correct
+        
+        assertThat("http://localhost:7101/JerseySchemaGen-Examples-context-root/jersey/path/ReplacementParam1/Param2Revision2",
+                equalTo(_requests.get(1).getURI().toString()));
+        
     }
 
 

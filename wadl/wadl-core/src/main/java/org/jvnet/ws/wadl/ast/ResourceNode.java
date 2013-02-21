@@ -197,6 +197,40 @@ public class ResourceNode extends AbstractNode {
     public String getUriTemplate() {
         return pathSegment.getTemplate();
     }
+    
+    
+    /**
+     * @return A template that contains all parent resources; but not
+     *   the base URI. This path will start with a '/' in order to 
+     *   make the code we generate less complicated
+     */
+    public String getAllResourceUriTemplate() {
+        StringBuilder sb = new StringBuilder("/");
+        List<PathSegment> segments = getPathSegments();
+        for(int segement = 1; segement < segments.size(); segement++) {
+            String pathSegment = segments.get(segement).getTemplate();
+            boolean bufferEndsInSlash = sb.length() > 0 ? sb.charAt(sb.length()-1)=='/': false;
+            boolean pathSegmentStartsWithSlash = pathSegment.startsWith("/");
+            
+            if (pathSegmentStartsWithSlash && bufferEndsInSlash) {
+                // We only need the one slash, so remove one from the 
+                // pathSegement
+                sb.append(pathSegment, 1, pathSegment.length());
+            }
+            else if (pathSegmentStartsWithSlash ^ bufferEndsInSlash) {
+                // Only one has a slash so it is fine to append
+                sb.append(pathSegment);
+            }
+            else {
+                // Neither has one so add a slash in
+                sb.append('/');
+                sb.append(pathSegment);
+            }
+        }
+        
+        return sb.toString();
+    }
+    
 
     /**
      * Override the default generated class name.

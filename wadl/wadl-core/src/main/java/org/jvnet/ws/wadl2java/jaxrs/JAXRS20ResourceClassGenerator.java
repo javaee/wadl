@@ -107,6 +107,12 @@ public class JAXRS20ResourceClassGenerator
         return codeModel.ref("javax.ws.rs.client.WebTarget"); // javax.ws.rs.client.Invocation$Builder");
     }
 
+    
+    @Override
+    protected JClass uriTemplateType() {
+        return codeModel.ref("org.glassfish.jersey.uri.UriTemplate");
+    }
+    
     @Override
     protected JClass resourceBuilderType() {
         return codeModel.ref("javax.ws.rs.client.Invocation.Builder");

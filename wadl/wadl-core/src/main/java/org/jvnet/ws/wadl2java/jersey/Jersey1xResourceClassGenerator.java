@@ -84,7 +84,10 @@ public class Jersey1xResourceClassGenerator
         return codeModel.ref("com.sun.jersey.api.client.ClientResponse");
     }
 
-    
+    @Override
+    protected JClass uriTemplateType() {
+        return codeModel.ref("com.sun.jersey.api.uri.UriTemplate");
+    }
     
     @Override
     protected JClass genericTypeType() {
