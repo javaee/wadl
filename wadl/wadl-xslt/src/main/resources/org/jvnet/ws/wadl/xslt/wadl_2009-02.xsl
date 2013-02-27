@@ -688,6 +688,9 @@ h1.hidden {
              ]]>
             </style>
          </header>
+         <head>
+           <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+         </head>
          <body>
             <h2 class="title">
                <xsl:call-template name="fetchTitle"/>
