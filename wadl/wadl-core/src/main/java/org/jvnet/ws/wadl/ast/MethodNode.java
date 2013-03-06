@@ -171,7 +171,10 @@ public class MethodNode extends AbstractNode {
         ArrayList<Param> optional = new ArrayList<Param>();
         filterParams(optional, getQueryParameters(), false);
         filterParams(optional, getHeaderParameters(), false);
-        filterParams(optional, getMatrixParameters(), false);
+        
+        // Matrix paramters are dealt with differently so should
+        // not be included in this list
+//        filterParams(optional, getMatrixParameters(), false);
         return optional;
     }
     

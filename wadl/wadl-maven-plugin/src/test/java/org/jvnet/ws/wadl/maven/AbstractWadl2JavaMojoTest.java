@@ -1053,6 +1053,42 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         
     }
 
+    
+    /**
+     * Check to see that we don't get duplicated methods when there
+     * are matrix parameters present but no other options parameters
+     * as they are no generated as java method parameters.
+     */
+    public void testWadlWithSingleOptionsMatrixParam() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("matrixparam-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+
+        // Verify the files are in place
+
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Localhost_JerseySchemaGenExamplesContextRootJersey.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+    }    
+    
 
     /**
      * Tests the case where we have a response but no content type, previously
