@@ -80,7 +80,7 @@
       
       <!-- resource type thingy -->
       <xsl:variable name="nodeName">
-         <xsl:choose>
+         <xsl:choose>   
             <xsl:when test="local-name(.) = 'resource'">
                <xsl:message>Calling lookupResource with resource, going to ignore that</xsl:message>
            </xsl:when>
@@ -106,7 +106,7 @@
    
       <xsl:param name="context" as="node()"/>
 
-    <!--  <xsl:message>lookupResourceReferences <xsl:value-of select="local-name($context)"/> 
+<!--    <xsl:message>lookupResourceReferences <xsl:value-of select="local-name($context)"/> 
       </xsl:message> -->
 
       
@@ -826,7 +826,7 @@ h1.hidden {
                <xsl:call-template name="processResource">
                   <xsl:with-param name="parentPath" select="../@base"/>
                   <!-- Deference the resource type if required -->
-                  <xsl:with-param name="resourceType" select="a:lookupReference(.)/node()"/>
+                  <xsl:with-param name="resourceType" select="."/>
                </xsl:call-template>
              </xsl:for-each>
          </li>
@@ -841,8 +841,16 @@ h1.hidden {
      <!-- This is the current resource to work on, could be a deferenced type
          hence this explicity parameter -->
      <xsl:param name="resourceType" required="yes"/>
+
+
      <!-- This allows us to walk back up the tree when we have object deferences -->
-     <xsl:param name="resourceObjectPath" select="."/> 
+     <xsl:param name="resourceObjectPath" select="empty"/> 
+
+
+<!--     <xsl:message>Resource Type <xsl:value-of select="local-name($resourceType)" />
+     </xsl:message> -->
+
+
      
      <!-- This is the current resource to work on, could be a deferenced type
          hence this explicity parameter -->
@@ -931,7 +939,7 @@ h1.hidden {
                      <xsl:with-param name="parentPath" select="$currentPath"/>
                      <!-- We don't dereference the resource, this is done in resource types -->
                      <xsl:with-param name="resourceType" select="."/>
-                     <xsl:with-param name="resourceObjectPath" select="$resourceTypes | $resourceObjectPath"/>
+                     <xsl:with-param name="resourceObjectPath" select="$resourceTypes/* | $resourceObjectPath"/>
                   </xsl:call-template>
          </xsl:for-each>   
      </xsl:if>
@@ -973,9 +981,27 @@ h1.hidden {
             <xsl:if test="string-length($testButtonUri)>0">
           <div style="text-align: right">
                   <form method="get" action="{$testButtonUri}">
+
+                     <!-- walk up and down the tree looking for parameters -->
+
+                     <xsl:variable name="unfilteredParams">
+                        <xsl:sequence select="$method/wadl:request/wadl:param" />
+                        <xsl:sequence select="$resourceTypes/*/wadl:param" />
+                        <xsl:sequence select="$resourceObjectPath/wadl:param" />
+                     </xsl:variable>
+
+
+                    
+                    <!-- <xsl:message>Unreferenced the parameters
+                       <xsl:for-each select="$unfilteredParams/*" >
+                          <xsl:value-of select="local-name(.)"/> - <xsl:value-of select="@name"/>
+                       </xsl:for-each>
+                       </xsl:message> -->
+
+
                      <!-- Template in some query parameters -->
                      <xsl:variable name="queryParams"
-                                   select="a:lookupReferences($resourceObjectPath/wadl:param | $method/wadl:request/wadl:param)/wadl:param[@style='query']"/>
+                                   select="a:lookupReferences($unfilteredParams/*)/wadl:param[@style='query']"/>
                      <xsl:variable name="queryParam" select="string-join($queryParams/@name,'=X&amp;')"/>
                      <!--  Not sure why this doesn't work        select="string-join($queryParams/concat(@name,'=X'),'&amp;')"/> -->
                      <input type="hidden" name="queryParam" value="{$queryParam}"/>
@@ -990,8 +1016,21 @@ h1.hidden {
                 </xsl:variable>
                      <!-- Template in some matrix parameters, only on the resource elements as per the WADL
                      spec but under request because of JERSEY-1336 -->
+                     
+                     
+                     
                      <xsl:variable name="matrixParams"
-                                   select="a:lookupReferences($resourceObjectPath/wadl:param | $method/wadl:request/wadl:param)/wadl:param[@style='matrix']"/>
+                                   select="a:lookupReferences($unfilteredParams/*)/wadl:param[@style='matrix']"/>
+
+
+                     <!--<xsl:message>Checking the parameters
+                       <xsl:for-each select="$matrixParams" >
+                          <xsl:value-of select="local-name(.)"/> - <xsl:value-of select="@name"/>
+                       </xsl:for-each>
+                       </xsl:message> -->
+                       
+
+
                      <!-- boolean parameters either exist or not, don't have a value -->
                      <xsl:variable name="matrixParam1"
                                    select="string-join($matrixParams[contains(@type,'boolean')]/@name,'=X;')"/>
