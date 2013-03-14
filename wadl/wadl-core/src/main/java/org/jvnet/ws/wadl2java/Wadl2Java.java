@@ -410,15 +410,17 @@ public class Wadl2Java {
                             
                         }
                             
-                        // By default assume a xml schema
-                        if (peakContent==null || peakContent.contains("<?xml")) {
-                            s2j.parseSchema(input);
-                        // Otherwise assume 
-                        } else if (peakContent.contains("{")) {
+                        // By default assume a xml schema, better guess
+                        // because some XML files don't start with <?xml
+                        // as per bug WADL-66
+                        if (peakContent.matches("^\\s*\\{")) {
                             // We are guessing this is a json type
                             jsonSchemas.add(URI.create(input.getSystemId()));
                         }
-
+                        else { //if (peakContent==null || peakContent.contains("<?xml") || peakContent.startsWith("<")) {
+                            s2j.parseSchema(input);
+                        } 
+                    
                     }
 
                     public void processSchema(String uri, Element node) {

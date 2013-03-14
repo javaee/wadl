@@ -1293,12 +1293,38 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         // Check expected response seen
         assertEquals("Check that our precanned response is used","Nested", result);
         // Check URI
-        String uri = "http://example.com/root;rootM=XXRootM;repeatingM=XXOne;repeatingM=XXTwo/sub;subM=XXSubM;subM=XXSubM?subQ=subq&subMethodQ=submethodq&repeatingQ=XXOne&repeatingQ=XXTwo";
+        String uri = "http://example.com/root;rootM=XXRootM;repeatingM=XXOne;repeatingM=XXTwo/sub;subM=XXSubM?subMethodQ=submethodq&repeatingQ=XXOne&repeatingQ=XXTwo&subQ=subq";
         assertEquals("Should only have recorded one request",1, _requests.size());
         String actualURI = _requests.get(0).getURI().toString();
         
         // Removed until Jersey-1369 is resolved
-        //assertEquals("We should have a really funky URI",uri, actualURI);
+        assertEquals("We should have a really funky URI",uri, actualURI);
+        
+
+        // Populate a canned response again
+        
+        _cannedResponse.add(new CannedResponse(
+                200, "text/plain", "Nested"));
+        
+        // Invoke with null parameters, as per WADL-65
+        
+        result = method("getAs").withReturnType(String.class)
+                .withParameterTypes(String.class, String.class, List.class,String.class,  String.class, List.class, Class.class)
+                .in(sub)
+                .invoke(
+                    null, null, null,
+                    null, null, null,
+                    String.class);
+        // Check expected response seen
+        assertEquals("Check that our precanned response is used","Nested", result);
+        // Check URI
+        uri = "http://example.com/root;rootM=XXRootM;repeatingM=XXOne;repeatingM=XXTwo/sub;subM=XXSubM";
+        assertEquals("Should only have recorded one request",2, _requests.size());
+        
+        actualURI = _requests.get(1).getURI().toString();
+        
+        // Removed until Jersey-1369 is resolved
+        assertEquals("We should have a really funky URI",uri, actualURI);
         
     }
 

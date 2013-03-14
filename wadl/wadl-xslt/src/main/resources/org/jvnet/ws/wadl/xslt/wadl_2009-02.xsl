@@ -498,6 +498,15 @@ ul.horizontal li {
     display:inline;
     font-size:0.9em;
 }
+
+/*
+Get ride of those little dots all over the place
+*/
+
+li.blockList {
+    list-style-type:none; 
+}
+
 ul.inheritance {
     margin:0;
     padding:0;
@@ -522,7 +531,7 @@ ul.blockList li.blockList, ul.blockListLast li.blockList {
 ul.blockList ul.blockList li.blockList, ul.blockList ul.blockListLast li.blockList {
     padding:0px 20px 5px 10px;
     border:1px solid #9eadc0;
-    background-color:#f9f9f9;
+    background-color:#f9f9f9; 
 }
 ul.blockList ul.blockList ul.blockList li.blockList, ul.blockList ul.blockList ul.blockListLast li.blockList {
     padding:0 0 5px 8px;
@@ -1168,9 +1177,9 @@ h1.hidden {
                   [
                   <xsl:value-of select="@style"/>
                   ]
-                  <xsl:if test="@required eq 'true'">@required</xsl:if>
-                  <xsl:if test="@repeating eq 'true'">@repeating</xsl:if>
-                  <xsl:if test="@fixed eq 'true'">@fixed</xsl:if>
+                  <xsl:if test="@required eq 'true'">@required<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</xsl:if>
+                  <xsl:if test="@repeating eq 'true'">@repeating<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</xsl:if>
+                  <xsl:if test="@fixed eq 'true'">@fixed<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</xsl:if>
                   <!-- TODO display something for required and default value -->
                   <xsl:call-template name="fetchDocumentation"/>
                </dd>
@@ -1218,18 +1227,17 @@ h1.hidden {
                         </xsl:call-template>
                   </xsl:if>
                   </code>
+                  <xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;
                   <xsl:call-template name="fetchDocumentation"/>
                   <!-- Display the parameters -->
-                  <dd>
-                     <dl>
-                        <xsl:call-template name="fetchParameters">
-                           <xsl:with-param name="context">
-                              <xsl:sequence select="."/>
-                           </xsl:with-param>
-                           <xsl:with-param name="resourceObjectPath" select="$resourceObjectPath"/>
-                        </xsl:call-template>
-                     </dl>
-                  </dd>
+                  <dl>
+                     <xsl:call-template name="fetchParameters">
+                       <xsl:with-param name="context">
+                          <xsl:sequence select="."/>
+                       </xsl:with-param>
+                       <xsl:with-param name="resourceObjectPath" select="$resourceObjectPath"/>
+                     </xsl:call-template>
+                 </dl>
                </dd>
             </xsl:for-each>  
          </xsl:when>

@@ -1292,13 +1292,25 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                         
                     }
 
-                    // codegen replace parameters
-                    $methodBody.
+                    // codegen replace parametersm but check if null
+                    JBlock $throwBlock = $methodBody._if(toSet.eq(JExpr._null()))._then();
+
+                    JConditional iffy = $methodBody._if(JOp.ne(toSet, JExpr._null()));
+                    String replaceMethodName = matrix ? "replaceMatrixParam" : "replaceQueryParam";
+                    iffy._then().
                         assign($localUriBuilder, 
                                 $localUriBuilder.invoke(
-                                matrix ? "replaceMatrixParam" : "replaceQueryParam")
+                                replaceMethodName)
                                 .arg(q.getName())
-                                .arg(q.isRepeating() ? JExpr.cast(codeModel.ref(Object[].class), toSet.invoke("toArray")) :  toSet));
+                                .arg(q.isRepeating() ? 
+                                    JExpr.cast(codeModel.ref(Object[].class), toSet.invoke("toArray"))
+                                    : toSet));
+                    iffy._else().
+                        assign($localUriBuilder, 
+                                $localUriBuilder.invoke(
+                                replaceMethodName)
+                                .arg(q.getName())
+                                .arg(JExpr.cast(codeModel.ref(Object[].class),JExpr._null())));
                 }
             }
             
