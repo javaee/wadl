@@ -1295,6 +1295,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                     // codegen replace parametersm but check if null
                     JBlock $throwBlock = $methodBody._if(toSet.eq(JExpr._null()))._then();
 
+                    // As per WADL-65, check for null parameters
                     JConditional iffy = $methodBody._if(JOp.ne(toSet, JExpr._null()));
                     String replaceMethodName = matrix ? "replaceMatrixParam" : "replaceQueryParam";
                     iffy._then().
