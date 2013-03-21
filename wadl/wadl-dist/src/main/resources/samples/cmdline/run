@@ -9,6 +9,5 @@ mkdir -p ./gen-src
 
 ../../bin/wadl2java \
     -o ./gen-src \
-    -p com.yahoo.search \
-    -c ../share/binding.xjb \
-    ../share/YahooSearch.wadl
+    -p bbc.schedule \
+    ../share/bbc.wadl

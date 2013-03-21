@@ -797,6 +797,15 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         runBeanInputOuputJAXB("hellobean-wadl-customname.xml", "Bean", "BeanBean", "beanBean");
     }
 
+    /**
+     * Test the case where the schema has not target name space
+     */
+    public void testHelloBeanWithNoNamespace() throws Exception {
+        runBeanInputOuputJAXB("hellobean-nonamespace-wadl.xml", "WwwExampleCom_Resource", "Bean", "bean",
+                "generated/",
+                null);
+    }
+
     
     /**
      * Test the case where we have the types generating as @XmlType not
@@ -807,7 +816,24 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
             String className,
             String innerClassName,
             String accesorName) throws Exception {
-    
+        
+        runBeanInputOuputJAXB(configurationFile, className, innerClassName, accesorName, 
+                "com/example/beans/",
+                "http://example.com/beans");
+    }
+        
+    /**
+     * Test the case where we have the types generating as @XmlType not
+     * @XmlRootElement so we need to generate some extra boilerplate code.
+     */
+    private void runBeanInputOuputJAXB(
+            String configurationFile,
+            String className,
+            String innerClassName,
+            String accesorName,
+            String beanPathPrefix,
+            String beanTargetNamespace) throws Exception {
+        
         
         // Prepare
         Wadl2JavaMojo mojo = getMojo(configurationFile);
@@ -833,15 +859,17 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         assertThat(targetDirectory, exists());
         assertThat(targetDirectory, contains("test"));
         assertThat(targetDirectory, contains("test/" + className + ".java"));
-        assertThat(targetDirectory, contains("com/example/beans/Bean.java"));
+        assertThat(targetDirectory, contains(beanPathPrefix + "Bean.java"));
 
         // Check that the generated code compiles
         ClassLoader cl = compile(targetDirectory);
 
+        String beanPackagePrefix = beanPathPrefix.replace("/", ".");
+        
         // Just check that the base class works
         Class $ProxyRoot = cl.loadClass("test." + className);
         Class $ProxyInnerClass = cl.loadClass("test." + className + "$" + innerClassName);
-        Class $BeanClass = cl.loadClass("com.example.beans.Bean");
+        Class $BeanClass = cl.loadClass(beanPackagePrefix + "Bean");
         
         
         // Check we have the right mesage format
@@ -877,10 +905,18 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
             fis.close();
         }
         
+        
+        
         // Make sure we wrap the @XmlType as a JAXBElement with the right
         // namespace
+
+        String pattern = "new JAXBElement(new QName(" + 
+            (beanTargetNamespace!=null ?
+            "\"" + beanTargetNamespace +"\", " : "\"\", ") 
+            + "\"bean\"), " + beanPackagePrefix + "Bean.class, input)";
         
-        boolean containsBinding = contents.contains("new JAXBElement(new QName(\"http://example.com/beans\", \"bean\"), com.example.beans.Bean.class, input)");
+        
+        boolean containsBinding = contents.contains(pattern);
         if (configurationFile.contains("simplexjc")) {
             assertFalse(
                  containsBinding);            
@@ -899,12 +935,16 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         // Invoke the service
         
         
-        Class beanObjClass = type("com.example.beans.Bean").withClassLoader(cl).load();
+        Class beanObjClass = type(beanPackagePrefix + "Bean").withClassLoader(cl).load();
         Object beanObj = constructor().in(beanObjClass).newInstance();
         method("setMessage").withParameterTypes(String.class).in(beanObj).invoke("Bob");
+
+        String namespaceBit = beanTargetNamespace!=null ? "xmlns=\"" + beanTargetNamespace + "\"" : "";
         
         _cannedResponse.add(new CannedResponse(
-                200, "application/xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns2:bean xmlns:ns2=\"http://example.com/beans\"><message>Hello Bob</message></ns2:bean>"));
+                200, "application/xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><bean " 
+                + namespaceBit
+                + "><message>Hello Bob</message></bean>"));
         
         Object returnObj = 
                 method("putXmlAsBean").withReturnType(beanObjClass)

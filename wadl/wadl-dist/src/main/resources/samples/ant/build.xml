@@ -10,9 +10,9 @@ http://www.opensource.org/licenses/cddl1.php
 See the License for the specific language governing
 permissions and limitations under the License.
 -->
-<project name="wadl2java-yahoo" default="generate-sources" basedir=".">
+<project name="wadl2java-bbc" default="generate-sources" basedir=".">
     
-    <description>Builds stubs for accessing Yahoo Search service.</description>
+    <description>Builds stubs for accessing BBC Schedule service.</description>
     
     <taskdef name="wjc" 
              classname="org.jvnet.ws.wadl2java.WJCTask">
@@ -25,12 +25,12 @@ permissions and limitations under the License.
     <target name="generate-sources">
         <echo message="Compiling the description..." />
         <mkdir dir="gen-src"/>
-        <wjc description="../share/YahooSearch.wadl" 
-             package="com.yahoo.search" 
-             autoSchemaPackage="true" 
+        <wjc description="../share/bbc.wadl" 
+             package="bbc.schedule" 
+             autoSchemaPackage="false" 
              target="gen-src">
-            <customizations dir="${basedir}/../share" 
-                            includes="binding.xjb" />
+            
+            <customClassName uri="http://www.bbc.co.uk" classname="BBCSchedule" />            
             <produces dir="gen-src" 
                       includes="**/*.java" />
             <depends dir="${basedir}/../share" 

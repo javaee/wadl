@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <project>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.yahoo.search</groupId>
-  <artifactId>search-api</artifactId>
+  <groupId>bbc.schedule</groupId>
+  <artifactId>schedule-api</artifactId>
   <version>${project.version}</version>
-  <name>Yahoo Search API</name>
+  <name>BBC Schedule API</name>
   <repositories>
     <repository>
       <id>wadl-repository</id>
@@ -47,6 +47,11 @@
       <artifactId>wadl-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-client</artifactId>
+      <version>1.17</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -71,11 +76,14 @@
         </executions>
         <configuration>
           <sourceDirectory>../share</sourceDirectory>
-          <packageName>com.yahoo.search</packageName>
-          <autopackaging>true</autopackaging>
-          <customizations>
-            <customization>../share/binding.xjb</customization>
-          </customizations>
+          <packageName>bbc.schedule</packageName>
+          <autoPackaging>false</autoPackaging>
+          <customClassNames>
+           <property>
+            <name>http://www.bbc.co.uk</name>
+            <value>BBCSchedule</value>
+           </property>
+          </customClassNames>
         </configuration>
       </plugin>
     </plugins>

@@ -11,7 +11,9 @@
  permissions and limitations under the License.
 -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0"
-                xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                xmlns:wadl="http://wadl.dev.java.net/2009/02" 
+                xmlns:wadljson="http://wadl.dev.java.net/2009/02/json-schema"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 xmlns:a="urn:functions" xmlns:fn="http://www.w3.org/2005/xpath-functions"
                 xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:pxsltu="http://www.oracle.com/XSL/Transform/java/org.jvnet.ws.wadl.xslt.WadlXsltUtils"
@@ -21,6 +23,13 @@
    <!-- This parameter allows this page to be used as a test tool, this value
      should be a URI that can be used to invoke a REST test tool of some kind -->
    <xsl:param name="testButtonUri" as="xsd:string"/>
+   
+   
+   <!-- This is a workaround for the fact that elements in a sequence loose there
+        original document, going to have to rethink that code but until then 
+        at least make this work for simple one document WADL files -->
+   <xsl:variable name="root" select="/" />
+   
    <!-- The Oracle XSL transformer doesn't support tokenize, so we have to do this
         using a recursive template -->
    <xsl:template name="tokenize">
@@ -107,6 +116,7 @@
       <xsl:param name="context" as="node()"/>
 
 <!--    <xsl:message>lookupResourceReferences <xsl:value-of select="local-name($context)"/> 
+     and root <xsl:value-of select="local-name(root($context))"/>
       </xsl:message> -->
 
       
@@ -260,6 +270,11 @@ h5 {
 h6 {
     font-size:1.1em;
 }
+
+span.documentation {
+   font-size:1.2em;
+}
+
 ul {
     list-style-type:disc;
 }
@@ -860,10 +875,28 @@ h1.hidden {
      </xsl:message> -->
 
 
+<!--    <xsl:message>Document root of resource type
+    <xsl:value-of select="local-name(.)"/>
+    <xsl:value-of select="local-name($resourceType/..)"/>
+    <xsl:value-of select="local-name($resourceType/../..)"/>
+    <xsl:value-of select="local-name($resourceType/../../..)"/>
+    <xsl:value-of select="local-name(root($resourceType))"/>
+    </xsl:message> -->
+
      
      <!-- This is the current resource to work on, could be a deferenced type
          hence this explicity parameter -->
      <xsl:variable name="resourceTypes" select="a:lookupResourceReferences($resourceType)"/>
+
+
+<!--    <xsl:message>Document root of resource types 
+    
+        <xsl:for-each select="$resourceTypes/*" >
+        
+    <xsl:value-of select="local-name(.)"/>
+    <xsl:value-of select="local-name(root(.))"/>
+    </xsl:for-each>
+    </xsl:message> -->
      
      
      <!-- Debug the resource ObjectPath -->
@@ -972,6 +1005,9 @@ h1.hidden {
       <xsl:param name="currentPath" required="yes"/> 
 
       <xsl:variable name="name" select="$method/@name"/>
+
+
+<!--    <xsl:message>Document root of method <xsl:value-of select="local-name(root($method))"/> </xsl:message> -->
 
    
       <a>
@@ -1173,6 +1209,11 @@ h1.hidden {
                      <xsl:if test="@type"><xsl:value-of select="substring-after(@type, ':')"/><xsl:value-of select="' '"/></xsl:if>
                      <xsl:value-of select="@name"/>
                      <xsl:if test="@default"> = <xsl:value-of select="@default"/> </xsl:if>
+
+                     <xsl:if test="./wadl:option">
+                       {<xsl:value-of select="string-join(./wadl:option/@value, '|')"/>}
+                     </xsl:if>
+
                   </code>
                   [
                   <xsl:value-of select="@style"/>
@@ -1180,6 +1221,9 @@ h1.hidden {
                   <xsl:if test="@required eq 'true'">@required<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</xsl:if>
                   <xsl:if test="@repeating eq 'true'">@repeating<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</xsl:if>
                   <xsl:if test="@fixed eq 'true'">@fixed<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</xsl:if>
+
+
+
                   <!-- TODO display something for required and default value -->
                   <xsl:call-template name="fetchDocumentation"/>
                </dd>
@@ -1221,11 +1265,20 @@ h1.hidden {
                   <code>
                      <xsl:value-of select="@mediaType"/>
                      <xsl:if test="@element"> : 
-                     <xsl:call-template name="resolveQName">
-                           <xsl:with-param name="qname" select="@element"/>
-                           <xsl:with-param name="document" select="root(.)"/>
+                         <xsl:call-template name="resolveQName">
+                               <xsl:with-param name="name" select="@element" />
+                               <xsl:with-param name="context" select="." />
+<!--                               <xsl:with-param name="document" select="root($context)"/> -->
+                                <!-- For the moment just support single document imports
+                                     as you cannot get a document from a element in a sequence -->
+                                <xsl:with-param name="document" select="$root"/>
                         </xsl:call-template>
-                  </xsl:if>
+                      </xsl:if>
+                      <xsl:if test="@wadljson:describedby"> : 
+                         <a href="{@wadljson:describedby}">   
+                            <xsl:value-of select="@wadljson:describedby" />
+                         </a>
+                      </xsl:if>
                   </code>
                   <xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;
                   <xsl:call-template name="fetchDocumentation"/>
@@ -1252,24 +1305,39 @@ h1.hidden {
    <!-- Work out whether a element can be referenced -->
    <xsl:template name="resolveQName">
 
-       <xsl:param name="qname" as="xsd:QName"/>
-       <xsl:param name="document"/>
+       <xsl:param name="name" as="xsd:string"/>
+       <xsl:param name="context" as="node"/>
+       <xsl:param name="document" as="node()"/>
 
-<!-- <xsl:message>Resolve qName type <xsl:value-of select="$qname"/></xsl:message>-->
+<!--      <xsl:message>Resolve qName type <xsl:value-of select="$qname"/></xsl:message>  -->
 
-       <!-- This appears to be broken in the Oracle XDK
-       <xsl:variable name="namepsace" select="namespace-uri-from-QName($qname)"/>
-       <xsl:variable name="localname" select="local-name-from-QName($qname)"/> -->
 
-       <xsl:variable name="ns-prefix" select="substring-before($qname, ':')"/> 
-<!--       <xsl:message><xsl:value-of select="$ns-prefix"/></xsl:message> -->
-       <xsl:variable name="localname" select="substring-after($qname, ':')"/>
-<!--       <xsl:message><xsl:value-of select="$localname"/></xsl:message> -->
-       <xsl:variable name="ns-uri" select="namespace::node()[local-name()=$ns-prefix]"/>
-<!--       <xsl:message><xsl:value-of select="$ns-uri"/></xsl:message> -->
+
+       <xsl:variable name="prefix" as="xsd:string" select="substring-before($name, ':')" />
+       <xsl:variable name="string-localname" as="xsd:string" select="substring-after($name, ':')" />
+       
+       <!-- If the prefix is invalid the resolve-QNAme function throws and exception and becuase we 
+            are not allowed to have nice things such as exception handling we have to check
+            first that the prefix is avaliable -->
+       <xsl:variable name="qname" select="if (contains(string-join(in-scope-prefixes(.), '|'), $prefix)) then resolve-QName($name,$context) else QName('', $string-localname)"  as="xsd:QName" />
+
+       <xsl:variable name="ns-uri" select="namespace-uri-from-QName($qname)"/>
+       <xsl:variable name="localname" select="local-name-from-QName($qname)"/> 
+
+
+<!--       <xsl:message>namespace <xsl:value-of select="$ns-uri"/></xsl:message> 
+       <xsl:message>localname <xsl:value-of select="$localname"/></xsl:message> -->
        
       
-<!--       <xsl:message>Looking at document element <xsl:value-of select="name($document/*)"/></xsl:message> -->
+<!--        <xsl:message>Looking at document element <xsl:value-of select="local-name($document)"/>
+        
+         <xsl:for-each select="$document/*">
+            <xsl:value-of select="local-name($document)"/>
+         </xsl:for-each>
+
+        
+        </xsl:message>  -->
+
 
 
       <xsl:choose>
@@ -1293,17 +1361,17 @@ h1.hidden {
          <!-- Possibly incrediably expensive query for find out which schema file this is in -->
          <!-- Put back when bug 14215372 is resolved        
         see also bug 14215407 	-->
-         <xsl:when test="document($document/wadl:application/wadl:grammars/wadl:include/@href, $document)/xsd:schema[@targetNamespace = $ns-uri]/xsd:element[@name = $localname]">
+         <xsl:when test="document($document/wadl:application/wadl:grammars/wadl:include/@href, $document)/xsd:schema[@targetNamespace = $ns-uri or (not(@targetNamespace) and $ns-uri eq '')] /xsd:element[@name = $localname]">
    
-              <xsl:variable name="documentURI"
-                            select="document-uri(document($document/wadl:application/wadl:grammars/wadl:include/@href, $document)/xsd:schema[@targetNamespace = $ns-uri]/xsd:element[@name = $localname])"/>
+              <xsl:variable name="documentURI" 
+                            select="$document/wadl:application/wadl:grammars/wadl:include[document(@href, $document)/xsd:schema[@targetNamespace = $ns-uri  or (not(@targetNamespace) and $ns-uri eq '')]/xsd:element[@name = $localname]]/@href" />
    
-               <xsl:message>
-                  Found in External Schema <xsl:value-of select="$documentURI"/>
-               </xsl:message>
+<!--               <xsl:message>
+                  Found in External Schema <xsl:value-of select="$documentURI"/>#<xsl:value-of select="$localname"/>
+               </xsl:message>-->
       
-               <a href="{$documentURI}#{$localname}">
-               <xsl:value-of select="$qname"/>
+               <a href="{$documentURI}#{$localname}" title="{$ns-uri}:{$localname}">
+               <xsl:value-of select="$localname"/>
             </a> 
            </xsl:when>
          <xsl:otherwise>
@@ -1333,17 +1401,19 @@ h1.hidden {
     </xsl:template>
    <!-- Simple function to return documents, html and all for the current element -->
    <xsl:template name="fetchDocumentation">
-      <xsl:choose>
-         <!-- If we have child elements then copy them in -->
-         <xsl:when test="count(wadl:doc/*) > 0">
-           <xsl:copy-of select="wadl:doc/*|wadl:doc/text()"/>
-        </xsl:when>
-         <!-- Otherwise use the title -->
-         <xsl:when test="wadl:doc/@title">
-           <xsl:value-of select="wadl:doc/@title"/>
-        </xsl:when>
-         <!-- Or just leave a blank -->
-         <xsl:otherwise></xsl:otherwise>
-      </xsl:choose>
+      <span class="documentation">
+        <xsl:choose>
+           <!-- If we have child elements then copy them in -->
+           <xsl:when test="count(wadl:doc/*|wadl:doc/text()) > 0">
+             <xsl:copy-of select="wadl:doc/*|wadl:doc/text()"/>
+          </xsl:when>
+           <!-- Otherwise use the title -->
+           <xsl:when test="wadl:doc/@title">
+             <xsl:value-of select="wadl:doc/@title"/>
+          </xsl:when>
+           <!-- Or just leave a blank -->
+           <xsl:otherwise></xsl:otherwise>
+        </xsl:choose>
+      </span>
     </xsl:template>
 </xsl:stylesheet>

@@ -1,0 +1,39 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<ns0:application xmlns:ns0="http://wadl.dev.java.net/2009/02">
+   <ns0:doc xmlns:ns1="http://jersey.java.net/" ns1:generatedBy="Jersey: 1.9 09/02/2011 11:17 AM"/>
+   <ns0:grammars>
+      <ns0:include href="HelloBean.xsd">
+         <ns0:doc title="Generated" xml:lang="en"/>
+      </ns0:include>
+   </ns0:grammars>
+   <ns0:resources base="http://www.example.com/resource/">
+      <ns0:resource path="/bean">
+         <ns0:method id="getBean" name="GET">
+            <ns0:response>
+               <ns0:representation  element="bean" mediaType="application/xml"/>
+            </ns0:response>
+         </ns0:method>
+         <ns0:method id="putBean" name="PUT">
+            <ns0:request>
+               <ns0:representation  element="bean" mediaType="application/xml"/>
+            </ns0:request>
+            <ns0:response>
+               <ns0:representation  element="bean" mediaType="application/xml"/>
+            </ns0:response>
+         </ns0:method>
+         <ns0:method id="postBean" name="POST">
+            <ns0:request>
+               <ns0:representation  element="bean" mediaType="application/xml"/>
+            </ns0:request>
+            <ns0:response>
+               <ns0:representation  element="bean" mediaType="application/xml"/>
+            </ns0:response>
+         </ns0:method>
+         <ns0:method id="deleteBean" name="DELETE">
+            <ns0:response>
+               <ns0:representation mediaType="application/xml"/>
+            </ns0:response>
+         </ns0:method>
+      </ns0:resource>
+   </ns0:resources>
+</ns0:application>

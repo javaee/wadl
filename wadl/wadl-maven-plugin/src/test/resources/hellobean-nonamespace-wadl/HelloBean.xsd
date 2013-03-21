@@ -1,10 +1,9 @@
-<xsd:schema xmlns:ns0="http://example.com/beans" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/beans"
-  elementFormDefault="qualified">
+<xsd:schema  xmlns:xsd="http://www.w3.org/2001/XMLSchema" >
    <!-- Removed <!xml prefix to exercise WADL-66 --> 
    <xsd:complexType name="bean">
       <xsd:sequence>
          <xsd:element name="message" type="xsd:string" minOccurs="0"/>
       </xsd:sequence>
    </xsd:complexType>
-   <xsd:element name="bean" type="ns0:bean"/>
+   <xsd:element name="bean" type="bean"/>
 </xsd:schema>
