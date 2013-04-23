@@ -308,8 +308,6 @@ public class Wadl2JavaMojoTest extends AbstractWadl2JavaMojoTest<Client> {
 
     }
     
-    
-    
     /**
      * Tests the case in which a valid wadl file exists.
      */

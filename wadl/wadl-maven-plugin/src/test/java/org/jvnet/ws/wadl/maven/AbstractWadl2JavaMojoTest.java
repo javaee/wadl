@@ -1660,4 +1660,70 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
         Class $Root = cl.loadClass("test.Localhost_OfficeDirectory$Root");
         
     }    
+    
+    
+    
+
+    /**
+     * Check to see that we can generate JSON schema from a non-file
+     * URI and that we knock of file extensions when trying to figure
+     * out class names
+     */
+    public void testForecastWithJsonSchema() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("forecast.io-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        
+        assertThat(targetDirectory, contains("test/ApiForecastIo_Forecast.java"));
+        //Types
+        assertThat(targetDirectory, contains("test/Alert.java"));
+        assertThat(targetDirectory, contains("test/Currently.java"));
+        assertThat(targetDirectory, contains("test/Flags.java"));
+        assertThat(targetDirectory, contains("test/Forecast.java"));
+        assertThat(targetDirectory, contains("test/Minutely.java"));
+        assertThat(targetDirectory, contains("test/Units.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Check that the BASE_URI is correct with a / absolute path
+        Class $ProxyRoot = cl.loadClass("test.ApiForecastIo_Forecast");
+        assertEquals(
+                URI.create("https://api.forecast.io/forecast"),
+                $ProxyRoot.getDeclaredField("BASE_URI").get($ProxyRoot));
+        
+
+        Class $LatLong = cl.loadClass("test.ApiForecastIo_Forecast$Apikey$LatitudeLongitude");
+        
+        // Check that we have a nice bean method, used to be missing becuase
+        // of the .json file extensoin
+        Method boundMethod = $LatLong.getDeclaredMethod("getAsForecast");
+        assertEquals(
+                boundMethod.getReturnType().getName(),
+                "test.Forecast");
+        
+    }
+    
+    
+    
+    
+    
+    
 }

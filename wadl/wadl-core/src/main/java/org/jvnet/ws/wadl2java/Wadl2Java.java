@@ -524,9 +524,14 @@ public class Wadl2Java {
             for (URI jsonSchema : jsonSchemas)
             {
                 String jsonSchemaStr = jsonSchema.toString();
-                String name = jsonSchemaStr.substring(jsonSchemaStr.lastIndexOf('/')+1);
-                String className = Character.toUpperCase(name.charAt(0))
-                        + ((name.length() > 1 ? name.substring(1) : ""));
+                String name = jsonSchemaStr.substring(jsonSchemaStr.lastIndexOf('/')+1
+                        );
+                String withoutExtension = name.lastIndexOf('.')!=-1
+                        ? name.substring(0,name.lastIndexOf('.'))
+                        : name;
+                
+                String className = Character.toUpperCase(withoutExtension.charAt(0))
+                        + ((withoutExtension.length() > 1 ? withoutExtension.substring(1) : ""));
                 
                 sm.generate(codeModel, 
                         className, parameters.pkg, jsonSchema.toURL());
