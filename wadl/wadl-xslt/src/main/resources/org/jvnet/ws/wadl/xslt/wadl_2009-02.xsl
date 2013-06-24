@@ -23,6 +23,7 @@
    <!-- This parameter allows this page to be used as a test tool, this value
      should be a URI that can be used to invoke a REST test tool of some kind -->
    <xsl:param name="testButtonUri" as="xsd:string"/>
+   <xsl:param name="jQueryUri" as="xsd:string"/>
    
    
    <!-- This is a workaround for the fact that elements in a sequence loose there
@@ -446,7 +447,8 @@ div.details ul.blockList ul.blockList ul.blockList li.blockList h4, div.details 
     border-top:1px solid #9eadc0;
     border-bottom:1px solid #9eadc0;
     margin:0 0 6px -8px;
-    padding:2px 5px;
+    padding:6px 1px 1px 5px;
+    height:24px
 }
 ul.blockList ul.blockList ul.blockList li.blockList h3 {
     background-color:#dee3e9;
@@ -708,12 +710,89 @@ h1.hidden {
 .strong {
     font-weight:bold;
 }
+
+.expandButton {
+  font-size:0.6em;
+  font-weight:bold;
+  cursor:pointer;
+  margin-right:8px;
+  height:19px;
+  width:19px;
+  visibility:hidden;
+  position:relative;top:-2;
+}
+
+.clearing {
+  clear:both;
+}
+
+.testButton {
+ font-size:0.8em;
+ padding: 0.0em 1em;
+ position:relative;top:-2
+}
              
              ]]>
             </style>
          </header>
-         <head>
-           <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<xsl:choose>
+   <xsl:when test="string-length($jQueryUri)>0">
+     <script>
+       <xsl:attribute name="src"><xsl:value-of select="$jQueryUri"/></xsl:attribute>
+       <xsl:text disable-output-escaping="yes"><![CDATA[ ]]></xsl:text> <!-- Just need to ensure the script tag has a distinct close tag -->
+     </script>
+   </xsl:when>
+   <xsl:otherwise>
+     <xsl:text disable-output-escaping="yes">
+       <![CDATA[<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>]]>
+     </xsl:text>
+   </xsl:otherwise>
+</xsl:choose>
+
+<script>
+$(document).ready(function() {
+  $('.collapsible').hide();
+  $('.expandButton').each(function(index,value){
+       // we change the margins here to avoid seeing part of the collapsible section
+       var h4 = $(this).parent();
+       h4.css("margin-bottom", "-6px");
+  });
+  $('.expandButton').toggle(
+      function() 
+      {
+        var h4 = $(this).parent();
+        h4.next('.collapsible').slideDown();
+       
+        // we change the margins back to their original settings.
+        h4.css("margin-bottom", "6px");
+
+        // Change the text to show the section is expanded.
+        $(this).text("-");
+      },
+      function() 
+      {
+        // Collapse the section.
+        var h4 = $(this).parent();
+        h4.next('.collapsible').slideUp();
+
+        // we change the margins here to avoid seeing part of the collapsible section
+        h4.css("margin-bottom", "-6px");
+
+        // Change the text to show the section is expanded.
+        $(this).text("+");
+      }
+  ); // end toggle
+  // We set the expandButton text to collapsed everywhere.
+  $('.expandButton').text("+");
+
+  // Make the button visible (this way, it only is visible if JQuery is supported  
+  $('.expandButton').css('visibility','visible');
+
+  // We expand the first Resource.
+  $('.expandButton:first').click();
+}); // end ready
+</script>
          </head>
          <body>
             <h2 class="title">
@@ -739,7 +818,7 @@ h1.hidden {
                            <!-- ======== Resources Summary ======== -->
                            <ul class="blockList">
                               <li class="blockList">
-                                 <a name="resources_summary"/>
+                                 <xsl:text disable-output-escaping="yes"> <![CDATA[<a name="resources_summary"></a>]]></xsl:text>
                                  <h3>Resources Summary</h3>
                                  <table class="overviewSummary" border="0" cellpadding="3" cellspacing="0"
                                         summary="Resources summary table, listing root URLs and titles">
@@ -786,9 +865,7 @@ h1.hidden {
                  
                      <ul class="blockList">
                               <li class="blockList">
-                                 <a name="grammar_detail">
-                                    <!--   -->
-                                 </a>
+                                 <xsl:text disable-output-escaping="yes"> <![CDATA[<a name="grammar_detail"></a>]]></xsl:text>
                                  <h3>Grammars</h3>
                                  <dl>
                                     <xsl:for-each select="wadl:grammars/wadl:include">
@@ -813,9 +890,8 @@ h1.hidden {
                         <!-- ========== Resources Details ========= -->
                         <ul class="blockList">
                            <li class="blockList">
-                              <a name="method_detail">
-                                 <!--   -->
-                              </a>
+
+                              <xsl:text disable-output-escaping="yes"> <![CDATA[<a name="method_detail"></a>]]></xsl:text>
                               <h3>Resources Detail</h3>
                               <xsl:for-each select="wadl:resources">
                        <xsl:call-template name="processResources"/>
@@ -834,6 +910,7 @@ h1.hidden {
    
       <a>
          <xsl:attribute name="name"><xsl:call-template name="fetchId"/></xsl:attribute>
+         <xsl:text disable-output-escaping="yes"><![CDATA[ ]]></xsl:text> <!-- Just need to ensure the a tag has a distinct close tag -->
       </a>
       <ul class="blockListLast">
          <li class="blockList">
@@ -929,12 +1006,13 @@ h1.hidden {
    
      <a>
          <xsl:attribute name="href"><xsl:call-template name="fetchId" select="$resourceType"/></xsl:attribute>
+         <xsl:text disable-output-escaping="yes"><![CDATA[ ]]></xsl:text> <!-- Just need to ensure the a tag has a distinct close tag -->
       </a>
      <ul class="blockListLast">
          <li class="blockList">
-            <h4>
-               <xsl:value-of select="$resourceType/@path"/>
+            <h4><xsl:text disable-output-escaping="yes"> <![CDATA[<div class="clearing"></div>]]></xsl:text><button class="expandButton"><xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</button> <xsl:value-of select="$resourceType/@path"/>
             </h4>
+            <div class="collapsible">
             <tt>
                <xsl:value-of select="pxsltu:hypernizeURI($currentPath)" disable-output-escaping="yes"/>
             </tt>
@@ -985,6 +1063,7 @@ h1.hidden {
                   </xsl:call-template>
          </xsl:for-each>   
      </xsl:if>
+         </div>
          </li>
       </ul>
       
@@ -1012,19 +1091,14 @@ h1.hidden {
    
       <a>
          <xsl:attribute name="name"><xsl:call-template name="fetchId" select="$method"/></xsl:attribute>
+         <xsl:text disable-output-escaping="yes"><![CDATA[ ]]></xsl:text> <!-- Just need to ensure the a tag has a distinct close tag -->
       </a>
       <ul class="blockListLast">
          <li class="blockList">
-            <h4>
-               <xsl:value-of select="$name"/>
-            </h4>
-            <!--      <pre>Do we need anything here?</pre> -->
-            <div class="block">
-               <xsl:call-template name="fetchDocumentation"/>
-            </div>
+            <h4><xsl:text disable-output-escaping="yes"> <![CDATA[<div class="clearing"></div>]]></xsl:text><button class="expandButton"><xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;</button><xsl:value-of select="$name"/>
             <!-- testing additions only added if there is a URI avaliable -->
             <xsl:if test="string-length($testButtonUri)>0">
-          <div style="text-align: right">
+          <div style="float: right">
                   <form method="get" action="{$testButtonUri}">
 
                      <!-- walk up and down the tree looking for parameters -->
@@ -1111,12 +1185,18 @@ h1.hidden {
                                    select="string-join(a:lookupReferences($method/wadl:response/wadl:representation)/wadl:representation/@mediaType,',')"/>
                      <input type="hidden" name="requestType" value="{$requestType}"/>
                      <input type="hidden" name="responseType" value="{$responseType}"/>
-                     <input type="submit" value="Test"/><xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;
-                     
+                     <input class="testButton" type="submit" value="Test"/><xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;<xsl:text disable-output-escaping="yes">&amp;</xsl:text>nbsp;
+
                   </form>
                </div>
        </xsl:if>
             <!-- End of testing additions -->
+            </h4>
+            <div class="collapsible">
+            <!--      <pre>Do we need anything here?</pre> -->
+            <div class="block">
+               <xsl:call-template name="fetchDocumentation"/>
+            </div>
             <!-- Now we need to look up parameters and request/response values in turn -->
             <dl>
                <!-- Request stuff -->
@@ -1165,6 +1245,7 @@ h1.hidden {
                   </dd>
          </xsl:for-each>
             </dl>
+            </div>
          </li>
       </ul>
    
