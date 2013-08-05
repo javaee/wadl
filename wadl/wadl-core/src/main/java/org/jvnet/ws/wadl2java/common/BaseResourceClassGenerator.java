@@ -354,9 +354,9 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             // Lower the first character to make it into a method name
             //
 
-            String accessorName = 
+            String accessorName = GeneratorUtil.escapeReservedWord(
                     Character.toLowerCase(className.charAt(0))
-                    + className.substring(1);
+                    + className.substring(1));
             
             
             JMethod $accessorMethod = parentClass.method(
@@ -1009,7 +1009,8 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
 //        } else if (inputRep != null) {
 //            buf.append(inputRep.getMediaTypeAsClassName());
 //        }
-        return buf.toString();
+        return GeneratorUtil.escapeReservedWord(
+                buf.toString());
     }
     
     /**
@@ -1536,7 +1537,11 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         JType propertyType = p.isRepeating() ? codeModel.ref(List.class).narrow(rawType) : rawType;
         
         String paramName = GeneratorUtil.makeParamName(p.getName());
-        String propertyName = paramName.substring(0,1).toUpperCase()+paramName.substring(1);
+        // Hack of any _ prefix and upcase the first character, unless we already
+        // have _class in which case we will have to leave well alone
+        String propertyName = paramName.startsWith("_") && !"_class".equals(paramName) ? paramName.substring(1) : paramName;
+        propertyName =
+                propertyName.substring(0,1).toUpperCase()+propertyName.substring(1);
         
         // getter
         JMethod $getter = $impl.method(JMod.PUBLIC, propertyType, "get"+propertyName);

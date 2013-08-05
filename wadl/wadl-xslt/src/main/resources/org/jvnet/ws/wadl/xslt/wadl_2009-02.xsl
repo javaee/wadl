@@ -872,7 +872,7 @@ $(document).ready(function() {
                               <dt>
                                           <code>
                                              <a href="{@href}">
-                                                <xsl:value-of name="href" select="@href"/>
+                                                <xsl:value-of  select="@href"/>
                                              </a>
                                           </code>
                                        </dt>
@@ -1005,7 +1005,7 @@ $(document).ready(function() {
    
    
      <a>
-         <xsl:attribute name="href"><xsl:call-template name="fetchId" select="$resourceType"/></xsl:attribute>
+         <xsl:attribute name="href"><xsl:call-template name="fetchId" /></xsl:attribute>
          <xsl:text disable-output-escaping="yes"><![CDATA[ ]]></xsl:text> <!-- Just need to ensure the a tag has a distinct close tag -->
       </a>
      <ul class="blockListLast">
@@ -1017,7 +1017,7 @@ $(document).ready(function() {
                <xsl:value-of select="pxsltu:hypernizeURI($currentPath)" disable-output-escaping="yes"/>
             </tt>
             <div class="block">
-               <xsl:call-template name="fetchDocumentation" select="$resourceType"/>
+               <xsl:call-template name="fetchDocumentation"/>
             </div>
             <!-- Display the parameters -->
             <dd>
@@ -1090,7 +1090,7 @@ $(document).ready(function() {
 
    
       <a>
-         <xsl:attribute name="name"><xsl:call-template name="fetchId" select="$method"/></xsl:attribute>
+         <xsl:attribute name="name"><xsl:call-template name="fetchId" /></xsl:attribute>
          <xsl:text disable-output-escaping="yes"><![CDATA[ ]]></xsl:text> <!-- Just need to ensure the a tag has a distinct close tag -->
       </a>
       <ul class="blockListLast">
@@ -1473,7 +1473,7 @@ $(document).ready(function() {
    <!-- Simple function to return the id for the current element or generate
          it if required -->
    <xsl:template name="fetchId">
-      <xsl:choose>
+       <xsl:choose>
          <xsl:when test="@id">
            <xsl:value-of select="@id"/>
         </xsl:when>
@@ -1482,7 +1482,7 @@ $(document).ready(function() {
     </xsl:template>
    <!-- Simple function to return documents, html and all for the current element -->
    <xsl:template name="fetchDocumentation">
-      <span class="documentation">
+       <span class="documentation">
         <xsl:choose>
            <!-- If we have child elements then copy them in -->
            <xsl:when test="count(wadl:doc/*|wadl:doc/text()) > 0">

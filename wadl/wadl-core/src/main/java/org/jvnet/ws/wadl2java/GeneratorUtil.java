@@ -147,10 +147,7 @@ public class GeneratorUtil {
             }
         }
         String paramName = buf.toString();
-        if (keywords.contains(paramName))
-            return "_"+paramName;
-        else
-            return paramName;
+        return escapeReservedWord(paramName);
     }
     
     /**
@@ -234,5 +231,16 @@ public class GeneratorUtil {
             }
             return (JClass)model._ref(type);
         }
+    }
+
+    /**
+     * @param name
+     * @return name prefixed with "_" if name is a reserved word
+     */
+    public static String escapeReservedWord(String name) {
+        if (keywords.contains(name))
+            return "_"+name;
+        else
+            return name;
     }
 }

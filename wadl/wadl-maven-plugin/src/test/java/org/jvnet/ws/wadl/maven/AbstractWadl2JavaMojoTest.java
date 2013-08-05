@@ -1723,6 +1723,44 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
     
     
     
+
+    /**
+     * That even if the WADL uses java reserved words we are still fine.
+     */
+    public void testResrvedWordsEscaped() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("reserved-words-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+
+        // Check that the set/get doesn't have the escape character in it
+        Class $Root = cl.loadClass("test.WwwExampleCom_Resource");
+        $Root.getDeclaredMethod("_import");
+        
+        
+        // Check that the set/get doesn't have the escape character in it
+        Class $Float = cl.loadClass("test.WwwExampleCom_Resource$Import$Float");
+        
+        $Float.getDeclaredMethod("getFloat");
+        $Float.getDeclaredMethod("setFloat", String.class);
+        
+        
+    }    
     
     
     

@@ -232,7 +232,7 @@ public class Wadl2JavaMojoTest extends AbstractWadl2JavaMojoTest<Client> {
         }
     }
 
-
+    
     /**
      * Test a fixed version of the open patent wadl, that doesn't
      * contain breaks as per testMissingMethodName, this is to exercise
