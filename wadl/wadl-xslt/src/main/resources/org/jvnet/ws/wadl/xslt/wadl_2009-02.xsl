@@ -1059,7 +1059,7 @@ $(document).ready(function() {
                      <xsl:with-param name="parentPath" select="$currentPath"/>
                      <!-- We don't dereference the resource, this is done in resource types -->
                      <xsl:with-param name="resourceType" select="."/>
-                     <xsl:with-param name="resourceObjectPath" select="$resourceTypes/* | $resourceObjectPath"/>
+                     <xsl:with-param name="resourceObjectPath" select="$resourceTypes/* , $resourceObjectPath"/>
                   </xsl:call-template>
          </xsl:for-each>   
      </xsl:if>
@@ -1212,6 +1212,7 @@ $(document).ready(function() {
                               <xsl:sequence select="."/>
                            </xsl:with-param>
                            <xsl:with-param name="resourceObjectPath" select="$resourceObjectPath"/>
+                           <xsl:with-param name="resourceTypes" select="$resourceTypes"/>
                         </xsl:call-template>
                         <xsl:call-template name="fetchRepresentations">
                            <xsl:with-param name="context" select="."/>
@@ -1270,11 +1271,13 @@ $(document).ready(function() {
       <!-- This allows us to walk back up the tree when we have object deferences -->
       <xsl:param name="resourceObjectPath" required="yes"/> 
     
+      <xsl:param name="resourceTypes" required="no"/>
+
       <!-- We need to de-reference each parameter before we can test it 
           otherwise we won't know what style it is extracted to here
            so that we don't do this twice in the if and the for-each statement
            later on -->    
-      <xsl:variable name="totalParamList" select="$resourceObjectPath/wadl:param | $context/*/wadl:param"/>
+      <xsl:variable name="totalParamList" select="$context/*/wadl:param , $resourceTypes/*/wadl:param , $resourceObjectPath/wadl:param"/>
       <xsl:variable name="filteredParamList" select="a:lookupReferences($totalParamList)"/> 
 
       <xsl:choose>
