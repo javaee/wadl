@@ -83,7 +83,7 @@ public class JAXRS20ResourceClassGenerator
 
     @Override 
     protected JClass clientFactoryType() {
-        return codeModel.ref("javax.ws.rs.client.ClientFactory");
+        return codeModel.ref("javax.ws.rs.client.ClientBuilder");
     }
 
     @Override

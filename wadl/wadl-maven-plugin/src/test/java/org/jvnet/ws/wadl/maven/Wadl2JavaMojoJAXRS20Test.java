@@ -8,10 +8,10 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URI;
 import java.util.concurrent.Future;
+import javax.ws.rs.ProcessingException;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientException;
-import javax.ws.rs.client.ClientFactory;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
@@ -36,7 +36,7 @@ public class Wadl2JavaMojoJAXRS20Test
     @Override
     protected Client createClient() {
 
-        JerseyClient client = (JerseyClient) ClientFactory.newClient();
+        JerseyClient client = (JerseyClient) ClientBuilder.newClient();
         ClientConfig cc = client.getConfiguration();
         cc.register(new MoxyJsonFeature()); 
         cc.connector(new Connector() {
@@ -44,7 +44,7 @@ public class Wadl2JavaMojoJAXRS20Test
                 return "TestConnector";
             }
 
-            public ClientResponse apply(final ClientRequest cr) throws ClientException {
+            public ClientResponse apply(final ClientRequest cr) throws ProcessingException {
 
                 // Store the request
                 _requests.add(
