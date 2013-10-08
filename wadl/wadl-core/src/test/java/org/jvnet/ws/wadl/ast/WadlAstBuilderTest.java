@@ -7,6 +7,7 @@ package org.jvnet.ws.wadl.ast;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.ArrayList;
 import org.junit.Test;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.w3c.dom.Element;
@@ -61,8 +62,15 @@ public class WadlAstBuilderTest {
 
         // Check that the status on the upgraded fault message
         // has correctly been upgrade to the 2009 WADL version
+        List<RepresentationNode> supportedOutputs = new ArrayList<RepresentationNode>();
+        for (List<RepresentationNode> nodeList : methods.get(0).getSupportedOutputs().values()) {
+            for (RepresentationNode node : nodeList)
+            {
+                supportedOutputs.add(node); 
+            }
+        }
         assertThat("Only one output",
-                methods.get(0).getSupportedOutputs().size(), equalTo(1));
+                supportedOutputs.size(), equalTo(1));
         assertThat("Only one fault",
                 methods.get(0).getFaults().size(), equalTo(1));
         

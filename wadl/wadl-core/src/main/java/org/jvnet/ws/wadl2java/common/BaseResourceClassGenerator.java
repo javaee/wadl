@@ -818,7 +818,13 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     public void generateMethodDecls(MethodNode method, boolean isAbstract) {
 
         List<RepresentationNode> supportedInputs = method.getSupportedInputs();
-        List<RepresentationNode> supportedOutputs = method.getSupportedOutputs();
+        List<RepresentationNode> supportedOutputs = new ArrayList<RepresentationNode>();
+        for (List<RepresentationNode> nodeList : method.getSupportedOutputs().values()) {
+          for (RepresentationNode node : nodeList) {
+            supportedOutputs.add(node);
+          }
+        }
+          
         Map<JType, JDefinedClass> exceptionMap = new HashMap<JType, JDefinedClass>();
         for (List<FaultNode> fl: method.getFaults().values()) {
             for (FaultNode f : fl){
@@ -980,14 +986,21 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             }
         }
         if (returnType != null) {
-            
+           
+             
+            List<RepresentationNode> supportedOutputs = new ArrayList<RepresentationNode>();
+            for (List<RepresentationNode> nodeList : method.getSupportedOutputs().values()) {
+              for (RepresentationNode node : nodeList) {
+                supportedOutputs.add(node);
+              }
+            }
             
             if (returnType == clientResponseClientType()) {
                 // Don't both appending anything
             }
             // If we have mutliple supported content types, then we need to
             // differential by content type
-            else if (method.getSupportedOutputs().size() > 1 && outputRep!=null) {
+            else if (supportedOutputs.size() > 1 && outputRep!=null) {
                 buf.append("As");
                 buf.append(returnType.name());
                 if (!outputMediaSameAsInput) {

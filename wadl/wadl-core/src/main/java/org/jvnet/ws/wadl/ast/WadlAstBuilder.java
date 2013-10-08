@@ -417,7 +417,10 @@ public class WadlAstBuilder {
                     }
                 }
                 for (Representation r: request.getRepresentation()) {
-                    addRepresentation(n.getSupportedInputs(), r, file);
+                    RepresentationNode rn = createRepresentationNode(r, file);
+                    if (rn != null) {
+                      n.getSupportedInputs().add(rn);
+                    }
                 }
             }
             for (Response response: method.getResponse()) {
@@ -427,7 +430,10 @@ public class WadlAstBuilder {
                         FaultNode fn = new FaultNode(o);
                         n.getFaults().add(response.getStatus(), fn); 
                     } else {
-                        addRepresentation(n.getSupportedOutputs(), o, file);
+                        RepresentationNode rn = createRepresentationNode(o, file);
+                        if (rn != null) {
+                          n.getSupportedOutputs().add(response.getStatus(), rn);
+                        }
                     }
                 }
             }
@@ -443,7 +449,7 @@ public class WadlAstBuilder {
      * @param file the URI of the current WADL file being processed.
      * @throws InvalidWADLException when WADL is invalid and cannot be processed.
      */
-    protected void addRepresentation(List<RepresentationNode> list, Representation representation, 
+    protected RepresentationNode createRepresentationNode(Representation representation, 
             URI file) throws InvalidWADLException {
         String href = representation.getHref();
         if (href != null && href.length() > 0) {
@@ -467,8 +473,10 @@ public class WadlAstBuilder {
         }
         if (representation != null) {
             RepresentationNode n = new RepresentationNode(representation);
-            list.add(n);
+            return n;
         }
+
+        return null;
     }
     
 

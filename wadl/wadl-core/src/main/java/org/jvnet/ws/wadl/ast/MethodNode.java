@@ -41,7 +41,7 @@ public class MethodNode extends AbstractNode {
     private List<Param> headerParams;
     private List<Param> matrixParams;
     private List<RepresentationNode> supportedInputs;
-    private List<RepresentationNode> supportedOutputs;
+    private MultivaluedMap<List<Long>, RepresentationNode> supportedOutputs;
     
     // Need to keep the order of these elements
     //
@@ -66,7 +66,8 @@ public class MethodNode extends AbstractNode {
         matrixParams = new ArrayList<Param>();
         matrixParams.addAll(parentResource.getMatrixParams());
         supportedInputs = new ArrayList<RepresentationNode>();
-        supportedOutputs = new ArrayList<RepresentationNode>();
+        supportedOutputs = new AbstractMultivaluedMap<List<Long>, RepresentationNode>(
+               new java.util.LinkedHashMap<List<Long>, List<RepresentationNode>>()) {};
         faults = new AbstractMultivaluedMap<List<Long>, FaultNode>(
                new java.util.LinkedHashMap<List<Long>, List<FaultNode>>()) {};
         r.getMethods().add(this);
@@ -89,7 +90,8 @@ public class MethodNode extends AbstractNode {
         matrixParams = new ArrayList<Param>();
         matrixParams.addAll(r.getMatrixParams());
         supportedInputs = new ArrayList<RepresentationNode>();
-        supportedOutputs = new ArrayList<RepresentationNode>();
+        supportedOutputs = new AbstractMultivaluedMap<List<Long>, RepresentationNode>(
+               new java.util.LinkedHashMap<List<Long>, List<RepresentationNode>>()) {};
         faults = new AbstractMultivaluedMap<List<Long>, FaultNode>(
                new java.util.LinkedHashMap<List<Long>, List<FaultNode>>()) {};
         r.getMethods().add(this);
@@ -102,7 +104,15 @@ public class MethodNode extends AbstractNode {
     public String getName() {
         return name;
     }
-    
+
+    /**
+     * Get the method name
+     * @return the method name
+     */
+    public String getId() {
+        return method.getId();
+    }
+
     /**
      * @return The owning resource if this is avaliable, generally only
      * avaliable for fully resolved types
@@ -196,11 +206,11 @@ public class MethodNode extends AbstractNode {
     }
 
     /**
-     * Get a list of the output representations that the method supports, these
+     * Get a multi valued map of output representations that the method supports, these
      * correspond to the body of a GET, POST or PUT response.
-     * @return list of supported outputs
+     * @return multiValuedMap of supported outputs
      */
-    public List<RepresentationNode> getSupportedOutputs() {
+    public MultivaluedMap<List<Long>, RepresentationNode> getSupportedOutputs() {
         return supportedOutputs;
     }
     
@@ -242,8 +252,11 @@ public class MethodNode extends AbstractNode {
             node.visit(visitor); 
         }
 
-        for (RepresentationNode node : getSupportedOutputs()) {
-            node.visit(visitor); 
+        for (List<RepresentationNode> nodeList : getSupportedOutputs().values()) {
+            for (RepresentationNode node : nodeList)
+            {
+                node.visit(visitor); 
+            }
         }
 
         for (List<FaultNode> nodeList : getFaults().values()) {
