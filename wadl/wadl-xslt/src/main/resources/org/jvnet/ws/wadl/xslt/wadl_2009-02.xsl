@@ -751,7 +751,19 @@ h1.hidden {
 </xsl:choose>
 
 <script>
-$(document).ready(function() {
+  function handleHref(urlString)
+  {
+    if (WADLPreview)
+    {
+      return WADLPreview.handleClick(urlString);
+    }
+    {
+      return true;
+    }
+  };
+</script>
+<script>
+  $(document).ready(function() {
   $('.collapsible').hide();
   $('.expandButton').each(function(index,value){
        // we change the margins here to avoid seeing part of the collapsible section
@@ -871,7 +883,7 @@ $(document).ready(function() {
                                     <xsl:for-each select="wadl:grammars/wadl:include">
                               <dt>
                                           <code>
-                                             <a href="{@href}">
+                                             <a href="{@href}" onclick="handleHref('{@href}');">
                                                 <xsl:value-of  select="@href"/>
                                              </a>
                                           </code>
@@ -1359,7 +1371,8 @@ $(document).ready(function() {
                         </xsl:call-template>
                       </xsl:if>
                       <xsl:if test="@wadljson:describedby"> : 
-                         <a href="{@wadljson:describedby}">   
+                         <a href="{@wadljson:describedby}" onclick="handleHref('{@wadljson:describedby}');">
+                         <!--<a href="{@wadljson:describedby}">-->
                             <xsl:value-of select="@wadljson:describedby" />
                          </a>
                       </xsl:if>
@@ -1426,7 +1439,8 @@ $(document).ready(function() {
 
       <xsl:choose>
          <xsl:when test="$ns-uri='http://www.w3.org/2001/XMLSchema' or $ns-uri='http://www.w3.org/2001/XMLSchema-instance'">
-               <a href="http://www.w3.org/TR/xmlschema-2/#{$localname}">
+               <a href="http://www.w3.org/TR/xmlschema-2/#{$localname}" onclick="handleHref('http://www.w3.org/TR/xmlschema-2/#{$localname}');">
+               <!--<a href="http://www.w3.org/TR/xmlschema-2/#{$localname}">-->
                <xsl:value-of select="$localname"/>
             </a>
    <!--            <xsl:message>
@@ -1438,7 +1452,8 @@ $(document).ready(function() {
                <!--<xsl:message>
                   Found in Embedded schema
                </xsl:message> -->
-               <a href="#{$localname}">
+               <a href="#{$localname}" onclick="handleHref('#{$localname}');">              
+               <!--<a href="#{$localname}">-->
                <xsl:value-of select="$localname"/>
             </a>
            </xsl:when>
@@ -1453,8 +1468,9 @@ $(document).ready(function() {
 <!--               <xsl:message>
                   Found in External Schema <xsl:value-of select="$documentURI"/>#<xsl:value-of select="$localname"/>
                </xsl:message>-->
-      
-               <a href="{$documentURI}#{$localname}" title="{$ns-uri}:{$localname}">
+
+               <a href="{$documentURI}#{$localname}" onclick="handleHref('{$documentURI}#{$localname}');" title="{$ns-uri}:{$localname}">
+               <!--<a href="#{$localname}" title="{$ns-uri}:{$localname}toto">-->
                <xsl:value-of select="$localname"/>
             </a> 
            </xsl:when>
