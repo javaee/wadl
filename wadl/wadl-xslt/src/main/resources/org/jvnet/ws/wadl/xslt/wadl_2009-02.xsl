@@ -883,7 +883,7 @@ h1.hidden {
                                     <xsl:for-each select="wadl:grammars/wadl:include">
                               <dt>
                                           <code>
-                                             <a href="{@href}" onclick="handleHref('{@href}');">
+                                             <a href="{@href}" onclick="return handleHref('{@href}');">
                                                 <xsl:value-of  select="@href"/>
                                              </a>
                                           </code>
@@ -1371,7 +1371,7 @@ h1.hidden {
                         </xsl:call-template>
                       </xsl:if>
                       <xsl:if test="@wadljson:describedby"> : 
-                         <a href="{@wadljson:describedby}" onclick="handleHref('{@wadljson:describedby}');">
+                         <a href="{@wadljson:describedby}" onclick="return handleHref('{@wadljson:describedby}');">
                          <!--<a href="{@wadljson:describedby}">-->
                             <xsl:value-of select="@wadljson:describedby" />
                          </a>
@@ -1439,7 +1439,7 @@ h1.hidden {
 
       <xsl:choose>
          <xsl:when test="$ns-uri='http://www.w3.org/2001/XMLSchema' or $ns-uri='http://www.w3.org/2001/XMLSchema-instance'">
-               <a href="http://www.w3.org/TR/xmlschema-2/#{$localname}" onclick="handleHref('http://www.w3.org/TR/xmlschema-2/#{$localname}');">
+               <a href="http://www.w3.org/TR/xmlschema-2/#{$localname}" onclick="return handleHref('http://www.w3.org/TR/xmlschema-2/#{$localname}');">
                <!--<a href="http://www.w3.org/TR/xmlschema-2/#{$localname}">-->
                <xsl:value-of select="$localname"/>
             </a>
@@ -1452,7 +1452,7 @@ h1.hidden {
                <!--<xsl:message>
                   Found in Embedded schema
                </xsl:message> -->
-               <a href="#{$localname}" onclick="handleHref('#{$localname}');">              
+               <a href="#{$localname}" onclick="return handleHref('#{$localname}');">              
                <!--<a href="#{$localname}">-->
                <xsl:value-of select="$localname"/>
             </a>
@@ -1469,7 +1469,7 @@ h1.hidden {
                   Found in External Schema <xsl:value-of select="$documentURI"/>#<xsl:value-of select="$localname"/>
                </xsl:message>-->
 
-               <a href="{$documentURI}#{$localname}" onclick="handleHref('{$documentURI}#{$localname}');" title="{$ns-uri}:{$localname}">
+               <a href="{$documentURI}#{$localname}" onclick="return handleHref('{$documentURI}#{$localname}');" title="{$ns-uri}:{$localname}">
                <!--<a href="#{$localname}" title="{$ns-uri}:{$localname}toto">-->
                <xsl:value-of select="$localname"/>
             </a> 
