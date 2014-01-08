@@ -299,15 +299,37 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             owner = owner.outer();
         }
         
+        
+        // Now is it possible that className has already been used for some
+        // reason so now we have to generate a new unique one if required
+        
+        String classNameRoot = className;
+        int nameCounter = 0;
+        JDefinedClass $impl = null;
+        
+        do
+        {
+            className = (nameCounter++) <= 0
+                    ? classNameRoot : classNameRoot + nameCounter;
+            
+            try
+            {
+                $impl = parentClass._class(JMod.PUBLIC | JMod.STATIC, className); 
+            }
+            catch (JClassAlreadyExistsException cad)
+            {
+                
+            }
+        }
+        while ($impl==null);
+
+        
         // Store the value if it has been updated;
         if (!originalClassName.equals(className)) {
             resource.setClassName(className);
         }
-        
+
         //
-        
-        JDefinedClass $impl = parentClass._class(JMod.PUBLIC | JMod.STATIC, className); 
-        
         
         for (ResourceTypeNode t: resource.getResourceTypes()) {
             $impl._implements(t.getGeneratedInterface());

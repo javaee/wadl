@@ -14,6 +14,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Configuration;
 
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientRequest;
@@ -21,6 +22,7 @@ import org.glassfish.jersey.client.ClientResponse;
 import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.spi.AsyncConnectorCallback;
 import org.glassfish.jersey.client.spi.Connector;
+import org.glassfish.jersey.client.spi.ConnectorProvider;
 import org.glassfish.jersey.moxy.json.MoxyJsonFeature;
 
 import org.fest.reflect.field.Invoker;
@@ -39,59 +41,69 @@ public class Wadl2JavaMojoJAXRS20Test
         JerseyClient client = (JerseyClient) ClientBuilder.newClient();
         ClientConfig cc = client.getConfiguration();
         cc.register(new MoxyJsonFeature()); 
-        cc.connector(new Connector() {
-            public String getName() {
-                return "TestConnector";
-            }
+        cc.connectorProvider(new ConnectorProvider()
+        {
+            public Connector getConnector(Client client, Configuration config)
+            {
+                return  new Connector() {
+                    public String getName() {
+                        return "TestConnector";
+                    }
 
-            public ClientResponse apply(final ClientRequest cr) throws ProcessingException {
+                    public ClientResponse apply(final ClientRequest cr) throws ProcessingException {
 
-                // Store the request
-                _requests.add(
-                        new WrapperResponse() {
-                            public URI getURI() {
-                                return cr.getUri();
-                            }
+                        // Store the request
+                        _requests.add(
+                                new WrapperResponse() {
+                                    public URI getURI() {
+                                        return cr.getUri();
+                                    }
 
-                            public String getMethod() {
-                                return cr.getMethod();
-                            }
-                        });
+                                    public String getMethod() {
+                                        return cr.getMethod();
+                                    }
+                                });
 
-                // Generate some pre-canned response
+                        // Generate some pre-canned response
 
-                ClientResponse resp;
+                        ClientResponse resp;
 
-                if (_cannedResponse.size() > 0) {
-                    CannedResponse cnr = (CannedResponse) _cannedResponse.remove(0);
+                        if (_cannedResponse.size() > 0) {
+                            CannedResponse cnr = (CannedResponse) _cannedResponse.remove(0);
 
-                    resp = new ClientResponse(
-                            Response.Status.fromStatusCode(cnr.status),
-                            cr);
+                            resp = new ClientResponse(
+                                    Response.Status.fromStatusCode(cnr.status),
+                                    cr);
 
-                    resp.headers(cnr.headers);
-                    resp.setEntityStream(new ByteArrayInputStream(cnr.content));
+                            resp.headers(cnr.headers);
+                            resp.setEntityStream(new ByteArrayInputStream(cnr.content));
 
-                } else {
-                    // Generate a generic response for the moment
-                    resp = new ClientResponse(
-                            Response.Status.OK,
-                            cr);
-                    resp.setEntityStream(new ByteArrayInputStream("Hello".getBytes()));
-                }
+                        } else {
+                            // Generate a generic response for the moment
+                            resp = new ClientResponse(
+                                    Response.Status.OK,
+                                    cr);
+                            resp.setEntityStream(new ByteArrayInputStream("Hello".getBytes()));
+                        }
 
-                return resp;
+                        return resp;
 
-            }
+                    }
 
-            public Future<?> apply(ClientRequest cr, AsyncConnectorCallback acc) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
+                    public Future<?> apply(ClientRequest cr, AsyncConnectorCallback acc) {
+                        throw new UnsupportedOperationException("Not supported yet.");
+                    }
 
-            public void close() {
-                // Do nothing;
+                    public void close() {
+                        // Do nothing;
+                    }
+                };
             }
         });
+                
+                
+                
+
 
         return client;
     }

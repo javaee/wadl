@@ -320,6 +320,43 @@ public abstract class AbstractWadl2JavaMojoTest<ClientType> extends AbstractMojo
     }
 
 
+
+    /**
+     * Test for oracle bug 14825571 where two resource have similar
+     * names "path" and "/path" so they end up with the same resource name
+     * and therefore and exception
+     */
+    public void testCaseTwoResourcesWithSameName() throws Exception {
+        // Prepare
+        Wadl2JavaMojo mojo = getMojo("resources-with-same-name-wadl.xml");
+        File targetDirectory = (File) getVariableValueFromObject(mojo,
+                "targetDirectory");
+        if (targetDirectory.exists()) {
+            FileUtils.deleteDirectory(targetDirectory);
+        }
+        setVariableValueToObject(mojo, "project", _project);
+
+        // Record
+        _project.addCompileSourceRoot(targetDirectory.getAbsolutePath());
+
+        // Replay
+        EasyMock.replay(_project);
+        mojo.execute();
+
+        // Verify
+        EasyMock.verify(_project);
+        assertThat(targetDirectory, exists());
+        assertThat(targetDirectory, contains("test"));
+        assertThat(targetDirectory, contains("test/Localhost_REST_AllOpsProject2ContextRootJersey.java"));
+
+        // Check that the generated code compiles
+        ClassLoader cl = compile(targetDirectory);
+
+        // Check that we get both Name resources generated
+        cl.loadClass("test.Localhost_REST_AllOpsProject2ContextRootJersey$Emp_proj$Name");
+        cl.loadClass("test.Localhost_REST_AllOpsProject2ContextRootJersey$Emp_proj$Name2");
+    }
+
     
     /**
      * Tests the case in which a valid wadl file exists, and we have a catalog

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:application xmlns:ns0="http://wadl.dev.java.net/2009/02">
+   <ns0:doc xmlns:ns1="http://jersey.java.net/" ns1:generatedBy="Jersey: 1.17.1 02/28/2013 12:47 PM"/>
+   <ns0:grammars>
+      <ns0:include href="xsd0.xsd">
+         <ns0:doc title="Generated" xml:lang="en"/>
+      </ns0:include>
+   </ns0:grammars>
+   <ns0:resources base="http://localhost:7101/REST_AllOps-Project2-context-root/jersey/">
+      <ns0:resource path="emp_proj">
+         <ns0:method id="getEmpList" name="GET">
+            <ns0:response>
+               <ns0:representation mediaType="application/xml"/>
+            </ns0:response>
+         </ns0:method>
+         <ns0:method id="addEmployee" name="PUT">
+            <ns0:request>
+               <ns0:representation element="employee" mediaType="application/xml"/>
+            </ns0:request>
+            <ns0:response>
+               <ns0:representation mediaType="application/json"/>
+            </ns0:response>
+         </ns0:method>
+         <ns0:resource path="/{name}">
+            <ns0:param name="name" style="template" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="xsd:string"/>
+            <ns0:method id="deleteEmployee" name="DELETE">
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="{name}">
+            <ns0:param name="name" style="template" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="xsd:string"/>
+            <ns0:method id="updateEmployee" name="POST">
+               <ns0:response>
+                  <ns0:representation mediaType="application/json"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+      </ns0:resource>
+   </ns0:resources>
+</ns0:application>
