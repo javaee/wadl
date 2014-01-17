@@ -108,9 +108,9 @@
         </dependency>
         
         <dependency>
-            <groupId>com.googlecode.jsonschema2pojo</groupId>
+            <groupId>org.jsonschema2pojo</groupId>
             <artifactId>jsonschema2pojo-core</artifactId>
-            <version>0.3.6</version>
+            <version>0.4.0</version>
         </dependency>
 
         <!-- Required to include the upgrade.xsl file -->

@@ -19,8 +19,6 @@
 
 package org.jvnet.ws.wadl2java;
 
-import com.googlecode.jsonschema2pojo.*;
-import com.googlecode.jsonschema2pojo.rules.RuleFactory;
 import com.sun.codemodel.*;
 import com.sun.tools.xjc.BadCommandLineException;
 import com.sun.tools.xjc.Options;
@@ -33,7 +31,6 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
-import java.net.URL;
 import java.nio.CharBuffer;
 import java.util.*;
 import java.util.logging.Level;
@@ -43,6 +40,8 @@ import javax.ws.rs.core.UriBuilder;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
+import org.jsonschema2pojo.*;
+import org.jsonschema2pojo.rules.RuleFactory;
 import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ast.*;
 import org.jvnet.ws.wadl.ast.AbstractNode.NodeVisitor;
