@@ -1,0 +1,7 @@
+These .wadl files are from
+
+http://www.epo.org/searching/free/ops.html
+
+ops-original is the original one
+ops-hacked is one modified to be compliant with the spec / and with
+extra entries for test purposes.

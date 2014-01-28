@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This is the customization file for the schema candidate.xsd-->
+<jaxb:bindings xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" version="2.0" schemaLocation="xsd0.xsd"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.example.org">
+
+    <jaxb:schemaBindings>
+        <jaxb:package name="JAXB_EmployeePack"/>
+    </jaxb:schemaBindings>
+  
+     <jaxb:bindings node="xsd:complexType[@name='employee']">
+        <jaxb:class name="emp"/>
+    </jaxb:bindings>
+</jaxb:bindings>

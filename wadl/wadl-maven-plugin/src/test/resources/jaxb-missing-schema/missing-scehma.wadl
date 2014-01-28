@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<application xmlns="http://research.sun.com/wadl/2006/10">
+    <doc xmlns:jersey="http://jersey.java.net/" jersey:generatedBy="Jersey: 1.8-SNAPSHOT 06/01/2011 07:09 PM"/>
+    <resources base="http://localhost:7201/Project1/jersey/">
+        <resource path="/put">
+            <method id="get" name="GET">
+                <response>
+                    <representation mediaType="application/xml"/>
+                </response>
+            </method>
+            <method id="put" name="PUT">
+                <request>
+                    <representation mediaType="application/xml"/>
+                </request>
+            </method>
+        </resource>
+    </resources>
+</application>

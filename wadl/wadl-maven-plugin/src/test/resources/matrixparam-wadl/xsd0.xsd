@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" targetNamespace="urn:example"
+    xmlns:tns="urn:example" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="indirectReturn" type="tns:indirectReturn"/>
+    <xs:element name="simpleParam" type="tns:simpleParam"/>
+    <xs:element name="simpleReturn" type="tns:simpleReturn"/>
+    <xs:complexType name="indirectReturn">
+        <xs:sequence/>
+    </xs:complexType>
+    <xs:complexType name="simpleReturn">
+        <xs:sequence/>
+    </xs:complexType>
+    <xs:complexType name="simpleParam">
+        <xs:sequence/>
+    </xs:complexType>
+</xs:schema>

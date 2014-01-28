@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<!--
+
+    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+
+    Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+
+    The contents of this file are subject to the terms of either the GNU
+    General Public License Version 2 only ("GPL") or the Common Development
+    and Distribution License("CDDL") (collectively, the "License").  You
+    may not use this file except in compliance with the License.  You can
+    obtain a copy of the License at
+    http://glassfish.java.net/public/CDDL+GPL_1_1.html
+    or packager/legal/LICENSE.txt.  See the License for the specific
+    language governing permissions and limitations under the License.
+
+    When distributing the software, include this License Header Notice in each
+    file and include the License file at packager/legal/LICENSE.txt.
+
+    GPL Classpath Exception:
+    Oracle designates this particular file as subject to the "Classpath"
+    exception as provided by Oracle in the GPL Version 2 section of the License
+    file that accompanied this code.
+
+    Modifications:
+    If applicable, add the following below the License Header, with the fields
+    enclosed by brackets [] replaced by your own identifying information:
+    "Portions Copyright [year] [name of copyright owner]"
+
+    Contributor(s):
+    If you wish your version of this file to be governed by only the CDDL or
+    only the GPL Version 2, indicate your decision by adding "[Contributor]
+    elects to include this software in this distribution under the [CDDL or GPL
+    Version 2] license."  If you don't indicate a single choice of license, a
+    recipient has the option to distribute your version of this file under
+    either the CDDL, the GPL Version 2 or to extend the choice of license to
+    its licensees as provided above.  However, if you add GPL Version 2 code
+    and therefore, elected the GPL Version 2 license, then the option applies
+    only if the new code is made subject to such option by the copyright
+    holder.
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jvnet.ws.wadl</groupId>
+        <artifactId>wadl</artifactId>
+        <version>1.1.6</version>
+    </parent>
+    <packaging>pom</packaging>
+    <artifactId>wadl-dist</artifactId>
+    <name>WADL Tools Distribution</name>
+    <description>
+        All WADL tools packaged in a single distribution, including
+        samples on how to use them.
+    </description>
+    
+
+    <properties>
+        <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+    </properties>
+    
+            
+    <build>
+        <plugins>
+            <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-dependency-plugin</artifactId>
+                 <version>2.1</version>
+                 <executions>
+                     <execution>
+                         <phase>validate</phase>
+                         <goals>
+                             <goal>copy</goal>
+                         </goals>
+                         
+                         <!-- Copy files into a directory so that we can do
+                              create a seperate endorsed directory for
+                              supporting JDK 6, this is then consumed in the
+                              dist.xml file that is used to put together the
+                              find structure -->
+                         <configuration>
+                             <outputDirectory>${endorsed.dir}</outputDirectory>
+                             <silent>true</silent>
+                             <artifactItems>
+                                 <artifactItem>
+                                     <groupId>javax.xml.bind</groupId>
+                                     <artifactId>jaxb-api</artifactId>
+                                     <version>${jaxb.version}</version>
+                                     <type>jar</type>
+                                 </artifactItem>
+                             </artifactItems>
+                         </configuration>
+                     </execution>
+                 </executions>
+             </plugin>
+             <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>attached</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptor>${basedir}/src/assembly/dist.xml</descriptor>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jvnet.ws.wadl</groupId>
+            <artifactId>wadl-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jvnet.ws.wadl</groupId>
+            <artifactId>wadl-cmdline</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jvnet.ws.wadl</groupId>
+            <artifactId>wadl-ant</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Only in place to provide implemenation of UriBuilder -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>${jersey2.version}</version>
+        </dependency>
+
+        <!-- for the endorsed directory -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>${jaxb.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- For some very basic testing -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+    </dependencies>
+</project>

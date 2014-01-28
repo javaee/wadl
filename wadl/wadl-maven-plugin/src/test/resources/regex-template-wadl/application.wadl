@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:application xmlns:ns0="http://wadl.dev.java.net/2009/02">
+   <ns0:doc xmlns:ns1="http://jersey.java.net/" ns1:generatedBy="Jersey: 1.16 11/28/2012 02:09 PM"/>
+   <ns0:grammars/>
+   <ns0:resources base="http://localhost:7101/resources/">
+      <ns0:resource path="hello">
+         <ns0:resource path="{name: [a-zA-Z]+}">
+            <ns0:param name="name" style="template" xmlns:ns2="http://www.w3.org/2001/XMLSchema" type="ns2:string"/>
+            <ns0:method id="sayHello" name="GET">
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+      </ns0:resource>
+   </ns0:resources>
+</ns0:application>

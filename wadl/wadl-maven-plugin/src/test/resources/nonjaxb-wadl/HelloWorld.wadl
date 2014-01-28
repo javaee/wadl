@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://wadl.dev.java.net/2009/02">
+    <doc xmlns:jersey="http://jersey.java.net/" jersey:generatedBy="Jersey: 1.9-SNAPSHOT 07/20/2011 01:19 PM"/>
+    <grammars>
+    </grammars>
+    <resources base="http://localhost:9998/">
+        <resource path="/helloworld">
+            <method name="GET" id="getClichedMessage">
+                <response>
+                    <representation mediaType="text/plain"/>
+                </response>
+            </method>
+        </resource>
+    </resources>
+</application>

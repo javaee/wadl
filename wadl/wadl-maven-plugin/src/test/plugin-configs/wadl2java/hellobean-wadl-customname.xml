@@ -1,0 +1,28 @@
+<project>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>wadl-client-plugin</artifactId>
+                <configuration>
+                    <targetDirectory>${basedir}/target/test-harness/hellobean-wadl-customname/generated-sources/wadl</targetDirectory>
+                    <sourceDirectory>${basedir}/src/test/resources/hellobean-wadl</sourceDirectory>
+                    <packageName>test</packageName>
+                    <includes>*.wadl</includes>
+                    <customizations></customizations>
+                    <autoPackaging>true</autoPackaging>
+                    <failOnError>true</failOnError>
+                    <customClassNames>
+                        <property>
+                            <!-- see HelloBean.wadl, this
+                                 used to result in an error as both parent
+                                 and child would be called Bean -->
+                            <name>http://www.example.com/resource/</name> 
+                            <value>Bean</value>
+                        </property>
+                    </customClassNames>
+                    
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

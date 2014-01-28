@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ccd="http://www.epo.org/ccd" xmlns:exch="http://www.epo.org/exchange" targetNamespace="http://www.epo.org/ccd" elementFormDefault="qualified">
+	<xs:import namespace="http://www.epo.org/exchange" schemaLocation="exchange-documents.xsd"/>
+	<!--
+
+Common Citation Document The common citation document contains a set
+of related applications each represented by a ccd member element
+
+representing the INPADOC family member. For each application it
+provides the citations and classifications provided by a specific
+
+office.
+-->
+	<xs:element name="ccd">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="ccd:simple-family-metadata" maxOccurs="unbounded"/>
+				<xs:element ref="ccd:ccd-member" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+Metadata information about the simple families that are contained in
+
+this ccd (INPADOC) family
+-->
+	<xs:element name="simple-family-metadata">
+		<xs:complexType>
+			<xs:attribute name="family-id" use="required"/>
+			<xs:attribute name="members" use="required"/>
+			<xs:attribute name="prios" use="required"/>
+			<xs:attribute name="weighted-prio-date" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!--Classification and citations related to an application.-->
+	<xs:element name="ccd-member">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:application-reference"/>
+				<xs:element ref="exch:publication-reference" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="exch:priority-claims" minOccurs="0"/>
+				<xs:element ref="exch:invention-title" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="exch:patent-classifications" minOccurs="0"/>
+				<xs:element ref="ccd:field-of-search" minOccurs="0"/>
+				<xs:element ref="exch:references-cited" minOccurs="0"/>
+				<xs:element ref="ccd:pct-or-regional-filing-data" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="ccd:pct-or-regional-publishing-data" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="ccd:search-reports-information" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="system"/>
+			<xs:attribute name="family-id"/>
+			<xs:attribute name="country"/>
+			<xs:attribute name="doc-number"/>
+			<xs:attribute name="kind"/>
+			<xs:attribute name="dtd-version"/>
+			<xs:attribute name="status"/>
+			<xs:attribute name="lang"/>
+		</xs:complexType>
+	</xs:element>
+	<!--
+
+Date: components of a date. Format: YYYYMMDD
+
+
+-->
+	<xs:element name="date" type="xs:string"/>
+	<!--
+Address, fourth line
+
+
+-->
+	<xs:element name="address-4" type="xs:string"/>
+	<!--
+
+Address, fifth line
+
+
+-->
+	<xs:element name="address-5" type="xs:string"/>
+	<!--
+Rule 4.6(c): "The request may, for different designated states,
+
+indicate different persons as inventors where, in this respect, the
+requirements of the national laws of the designated States are not the
+
+same. In such a case, the request shall contain a separate statement
+for each designated State or group of States in which a particular
+
+person, or the same person, is to be considered the inventor, or in
+which particular persons, or the same persons, are to be considered
+
+the inventors."
+-->
+	<xs:element name="designated-states-as-inventor">
+		<xs:complexType>
+          <xs:sequence minOccurs="0" maxOccurs="unbounded"> 
+            <xs:element name="region" type="exch:regionType" minOccurs="0"/> 
+            <xs:element name="country" type="exch:countryType" maxOccurs="unbounded"/> 
+          </xs:sequence>    
+		</xs:complexType>
+	</xs:element>
+	<!--
+
+Field of search.
+(INID 58, ST.32:B580)
+
+
+-->
+	<xs:element name="field-of-search">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:patent-classifications" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+
+PCT or regional filing information. (INID 86, ST.32:B860)
+-->
+	<xs:element name="pct-or-regional-filing-data">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:document-id" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+
+PCT or regional publication information. (INID 87, ST.32:B870)
+-->
+	<xs:element name="pct-or-regional-publishing-data">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:document-id"/>
+				<xs:element ref="exch:gazette-reference" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+Information about an office's gazette or bulletin - paper, electronic,
+
+etc. where, the details of the patent publication are also given.
+Examples WIPO gazette and EPO Bulletin The date is mandatory.
+
+(ST.32:B405)
+-->
+	<xs:element name="gazette-reference">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:gazette-num"/>
+				<xs:element ref="exch:date"/>
+				<xs:element ref="exch:text" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:ID"/>
+			<xs:attribute name="country"/>
+			<xs:attribute name="lang"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="gazette-num" type="xs:string"/>
+	<!-- PFR ST.36/2010/001 -->
+	<xs:element name="search-reports-information">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="ccd:search-report-information" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:ID"/>
+			<xs:attribute name="office" use="required"/>
+			<xs:attribute name="search-type" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:token">
+						<xs:enumeration value="international-type"/>
+						<xs:enumeration value="isr"/>
+						<xs:enumeration value="sisr"/>
+						<xs:enumeration value="national"/>
+						<xs:enumeration value="national-supplementary"/>
+						<xs:enumeration value="other"/>
+						<xs:enumeration value="undefined"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="incomplete-search">
+				<xs:simpleType>
+					<xs:restriction base="xs:token">
+						<xs:enumeration value="yes"/>
+						<xs:enumeration value="no"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="declaration-of-no-search" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:token">
+						<xs:enumeration value="yes"/>
+						<xs:enumeration value="no"/>
+						<xs:enumeration value="not-determined"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="status"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Details about a specific search report. -->
+	<xs:element name="search-report-information">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="ccd:srep-request-date" minOccurs="0"/>
+				<xs:element ref="exch:application-reference" minOccurs="0"/>
+				<xs:element ref="ccd:srep-request-withdrawn" minOccurs="0"/>
+				<xs:element ref="ccd:sis-receipt-of-translation" minOccurs="0"/>
+				<xs:element ref="ccd:date-search-completed" minOccurs="0"/>
+				<xs:element ref="ccd:date-search-report-mailed" minOccurs="0"/>
+				<xs:element ref="ccd:correction-mailing-date" minOccurs="0"/>
+				<xs:element ref="ccd:place-of-search" minOccurs="0"/>
+				<xs:element ref="ccd:search-report-publication" minOccurs="0"/>
+				<xs:element ref="ccd:searcher" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+
+Date of request for search eg. on PCT Form 201
+
+
+-->
+	<xs:element name="srep-request-date">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:date"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="srep-request-withdrawn">
+		<xs:complexType/>
+	</xs:element>
+	<xs:element name="sis-receipt-of-translation">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:date"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+Date of completion of search report. (ST.32:B565)
+
+-->
+	<xs:element name="date-search-completed">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:date"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+Date of mailing of search report.
+
+(ST.32:B566)
+
+
+-->
+	<xs:element name="date-search-report-mailed">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:date"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="correction-mailing-date">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:date" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+
+Place of search - international search authority. (ST.32:B567)
+-->
+	<xs:element name="place-of-search">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:country"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+
+(ST.32:B568)
+
+
+-->
+	<xs:element name="search-report-publication">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="exch:document-id" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--
+Search report examiner.
+
+(ST.32:B569)
+
+
+-->
+	<xs:element name="searcher">
+		<xs:complexType>
+			<xs:choice>
+				<xs:group ref="exch:nameGroup"/>
+				<xs:element ref="exch:addressbook"/>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="addressGroup">
+		<xs:choice>
+			<xs:sequence>
+				<xs:element ref="exch:address-1" minOccurs="0"/>
+				<xs:element ref="exch:address-2" minOccurs="0"/>
+				<xs:element ref="exch:address-3" minOccurs="0"/>
+				<xs:element ref="ccd:address-4" minOccurs="0"/>
+				<xs:element ref="ccd:address-5" minOccurs="0"/>
+				<xs:element ref="exch:mailcode" minOccurs="0"/>
+				<xs:element ref="exch:pobox" minOccurs="0"/>
+				<xs:element ref="exch:room" minOccurs="0"/>
+				<xs:element ref="exch:address-floor" minOccurs="0"/>
+				<xs:element ref="exch:building" minOccurs="0"/>
+				<xs:element ref="exch:street" minOccurs="0"/>
+				<xs:element ref="exch:city" minOccurs="0"/>
+				<xs:element ref="exch:county" minOccurs="0"/>
+				<xs:element ref="exch:state" minOccurs="0"/>
+				<xs:element ref="exch:postcode" minOccurs="0"/>
+				<xs:element ref="exch:country"/>
+			</xs:sequence>
+			<xs:element ref="exch:text"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="publication-referenceType">
+		<xs:annotation>
+			<xs:documentation>An exch:publication-reference with the additional is-representative
+
+        attribute to indicate the main member of the publication cycle
+      </xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="exch:publication-referenceType">
+				<xs:attribute name="is-representative" type="xs:string" use="optional"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:element name="publication-reference" type="ccd:publication-referenceType"/>
+</xs:schema>

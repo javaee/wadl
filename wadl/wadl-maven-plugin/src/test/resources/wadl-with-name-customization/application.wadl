@@ -1,0 +1,26 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<ns0:application xmlns:ns0="http://wadl.dev.java.net/2009/02">
+   <ns0:doc xmlns:ns1="http://jersey.java.net/" ns1:generatedBy="Jersey: 1.13-b01 03/09/2012 03:52 PM"/>
+   <ns0:grammars>
+      <ns0:include href="xsd0.xsd">
+         <ns0:doc title="Generated" xml:lang="en"/>
+      </ns0:include>
+   </ns0:grammars>
+   <ns0:resources base="http://localhost:7101/REST_Sanity-EmpService-context-root/resources/">
+      <ns0:resource path="project1">
+         <ns0:method id="getEmpList" name="GET">
+            <ns0:response>
+               <ns0:representation element="employeeList" mediaType="application/xml"/>
+            </ns0:response>
+         </ns0:method>
+         <ns0:resource path="{name}">
+            <ns0:param name="name" style="template" xmlns:ns2="http://www.w3.org/2001/XMLSchema" type="ns2:string"/>
+            <ns0:method id="getEmpByName" name="GET">
+               <ns0:response>
+                  <ns0:representation element="employee" mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+      </ns0:resource>
+   </ns0:resources>
+</ns0:application>

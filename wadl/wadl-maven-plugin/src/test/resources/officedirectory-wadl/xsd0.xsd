@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:ns0="urn:com.office.directory" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:com.office.directory">
+   <xsd:complexType name="Record">
+      <xsd:sequence>
+         <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="title" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="phone" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="building" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="floor" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="office" type="xsd:string" minOccurs="0"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="PhoneInfo">
+      <xsd:sequence>
+         <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="phone" type="xsd:string" minOccurs="0"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:complexType name="OfficeInfo">
+      <xsd:sequence>
+         <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="phone" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="building" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="floor" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="officeNumber" type="xsd:string" minOccurs="0"/>
+      </xsd:sequence>
+   </xsd:complexType>
+   <xsd:element name="Record" type="ns0:Record"/>
+   <xsd:element name="PhoneInfo" type="ns0:PhoneInfo"/>
+   <xsd:element name="OfficeInfo" type="ns0:OfficeInfo"/>
+</xsd:schema>

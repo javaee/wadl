@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://wadl.dev.java.net/2009/02">
+    <doc xmlns:jersey="http://jersey.java.net/" jersey:generatedBy="Jersey: 1.9-SNAPSHOT 07/13/2011 11:13 AM"/>
+    <grammars>
+        <include href="xsd0.xsd">
+            <doc xml:lang="en" title="Generated"/>
+        </include>
+    </grammars>
+    <resources base="http://localhost:7101/JerseySchemaGen-Examples-context-root/jersey/">
+        <resource path="/path/{param1}">
+            <resource path="/{param2}">
+                <param xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                    type="xs:string" style="template" name="param1"/>
+                <param xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                    type="xs:string" style="template" name="param2"/>
+                <method name="GET" id="hello">
+                    <response>
+                        <representation xmlns:ns2="urn:example"
+                            mediaType="application/xml" element="ns2:simpleReturn"/>
+                    </response>
+                </method>
+            </resource>
+        </resource>
+    </resources>
+</application>

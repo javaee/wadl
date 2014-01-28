@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="yes"?>
+<xs:schema version="1.0" targetNamespace="urn:message" xmlns:tns="urn:message" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="requestMessage" type="tns:requestMessage"/>
+
+  <xs:element name="responseMessage" type="tns:responseMessage"/>
+
+  <xs:complexType name="responseMessage">
+    <xs:sequence>
+      <xs:element name="text" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="requestMessage">
+    <xs:sequence>
+      <xs:element name="text" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

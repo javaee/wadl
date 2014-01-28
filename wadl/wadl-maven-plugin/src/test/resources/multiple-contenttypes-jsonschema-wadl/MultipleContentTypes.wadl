@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<application xmlns="http://wadl.dev.java.net/2009/02">
+    <doc xmlns:jersey="http://jersey.java.net/" jersey:generatedBy="Jersey: 1.15-SNAPSHOT 10/26/2012 09:28 AM"/>
+    <grammars>
+        <include href="xsd0.xsd">
+            <doc title="Generated" xml:lang="en"/>
+        </include>
+    </grammars>
+    <resources base="http://localhost/">
+        <resource path="/root">
+            <method id="hello" name="PUT">
+                <request>
+                    <representation xmlns:ns2="urn:message" xmlns:json="http://wadl.dev.java.net/2009/02/json-schema" element="ns2:requestMessage" mediaType="application/json" json:describedby="requestMessage"/>
+                    <representation xmlns:ns2="urn:message" element="ns2:requestMessage" mediaType="application/xml"/>
+                </request>
+                <response>
+                    <representation xmlns:ns2="urn:message" element="ns2:responseMessage" mediaType="application/xml"/>
+                    <representation xmlns:ns2="urn:message" xmlns:json="http://wadl.dev.java.net/2009/02/json-schema" element="ns2:responseMessage" mediaType="application/json" json:describedby="responseMessage"/>
+                </response>
+            </method>
+        </resource>
+    </resources>
+</application>
