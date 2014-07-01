@@ -1048,6 +1048,8 @@ h1.hidden {
         <h3>Methods:</h3>
 
         <xsl:for-each select="$resourceTypes/*/wadl:method">
+
+	   <xsl:sort select="a:lookupReference(.)/node()/@name"/>
    
            <!-- look up the method, could be a deference -->
            <xsl:variable name="method" select="a:lookupReference(.)/node()"/>    
@@ -1067,6 +1069,9 @@ h1.hidden {
         <h3>Resources:</h3>
      
          <xsl:for-each select="$resourceTypes/*/wadl:resource">
+
+	    <xsl:sort select="a:lookupReference(.)/node()/@path"/>
+
             <xsl:call-template name="processResource">
                      <xsl:with-param name="parentPath" select="$currentPath"/>
                      <!-- We don't dereference the resource, this is done in resource types -->
