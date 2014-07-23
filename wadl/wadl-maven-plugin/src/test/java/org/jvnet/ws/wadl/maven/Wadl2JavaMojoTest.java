@@ -37,7 +37,7 @@ import static org.jvnet.ws.wadl.matchers.Matchers.exists;
  * @author Wilfred Springer
  * 
  */
-public class Wadl2JavaMojoTest extends AbstractWadl2JavaMojoTest<Client> {
+public class Wadl2JavaMojoTest extends AbstractJavaWadl2JavaMojoTest<Client> {
 
     
     /**

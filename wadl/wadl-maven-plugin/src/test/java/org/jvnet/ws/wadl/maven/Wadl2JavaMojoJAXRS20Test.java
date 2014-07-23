@@ -1,6 +1,13 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * The contents of this file are subject to the terms
+ * of the Common Development and Distribution License
+ * (the "License").  You may not use this file except
+ * in compliance with the License.
+ * 
+ * You can obtain a copy of the license at
+ * http://www.opensource.org/licenses/cddl1.php
+ * See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package org.jvnet.ws.wadl.maven;
 
@@ -33,7 +40,7 @@ import static org.fest.reflect.core.Reflection.field;
  * @author gdavison
  */
 public class Wadl2JavaMojoJAXRS20Test
-        extends AbstractWadl2JavaMojoTest<Client> {
+        extends AbstractJavaWadl2JavaMojoTest<Client> {
 
     @Override
     protected Client createClient() {

@@ -112,6 +112,16 @@
             <version>1.1</version>
             <scope>test</scope>
         </dependency>
+        
+        <!-- HTML Unit to allow testing of JavaScript clients -->
+        
+        <dependency>
+            <groupId>net.sourceforge.htmlunit</groupId>
+            <artifactId>htmlunit</artifactId>
+            <version>2.15</version>
+            <scope>test</scope>
+        </dependency>         
+        
 
         <!-- Only in place to provide implementation of UriBuilder -->
         <dependency>
