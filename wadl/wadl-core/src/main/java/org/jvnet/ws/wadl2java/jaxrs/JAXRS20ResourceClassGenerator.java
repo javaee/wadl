@@ -29,6 +29,7 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
+import org.jvnet.ws.wadl2java.Wadl2Java;
 
 /**
  * The specific implementation for JAX-RS 2.0 static client
@@ -50,10 +51,10 @@ public class JAXRS20ResourceClassGenerator
      * @param resource the resource element for which to generate a class.
      */
     public JAXRS20ResourceClassGenerator(
-            MessageListener messageListener,
+            Wadl2Java.Parameters parameters,
             Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
-        super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, resource);
+        super(parameters, resolver, codeModel, pkg, generatedPackages, javaDoc, resource);
     }
     
     /**
@@ -63,13 +64,12 @@ public class JAXRS20ResourceClassGenerator
      * @param resolver the schema2java model to use for element to class mapping lookups.
      * @param codeModel code model instance to use when generating code.
      * @param pkg package for new classes.
-     * @param clazz the existing class.
      */
     public JAXRS20ResourceClassGenerator(
-            MessageListener messageListener,
+            Wadl2Java.Parameters parameters,
             Resolver resolver, JCodeModel codeModel, 
-            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
-        super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, clazz);
+            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc) {
+        super(parameters, resolver, codeModel, pkg, generatedPackages, javaDoc);
     }
 
     

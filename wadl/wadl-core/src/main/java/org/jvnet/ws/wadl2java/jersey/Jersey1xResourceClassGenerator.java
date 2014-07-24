@@ -14,6 +14,7 @@ import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.jvnet.ws.wadl2java.Resolver;
 import org.jvnet.ws.wadl2java.JavaDocUtil;
+import org.jvnet.ws.wadl2java.Wadl2Java;
 import org.jvnet.ws.wadl2java.Wadl2JavaMessages;
 import org.jvnet.ws.wadl2java.common.BaseResourceClassGenerator;
 
@@ -37,10 +38,10 @@ public class Jersey1xResourceClassGenerator
      * @param resource the resource element for which to generate a class.
      */
     public Jersey1xResourceClassGenerator(
-            MessageListener messageListener,
+            Wadl2Java.Parameters parameters,
             Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
-        super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, resource);
+        super(parameters, resolver, codeModel, pkg, generatedPackages, javaDoc, resource);
     }
     
     /**
@@ -50,13 +51,12 @@ public class Jersey1xResourceClassGenerator
      * @param resolver the schema2java model to use for element to class mapping lookups.
      * @param codeModel code model instance to use when generating code.
      * @param pkg package for new classes.
-     * @param clazz the existing class.
      */
     public Jersey1xResourceClassGenerator(
-            MessageListener messageListener,
+            Wadl2Java.Parameters parameters,
             Resolver resolver, JCodeModel codeModel, 
-            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
-        super(messageListener, resolver, codeModel, pkg, generatedPackages, javaDoc, clazz);
+            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc) {
+        super(parameters, resolver, codeModel, pkg, generatedPackages, javaDoc);
     }
 
     

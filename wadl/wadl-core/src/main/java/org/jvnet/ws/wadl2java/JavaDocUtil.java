@@ -196,7 +196,7 @@ public class JavaDocUtil {
      * @param n the WADL resource type.
      * @param iface the corresponding interface.
      */
-    void generateClassDoc(ResourceTypeNode n, JDefinedClass iface) {
+    public void generateClassDoc(ResourceTypeNode n, JDefinedClass iface) {
         if (n.getDoc().size() < 1)
             return;
         Doc d = n.getDoc().get(0);

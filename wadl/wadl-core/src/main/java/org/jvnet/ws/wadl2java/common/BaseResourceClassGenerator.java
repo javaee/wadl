@@ -21,13 +21,16 @@ package org.jvnet.ws.wadl2java.common;
  
 import com.sun.codemodel.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Generated;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
@@ -37,7 +40,7 @@ import org.jvnet.ws.wadl.ParamStyle;
 import org.jvnet.ws.wadl.ast.*;
 import org.jvnet.ws.wadl.util.MessageListener;
 import org.jvnet.ws.wadl2java.*;
-
+ 
 /**
  * Generator class for nested static classes used to represent web resources.
  *
@@ -78,7 +81,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     private JDefinedClass $class = null;
     private JavaDocUtil javaDoc;
     private String generatedPackages;
-    private MessageListener messageListener; 
+    private Wadl2Java.Parameters parameters;
     
     /**
      * Creates a new instance of BaseResourceClassGenerator.
@@ -90,10 +93,10 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * @param resource the resource element for which to generate a class.
      */
     public BaseResourceClassGenerator(
-            MessageListener messageListener,
+            Wadl2Java.Parameters parameters,
             Resolver resolver, JCodeModel codeModel, 
             JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, ResourceNode resource) {
-        this.messageListener = messageListener;
+        this.parameters = parameters;
         this.resource = resource;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
@@ -112,16 +115,15 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * @param clazz the existing class.
      */
     public BaseResourceClassGenerator(
-            MessageListener messageListener,
+            Wadl2Java.Parameters parameters,
             Resolver resolver, JCodeModel codeModel, 
-            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc, JDefinedClass clazz) {
-        this.messageListener = messageListener;
+            JPackage pkg, String generatedPackages, JavaDocUtil javaDoc) {
+        this.parameters = parameters;
         this.resource = null;
         this.codeModel = codeModel;
         this.javaDoc = javaDoc;
         this.resolver = resolver;
         this.pkg = pkg;
-        this.$class = clazz;
         this.generatedPackages = generatedPackages;
     }
 
@@ -276,6 +278,170 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         return true;
     }
     
+   /**
+     * Create a class that acts as a container for a hierarchy
+     * of static inner classes, one for each resource described by the WADL file.
+     *
+     * @param rootResource the root URI to the WADL so we can generate the required annotations
+     * @param root the resource element that corresponds to the root of the resource tree
+     * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
+     * generation, the WADL processor attempts to create a duplicate
+     * class. This indicates a structural problem with the WADL file, e.g. duplicate
+     * peer resource entries. 
+     */
+    public void generateEndpointClass(
+            URI rootResource, ResourceNode root)
+            throws JClassAlreadyExistsException {
+
+        int counter=0; //
+        JDefinedClass impl;
+
+        // It is possible for multiple resources to have the same
+        // root, so in that case we genreate the name sequentially
+        //
+        do
+        {
+            String proposedName = counter++ ==0 ?
+                    root.getClassName() : root.getClassName() + counter;
+
+            try
+            {
+                impl = pkg._class(JMod.PUBLIC, proposedName);
+                // Store the name for later
+                root.setClassName(proposedName);
+            }
+            catch (JClassAlreadyExistsException ex)
+            {
+                // So we try again
+                impl = null;
+            }
+
+        }
+        while (impl==null);
+
+
+        // Put a Generated annotation on the class for later regeneration
+        // by tooling
+        if (rootResource!=null) {
+            JAnnotationUse annUse = impl.annotate(Generated.class);
+            JAnnotationArrayMember array = annUse.paramArray("value");
+            array.param("wadl|" + rootResource.toString());
+
+            // Process any of the binding files if avaliable
+            //
+
+            URI packagePath = UriBuilder.fromUri(parameters.getRootDir())
+                    .path(parameters.getPkg().replace(".", "/") + "/").build();
+
+
+            for (URI customization : parameters.getCustomizations()) {
+                array.param("customization|" + packagePath.relativize(customization));
+            }
+
+            //
+
+            annUse.param("comments",
+                    "wadl2java, http://wadl.java.net");
+
+            // Output date
+            GregorianCalendar gc = new GregorianCalendar();
+            gc.setTime(new Date());
+            annUse.param("date",
+                    DatatypeConverter.printDateTime(
+                            gc));
+
+
+        }
+
+        // Create a static final field that contains the root URI
+        //
+
+        JFieldVar $base_uri = impl.field(
+                Modifier.PUBLIC
+                        | Modifier.STATIC
+                | Modifier.FINAL, URI.class, "BASE_URI");
+
+        $base_uri.javadoc().append("The base URI for the resource represented by this proxy");
+
+        // Generate the subordinate classes
+        //
+
+        for (ResourceNode r: root.getChildResources()) {
+            generateSubClass(impl, $base_uri, r);
+        }
+
+        // Populate the BASE_URI field in a static init block at the
+        // end of the file to make things a bit tidier.
+
+        JBlock staticInit = impl.init();
+
+        
+        JVar $originalURI = staticInit.decl($base_uri.type(), "originalURI")
+                .init(
+                   codeModel.ref(URI.class).staticInvoke("create").arg(JExpr.lit(root.getUriTemplate())));
+
+        staticInit.directStatement(
+                "// Look up to see if we have any indirection in the local copy"
+                        + "\n        // of META-INF/java-rs-catalog.xml file, assuming it will be in the"
+                        + "\n        // oasis:name:tc:entity:xmlns:xml:catalog namespace or similar duck type"
+                        + "\n        java.io.InputStream is = " + impl.name() + ".class.getResourceAsStream(\"/META-INF/jax-rs-catalog.xml\");"
+                        + "\n        if (is!=null) {"
+                        + "\n            try {"
+                        + "\n                // Ignore the namespace in the catalog, can't use wildcard until"
+                        + "\n                // we are sure we have XPath 2.0"
+                        + "\n                String found = javax.xml.xpath.XPathFactory.newInstance().newXPath().evaluate("
+                        + "\n                    \"/*[name(.) = 'catalog']/*[name(.) = 'uri' and @name ='\" + originalURI +\"']/@uri\", "
+                        + "\n                    new org.xml.sax.InputSource(is)); "
+                        + "\n                if (found!=null && found.length()>0) {"
+                + "\n                    originalURI = java.net.URI.create(found);"
+                        + "\n                }"
+                        + "\n                "
+                        + "\n            }"
+                        + "\n            catch (Exception ex) {"
+                        + "\n                ex.printStackTrace();"
+                        + "\n            }"
+                        + "\n            finally {"
+                        + "\n                try {"
+                        + "\n                    is.close();"
+                        + "\n                } catch (java.io.IOException e) {"
+                        + "\n                }"
+                        + "\n            }"
+                        + "\n        }");
+        staticInit.assign($base_uri, $originalURI);
+
+    }
+
+    /**
+     * Creates an inner static class that represents a resource and its 
+     * methods. Recurses the tree of child resources.
+     *
+     * @param parent the outer class for the static inner class being 
+     * generated. This can either be a top level class or a nested static 
+     * inner class for a parent resource.
+     * @param resource the WADL <code>resource</code> element being processed.
+     * @param $base_uri The root URI for this resource class
+     * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code
+     * generation, the WADL processor attempts to create a duplicate
+     * class. This indicates a structural problem with the WADL file, 
+     * e.g. duplicate peer resource entries.
+     */
+    public void generateSubClass(JDefinedClass parent, JVar $global_base_uri, ResourceNode resource)
+            throws JClassAlreadyExistsException {
+
+        
+        JDefinedClass impl = generateClass(parent, resource, $global_base_uri);
+
+        // generate Java methods for each resource method
+        for (MethodNode m: resource.getMethods()) {
+            generateMethodDecls(m, false);
+        } 
+
+
+        // generate sub classes for each child resource
+        for (ResourceNode r: resource.getChildResources()) {
+            generateSubClass(impl,$global_base_uri, r);
+        }
+    }
     
     /**
      * Generate a static member class that represents a WADL resource.
@@ -286,8 +452,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * @throws com.sun.codemodel.JClassAlreadyExistsException if a class with 
      * the same name already exists.
      */
-    @Override
-    public JDefinedClass generateClass(JDefinedClass parentClass, 
+    public JDefinedClass generateClass(JDefinedClass parentClass, ResourceNode resource,
             JVar $global_base_uri) throws JClassAlreadyExistsException {
 
         String className = resource.getClassName();
@@ -836,7 +1001,6 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * or not {@code true}.
      * @param method the WADL <code>method</code> element to process.
      */
-    @Override
     public void generateMethodDecls(MethodNode method, boolean isAbstract) {
 
         List<RepresentationNode> supportedInputs = method.getSupportedInputs();
@@ -851,7 +1015,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         for (List<FaultNode> fl: method.getFaults().values()) {
             for (FaultNode f : fl){
                 if (f.getElement()==null) {// skip fault for which there's no XML
-                    messageListener.info(Wadl2JavaMessages.FAULT_NO_ELEMENT());
+                    parameters.getMessageListener().info(Wadl2JavaMessages.FAULT_NO_ELEMENT());
                     continue;
                 }
                 JDefinedClass generatedException = generateExceptionClass(f);
@@ -929,7 +1093,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
     protected JType getTypeFromElement(QName element) {
         JType type = resolver.resolve(element);
         if (type==null)
-            messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
+            parameters.getMessageListener().info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(element.toString()));
         return type;
     }
 
@@ -944,7 +1108,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         URI uri = resolver.resolveURI(resource, path);
         JType type = resolver.resolve(uri);
         if (type==null)
-            messageListener.info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(uri.toString()));
+            parameters.getMessageListener().info(Wadl2JavaMessages.ELEMENT_NOT_FOUND(uri.toString()));
         return type;
     }
     
@@ -1135,7 +1299,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
                     catch (Exception ex)
                     {
                         // Ignore for the moment
-                        messageListener.warning("Internal error", ex);
+                        parameters.getMessageListener().warning("Internal error", ex);
                     }
                     
                     wrapInputTypeInJAXBElement = !isRootElement && isXmlType;
@@ -1556,6 +1720,38 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
             // $methodBody.add($execute);
         }
     }
+     
+    
+    /**
+     * Generate Java interfaces for WADL resource types
+     * @throws com.sun.codemodel.JClassAlreadyExistsException if the interface to be generated already exists
+     */
+    @Override
+    public void generateResourceTypeInterface(ResourceTypeNode n)
+            throws JClassAlreadyExistsException{
+
+        JDefinedClass iface = pkg._class(JMod.PUBLIC, n.getClassName(), ClassType.INTERFACE);
+        n.setGeneratedInterface(iface);
+        
+        javaDoc.generateClassDoc(n, iface);
+         
+        //
+        
+        $class = iface;
+       
+        // generate Java methods for each resource method
+        for (MethodNode m: n.getMethods()) {
+            generateMethodDecls(m, true);
+        }
+        List<Param> matrixParams = n.getMatrixParams();
+        // generate bean properties for matrix parameters
+        for (Param p: matrixParams) {
+            generateBeanProperty(iface, matrixParams, p, true);
+        }
+    }
+
+
+    
 
 
     /**
@@ -1566,7 +1762,6 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * @param isAbstract controls whether a method body is created {@code false} or not {@code true}. Set to {@code true}
      * for interface methods, {@code false} for class methods.
      */
-    @Override
     public void generateBeanProperty(JDefinedClass $impl, List<Param> matrixParameters, Param p, boolean isAbstract) {
         JClass rawType = GeneratorUtil.getJavaType(p, codeModel, $impl, javaDoc);
         JType propertyType = p.isRepeating() ? codeModel.ref(List.class).narrow(rawType) : rawType;

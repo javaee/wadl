@@ -534,7 +534,7 @@ public class WadlAstBuilder {
         
         StreamResult result = new StreamResult(sw);
         try {
-            TransformerFactory tf = TransformerFactory.newInstance();
+            TransformerFactory tf = TransformerFactory.newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", TransformerFactory.class.getClassLoader());
             StreamSource stylesheet = new StreamSource(
                 WadlXsltUtils.getUpgradeTransformAsStream());
             Transformer t = tf.newTransformer(stylesheet);

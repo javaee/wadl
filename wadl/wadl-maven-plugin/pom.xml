@@ -115,6 +115,13 @@
         
         <!-- HTML Unit to allow testing of JavaScript clients -->
         
+<!--        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>xalan</artifactId>
+            <version>2.7.0</version>
+            <scope>test</scope>
+        </dependency> -->
+        
         <dependency>
             <groupId>net.sourceforge.htmlunit</groupId>
             <artifactId>htmlunit</artifactId>
@@ -143,7 +150,17 @@
             <version>${jersey1.version}</version>
             <scope>test</scope>
         </dependency>
-
+        
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-jaxrs</artifactId>
+            <version>1.9.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-xc</artifactId>
+            <version>1.9.11</version>
+        </dependency>
     </dependencies>
 
     <profiles>

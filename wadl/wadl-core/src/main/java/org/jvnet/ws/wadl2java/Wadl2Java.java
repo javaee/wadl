@@ -65,6 +65,7 @@ public class Wadl2Java {
     
     public static final String STYLE_JERSEY1X = "jersey1x";
     public static final String STYLE_JAXRS20 = "jaxrs20";
+    public static final String STYLE_JQUERY_JAVASCRIPT = "jqeuryJavaScript";
     public static final String STYLE_DEFAULT = STYLE_JERSEY1X;
     public static final Set<String> STYLE_SET = new HashSet<String>() {{
             add(STYLE_JERSEY1X);
@@ -116,9 +117,9 @@ public class Wadl2Java {
         {
             try {
                 Parameters parameters = (Parameters)super.clone();
-                parameters.customizations = new ArrayList<URI>(this.customizations);
-                parameters.baseURIToClassName = new HashMap<String, String>(this.baseURIToClassName);
-                parameters.xjcArguments = ( this.xjcArguments == null ? null : new ArrayList<String>(this.xjcArguments));
+                parameters.customizations = new ArrayList<URI>(this.getCustomizations());
+                parameters.baseURIToClassName = new HashMap<String, String>(this.getBaseURIToClassName());
+                parameters.xjcArguments = ( this.getXjcArguments() == null ? null : new ArrayList<String>(this.getXjcArguments()));
                 return parameters;
             } catch (CloneNotSupportedException ex) {
                 Logger.getLogger(Wadl2Java.class.getName()).log(Level.SEVERE, null, ex);
@@ -226,6 +227,69 @@ public class Wadl2Java {
             return this;
         }
 
+        /**
+         * @return the codeWriter
+         */
+        public CodeWriter getCodeWriter() {
+            return codeWriter;
+        }
+
+        /**
+         * @return the customizations
+         */
+        public List<URI> getCustomizations() {
+            return customizations;
+        }
+
+        /**
+         * @return the xjcArguments
+         */
+        public List<String> getXjcArguments() {
+            return xjcArguments;
+        }
+
+        /**
+         * @return the pkg
+         */
+        public String getPkg() {
+            return pkg;
+        }
+
+        /**
+         * @return the generationStyle
+         */
+        public String getGenerationStyle() {
+            return generationStyle;
+        }
+
+        /**
+         * @return the autoPackage
+         */
+        public boolean isAutoPackage() {
+            return autoPackage;
+        }
+
+        /**
+         * @return the rootDir
+         */
+        public URI getRootDir() {
+            return rootDir;
+        }
+
+        /**
+         * @return the baseURIToClassName
+         */
+        public Map<String, String> getBaseURIToClassName() {
+            return baseURIToClassName;
+        }
+
+        /**
+         * @return the messageListener
+         */
+        public MessageListener getMessageListener() {
+            return messageListener;
+        }
+
     }
 
     private Parameters parameters;
@@ -249,7 +313,7 @@ public class Wadl2Java {
                 }
                 catch (Throwable th)
                 {
-                    parameters.messageListener.
+                    parameters.getMessageListener().
                             warning("Problem getting hold of the model", th);
                 }
             }
@@ -329,14 +393,14 @@ public class Wadl2Java {
      */
     public Wadl2Java(Parameters parameters) {
         this.parameters = parameters.clone();
-        assert parameters.codeWriter!=null;
+        assert parameters.getCodeWriter()!=null;
         this.javaDoc = new JavaDocUtil();
         
         // Parameter validation
         
         if (!STYLE_SET.contains(parameters.generationStyle)) {
             throw new IllegalArgumentException(
-                    Wadl2JavaMessages.INVALID_GENERATION_STYLE(parameters.generationStyle, STYLE_SET));
+                    Wadl2JavaMessages.INVALID_GENERATION_STYLE(parameters.getGenerationStyle(), STYLE_SET));
         }
     }
 
@@ -372,8 +436,8 @@ public class Wadl2Java {
         s2j = new SchemaCompilerImpl();
 
         SchemaCompilerErrorListener errorListener = new SchemaCompilerErrorListener();
-        if (!parameters.autoPackage)
-            s2j.setDefaultPackageName(parameters.pkg);
+        if (!parameters.isAutoPackage())
+            s2j.setDefaultPackageName(parameters.getPkg());
         s2j.setErrorListener(errorListener);
 
         this.astBuilder = new WadlAstBuilder(
@@ -425,8 +489,7 @@ public class Wadl2Java {
                     public void processSchema(String uri, Element node) {
                         s2j.parseSchema(uri, node);
                     }
-                },
-                parameters.messageListener);
+                }, parameters.getMessageListener());
 
         ApplicationNode an = astBuilder.buildAst(rootDesc);
         List<ResourceNode> rs = an.getResources();
@@ -437,7 +500,7 @@ public class Wadl2Java {
 
         for (ResourceNode rootResourcesNode : rs) {
 
-            String overrideName = parameters.baseURIToClassName.get(
+            String overrideName = parameters.getBaseURIToClassName().get(
                     rootResourcesNode.getUriTemplate());
             if (overrideName!=null) {
                 rootResourcesNode.setClassName(overrideName);
@@ -447,9 +510,9 @@ public class Wadl2Java {
 
         // Apply any customizations
         //
-        for (URI customization: parameters.customizations) {
+        for (URI customization: parameters.getCustomizations()) {
             URI incl = rootDesc.resolve(customization);
-            parameters.messageListener.info(Wadl2JavaMessages.PROCESSING(incl.toString()));
+            parameters.getMessageListener().info(Wadl2JavaMessages.PROCESSING(incl.toString()));
             InputSource input = new InputSource(incl.toURL().openStream());
             input.setSystemId(incl.toString());
             s2j.parseSchema(input);
@@ -501,7 +564,7 @@ public class Wadl2Java {
             // Commented out until we work out what to about JSON Schema
             //
             
-            final AnnotationStyle sa = STYLE_JERSEY1X.equals(parameters.generationStyle) ?
+            final AnnotationStyle sa = STYLE_JERSEY1X.equals(parameters.getGenerationStyle()) ?
                     AnnotationStyle.JACKSON1 : AnnotationStyle.JACKSON2;
             GenerationConfig gc = new DefaultGenerationConfig() {
                 public AnnotationStyle getAnnotationStyle() {
@@ -533,25 +596,36 @@ public class Wadl2Java {
                         + ((withoutExtension.length() > 1 ? withoutExtension.substring(1) : ""));
                 
                 sm.generate(codeModel, 
-                        className, parameters.pkg, jsonSchema.toURL());
+                        className, parameters.getPkg(), jsonSchema.toURL());
                 
                 // Store this as we would any other json type
                 jsonTypes.put(
                         jsonSchema, 
-                        codeModel._getClass(parameters.pkg + "." + className));
+                        codeModel._getClass(parameters.getPkg() + "." + className));
             }
             
             
             // Generate the resource interface
             //
-            jPkg = codeModel._package(parameters.pkg);
-
+            jPkg = codeModel._package(parameters.getPkg());
+ 
             
-            generateResourceTypeInterfaces();
-            for (ResourceNode r: rs)
-                generateEndpointClass(rootDesc, r);
+            Map<String, ResourceTypeNode> ifaceMap = astBuilder.getInterfaceMap();
+            for (String id: ifaceMap.keySet()) {
+                ResourceTypeNode n = ifaceMap.get(id);
+                
+                ResourceClassGenerator rcGen = createGeneratorForResourceType();
+                rcGen.generateResourceTypeInterface(n);
+            }
 
-            codeModel.build(parameters.codeWriter);
+
+            for (ResourceNode r: rs)
+            {
+                ResourceClassGenerator rcg = createGeneratorForResource(r);
+                rcg.generateEndpointClass(rootDesc, r); 
+            }
+
+            codeModel.build(parameters.getCodeWriter());
         }
 
         // If we have gotten this far as we have recorded a fatal error then
@@ -565,9 +639,9 @@ public class Wadl2Java {
     }
 
     private void applyXjcArguments(Options options) {
-        if(parameters.xjcArguments != null) {
+        if(parameters.getXjcArguments() != null) {
             try {
-                String[] args = parameters.xjcArguments.toArray(new String[0]);
+                String[] args = parameters.getXjcArguments().toArray(new String[0]);
                 for(int i=0;i<args.length;i++) {
                     options.parseArgument(args, i);
                 }
@@ -581,15 +655,15 @@ public class Wadl2Java {
     
     private ResourceClassGenerator createGeneratorForResource(ResourceNode resource) {
         
-        if (parameters.generationStyle==null || STYLE_JERSEY1X.equals(parameters.generationStyle)) {
+        if (parameters.getGenerationStyle()==null || STYLE_JERSEY1X.equals(parameters.getGenerationStyle())) {
             return  new Jersey1xResourceClassGenerator(
-                parameters.messageListener,
+                    parameters,
                 resolver,
                 codeModel, jPkg, generatedPackages, javaDoc, resource);
         }
-        else if (STYLE_JAXRS20.equals(parameters.generationStyle)) {
+        else if (STYLE_JAXRS20.equals(parameters.getGenerationStyle())) {
             return  new JAXRS20ResourceClassGenerator(
-                parameters.messageListener,
+                    parameters,
                 resolver,
                 codeModel, jPkg, generatedPackages, javaDoc, resource);
         }
@@ -598,17 +672,17 @@ public class Wadl2Java {
         }
     }
 
-    private ResourceClassGenerator createGeneratorForResourceType(JDefinedClass iface) {
-        if (parameters.generationStyle==null || STYLE_JERSEY1X.equals(parameters.generationStyle)) {
-            return new Jersey1xResourceClassGenerator(parameters.messageListener,
+    private ResourceClassGenerator createGeneratorForResourceType() {
+        if (parameters.getGenerationStyle()==null || STYLE_JERSEY1X.equals(parameters.getGenerationStyle())) {
+            return new Jersey1xResourceClassGenerator(parameters,
                     resolver,
-                    codeModel, jPkg, generatedPackages, javaDoc, iface);
+                    codeModel, jPkg, generatedPackages, javaDoc);
         }
-        else if (STYLE_JAXRS20.equals(parameters.generationStyle)) {
+        else if (STYLE_JAXRS20.equals(parameters.getGenerationStyle())) {
             return  new JAXRS20ResourceClassGenerator(
-                parameters.messageListener,
+                    parameters,
                     resolver,
-                    codeModel, jPkg, generatedPackages, javaDoc, iface);
+                    codeModel, jPkg, generatedPackages, javaDoc);
         }
         else {
             throw new IllegalStateException("Invalid generation style");
@@ -616,198 +690,7 @@ public class Wadl2Java {
     }
     
     
-    /**
-     * Generate Java interfaces for WADL resource types
-     * @throws com.sun.codemodel.JClassAlreadyExistsException if the interface to be generated already exists
-     */
-    protected void generateResourceTypeInterfaces()
-            throws JClassAlreadyExistsException{
-
-        Map<String, ResourceTypeNode> ifaceMap = astBuilder.getInterfaceMap();
-        for (String id: ifaceMap.keySet()) {
-            ResourceTypeNode n = ifaceMap.get(id);
-            JDefinedClass iface = jPkg._class(JMod.PUBLIC, n.getClassName(), ClassType.INTERFACE);
-            n.setGeneratedInterface(iface);
-            javaDoc.generateClassDoc(n, iface);
-            ResourceClassGenerator rcGen = createGeneratorForResourceType(iface);
-            // generate Java methods for each resource method
-            for (MethodNode m: n.getMethods()) {
-                rcGen.generateMethodDecls(m, true);
-            }
-            List<Param> matrixParams = n.getMatrixParams();
-            // generate bean properties for matrix parameters
-            for (Param p: matrixParams) {
-                rcGen.generateBeanProperty(iface, matrixParams, p, true);
-            }
-        }
-    }
-
-
-    /**
-     * Create a class that acts as a container for a hierarchy
-     * of static inner classes, one for each resource described by the WADL file.
-     *
-     * @param rootResource the root URI to the WADL so we can generate the required annotations
-     * @param root the resource element that corresponds to the root of the resource tree
-     * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code 
-     * generation, the WADL processor attempts to create a duplicate
-     * class. This indicates a structural problem with the WADL file, e.g. duplicate
-     * peer resource entries.
-     */
-    protected void generateEndpointClass(
-            URI rootResource, ResourceNode root)
-            throws JClassAlreadyExistsException {
-
-        int counter=0; //
-        JDefinedClass impl;
-
-        // It is possible for multiple resources to have the same
-        // root, so in that case we genreate the name sequentially
-        //
-        do
-        {
-            String proposedName = counter++ ==0 ?
-                    root.getClassName() : root.getClassName() + counter;
-
-            try
-            {
-                impl = jPkg._class(JMod.PUBLIC, proposedName);
-                // Store the name for later
-                root.setClassName(proposedName);
-            }
-            catch (JClassAlreadyExistsException ex)
-            {
-                // So we try again
-                impl = null;
-            }
-
-        }
-        while (impl==null);
-
-
-        // Put a Generated annotation on the class for later regeneration
-        // by tooling
-        if (rootResource!=null) {
-            JAnnotationUse annUse = impl.annotate(Generated.class);
-            JAnnotationArrayMember array = annUse.paramArray("value");
-            array.param("wadl|" + rootResource.toString());
-
-            // Process any of the binding files if avaliable
-            //
-
-            URI packagePath = UriBuilder.fromUri(parameters.rootDir)
-                    .path(parameters.pkg.replace(".", "/") + "/").build();
-
-
-            for (URI customization : parameters.customizations) {
-                array.param("customization|" + packagePath.relativize(customization));
-            }
-
-            //
-
-            annUse.param("comments",
-                    "wadl2java, http://wadl.java.net");
-
-            // Output date
-            GregorianCalendar gc = new GregorianCalendar();
-            gc.setTime(new Date());
-            annUse.param("date",
-                    DatatypeConverter.printDateTime(
-                            gc));
-
-
-        }
-
-        // Create a static final field that contains the root URI
-        //
-
-        JFieldVar $base_uri = impl.field(
-                Modifier.PUBLIC
-                        | Modifier.STATIC
-                | Modifier.FINAL, URI.class, "BASE_URI");
-
-        $base_uri.javadoc().append("The base URI for the resource represented by this proxy");
-
-        // Generate the subordinate classes
-        //
-
-        for (ResourceNode r: root.getChildResources()) {
-            generateSubClass(impl, $base_uri, r);
-        }
-
-        // Populate the BASE_URI field in a static init block at the
-        // end of the file to make things a bit tidier.
-
-        JBlock staticInit = impl.init();
-
-        
-        JVar $originalURI = staticInit.decl($base_uri.type(), "originalURI")
-                .init(
-                   codeModel.ref(URI.class).staticInvoke("create").arg(JExpr.lit(root.getUriTemplate())));
-
-        staticInit.directStatement(
-                "// Look up to see if we have any indirection in the local copy"
-                        + "\n        // of META-INF/java-rs-catalog.xml file, assuming it will be in the"
-                        + "\n        // oasis:name:tc:entity:xmlns:xml:catalog namespace or similar duck type"
-                        + "\n        java.io.InputStream is = " + impl.name() + ".class.getResourceAsStream(\"/META-INF/jax-rs-catalog.xml\");"
-                        + "\n        if (is!=null) {"
-                        + "\n            try {"
-                        + "\n                // Ignore the namespace in the catalog, can't use wildcard until"
-                        + "\n                // we are sure we have XPath 2.0"
-                        + "\n                String found = javax.xml.xpath.XPathFactory.newInstance().newXPath().evaluate("
-                        + "\n                    \"/*[name(.) = 'catalog']/*[name(.) = 'uri' and @name ='\" + originalURI +\"']/@uri\", "
-                        + "\n                    new org.xml.sax.InputSource(is)); "
-                        + "\n                if (found!=null && found.length()>0) {"
-                + "\n                    originalURI = java.net.URI.create(found);"
-                        + "\n                }"
-                        + "\n                "
-                        + "\n            }"
-                        + "\n            catch (Exception ex) {"
-                        + "\n                ex.printStackTrace();"
-                        + "\n            }"
-                        + "\n            finally {"
-                        + "\n                try {"
-                        + "\n                    is.close();"
-                        + "\n                } catch (java.io.IOException e) {"
-                        + "\n                }"
-                        + "\n            }"
-                        + "\n        }");
-        staticInit.assign($base_uri, $originalURI);
-
-    }
-
-    /**
-     * Creates an inner static class that represents a resource and its 
-     * methods. Recurses the tree of child resources.
-     *
-     * @param parent the outer class for the static inner class being 
-     * generated. This can either be a top level class or a nested static 
-     * inner class for a parent resource.
-     * @param resource the WADL <code>resource</code> element being processed.
-     * @param $base_uri The root URI for this resource class
-     * @throws com.sun.codemodel.JClassAlreadyExistsException if, during code
-     * generation, the WADL processor attempts to create a duplicate
-     * class. This indicates a structural problem with the WADL file, 
-     * e.g. duplicate peer resource entries.
-     */
-    protected void generateSubClass(JDefinedClass parent, JVar $global_base_uri, ResourceNode resource)
-            throws JClassAlreadyExistsException {
-
-        ResourceClassGenerator rcGen = createGeneratorForResource(resource);
-        
-        JDefinedClass impl = rcGen.generateClass(parent, $global_base_uri);
-
-        // generate Java methods for each resource method
-        for (MethodNode m: resource.getMethods()) {
-            rcGen.generateMethodDecls(m, false);
-        } 
-
-
-        // generate sub classes for each child resource
-        for (ResourceNode r: resource.getChildResources()) {
-            generateSubClass(impl,$global_base_uri, r);
-        }
-    }
+ 
 
 
     /**
@@ -838,7 +721,7 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the warning.
          */
         public void warning(SAXParseException sAXParseException) {
-            parameters.messageListener.warning(
+            parameters.getMessageListener().warning(
                     Wadl2JavaMessages.WARNING(sAXParseException.getMessage()),
                     sAXParseException);
         }
@@ -848,7 +731,7 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the informative message.
          */
         public void info(SAXParseException sAXParseException) {
-            parameters.messageListener.info(
+            parameters.getMessageListener().info(
                     Wadl2JavaMessages.INFO(
                             sAXParseException.getMessage(),
                             sAXParseException.getLineNumber(),
@@ -866,7 +749,7 @@ public class Wadl2Java {
                 firstFatalError = sAXParseException;
             }
 
-            parameters.messageListener.error(
+            parameters.getMessageListener().error(
                     Wadl2JavaMessages.ERROR_FATAL(
                             sAXParseException.getMessage(),
                             sAXParseException.getLineNumber(),
@@ -880,7 +763,7 @@ public class Wadl2Java {
          * @param sAXParseException the exception that caused the error.
          */
         public void error(SAXParseException sAXParseException) {
-            parameters.messageListener.error(
+            parameters.getMessageListener().error(
                     Wadl2JavaMessages.ERROR(
                             sAXParseException.getMessage(),
                             sAXParseException.getLineNumber(),
