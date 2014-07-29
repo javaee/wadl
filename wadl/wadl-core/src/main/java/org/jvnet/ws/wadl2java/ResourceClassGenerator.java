@@ -5,12 +5,7 @@
 package org.jvnet.ws.wadl2java;
 
 import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JVar;
 import java.net.URI;
-import java.util.List;
-import org.jvnet.ws.wadl.Param;
-import org.jvnet.ws.wadl.ast.MethodNode;
 import org.jvnet.ws.wadl.ast.ResourceNode;
 import org.jvnet.ws.wadl.ast.ResourceTypeNode;
 

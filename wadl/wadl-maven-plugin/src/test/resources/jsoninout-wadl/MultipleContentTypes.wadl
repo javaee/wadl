@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://wadl.dev.java.net/2009/02">
+    <doc xmlns:jersey="http://jersey.java.net/" jersey:generatedBy="Jersey: 1.9-SNAPSHOT 07/20/2011 01:19 PM"/>
+    <grammars>
+        <include href="xsd0.xsd">
+            <doc xml:lang="en" title="Generated"/>
+        </include>
+    </grammars>
+    <resources base="http://localhost:9998/">
+        <resource path="/helloworld">
+            <method name="POST" id="echo">
+                <request>
+                    <ns2:representation
+                        xmlns:ns2="http://wadl.dev.java.net/2009/02"
+                        xmlns="" mediaType="application/json" element="someClass"/>
+                </request>
+                <response>
+                    <ns2:representation
+                        xmlns:ns2="http://wadl.dev.java.net/2009/02"
+                        xmlns="" mediaType="application/json" element="someClass"/>
+                </response>
+            </method>
+        </resource>
+    </resources>
+</application>

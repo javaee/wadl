@@ -1148,8 +1148,10 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
      * @param returnType a reference to the Java return type.
      * @return a suitable method name.
      */
-    protected String getMethodName(MethodNode method, RepresentationNode inputRep, RepresentationNode outputRep,
-            JType returnType) {
+    public  static String getMethodName(MethodNode method, RepresentationNode inputRep, RepresentationNode outputRep,
+            JType returnType, JType responseType) {
+        
+        
         StringBuilder buf = new StringBuilder();
         buf.append(method.getName().toLowerCase());
 
@@ -1181,7 +1183,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
               }
             }
             
-            if (returnType == clientResponseClientType()) {
+            if (returnType == responseType) {
                 // Don't both appending anything
             }
             // If we have mutliple supported content types, then we need to
@@ -1363,7 +1365,7 @@ public abstract class BaseResourceClassGenerator implements ResourceClassGenerat
         }
         
         // generate a name for the method 
-        String methodName = getMethodName(method, inputRep, outputRep, isJAXBMapping || isJSONPOJOMapping ? returnType : null);
+        String methodName = getMethodName(method, inputRep, outputRep, isJAXBMapping || isJSONPOJOMapping ? returnType : null, clientResponseClientType());
         
         // create the method
         JMethod $genMethod = $class.method(JMod.PUBLIC, returnType, methodName);

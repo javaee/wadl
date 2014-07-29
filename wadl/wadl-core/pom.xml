@@ -122,57 +122,6 @@
 
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>jdk1.6</id>
-            <activation>
-                <jdk>1.6</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>2.3.2</version>
-                        <configuration>
-                            <compilerArguments>
-                                <endorseddirs>${endorsed.dir}</endorseddirs>
-                            </compilerArguments>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>2.1</version>
-                        <executions>
-                            <execution>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${endorsed.dir}</outputDirectory>
-                                    <silent>true</silent>
-                                    <artifactItems>
-                                        <artifactItem>
-                                            <groupId>javax.xml.bind</groupId>
-                                            <artifactId>jaxb-api</artifactId>
-                                            <version>${jaxb.version}</version>
-                                            <type>jar</type>
-                                        </artifactItem>
-                                    </artifactItems>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-
-            <properties>
-                <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
-            </properties>
-        </profile>
-    </profiles>
 
     <build>
         <plugins>

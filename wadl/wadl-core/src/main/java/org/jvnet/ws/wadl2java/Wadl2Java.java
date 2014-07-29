@@ -29,23 +29,19 @@ import com.sun.xml.xsom.XSElementDecl;
 import com.sun.xml.xsom.XSType;
 import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.nio.CharBuffer;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Generated;
-import javax.ws.rs.core.UriBuilder;
-import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import org.jsonschema2pojo.*;
 import org.jsonschema2pojo.rules.RuleFactory;
-import org.jvnet.ws.wadl.Param;
 import org.jvnet.ws.wadl.ast.*;
 import org.jvnet.ws.wadl.ast.AbstractNode.NodeVisitor;
 import org.jvnet.ws.wadl.util.MessageListener;
+import org.jvnet.ws.wadl2java.javascript.JavaScriptGenerator;
 import org.jvnet.ws.wadl2java.jaxrs.JAXRS20ResourceClassGenerator;
 import org.jvnet.ws.wadl2java.jersey.Jersey1xResourceClassGenerator;
 import org.w3c.dom.Element;
@@ -65,9 +61,15 @@ public class Wadl2Java {
     
     public static final String STYLE_JERSEY1X = "jersey1x";
     public static final String STYLE_JAXRS20 = "jaxrs20";
-    public static final String STYLE_JQUERY_JAVASCRIPT = "jqeuryJavaScript";
+    public static final String STYLE_JQUERY_JAVASCRIPT = "jqueryJavaScript";
     public static final String STYLE_DEFAULT = STYLE_JERSEY1X;
     public static final Set<String> STYLE_SET = new HashSet<String>() {{
+            add(STYLE_JERSEY1X);
+            add(STYLE_JAXRS20);
+            add(STYLE_JQUERY_JAVASCRIPT);
+        }
+    };
+    public static final Set<String> JAVA_SET = new HashSet<String>() {{
             add(STYLE_JERSEY1X);
             add(STYLE_JAXRS20);
         }
@@ -423,6 +425,10 @@ public class Wadl2Java {
      */
     public void process(final URI rootDesc) throws JAXBException, IOException,
             JClassAlreadyExistsException, InvalidWADLException {
+        
+        //
+        
+        boolean isJava = JAVA_SET.contains(parameters.generationStyle);
 
         // Just store the current location so we can resolve more easily
         
@@ -431,19 +437,28 @@ public class Wadl2Java {
         // Store a list of JSON schemas
         
         final Set<URI> jsonSchemas = new LinkedHashSet<URI>();
+        SchemaCompilerErrorListener errorListener = null;
         
-        // read in root WADL file
-        s2j = new SchemaCompilerImpl();
+        if (isJava)
+        {
+            // read in root WADL file
+            s2j = new SchemaCompilerImpl();
 
-        SchemaCompilerErrorListener errorListener = new SchemaCompilerErrorListener();
-        if (!parameters.isAutoPackage())
-            s2j.setDefaultPackageName(parameters.getPkg());
-        s2j.setErrorListener(errorListener);
+            errorListener = new SchemaCompilerErrorListener();
+            if (!parameters.isAutoPackage())
+                s2j.setDefaultPackageName(parameters.getPkg());
+            s2j.setErrorListener(errorListener);
+        }
 
         this.astBuilder = new WadlAstBuilder(
                 new WadlAstBuilder.SchemaCallback() {
 
                     public void processSchema(InputSource input) {
+                        
+                        if (s2j==null)
+                        {
+                            return;
+                        }
                         
                         // Assume that the stream is a buffered stream at this point
                         // and mark a position
@@ -487,6 +502,11 @@ public class Wadl2Java {
                     }
 
                     public void processSchema(String uri, Element node) {
+                        if (s2j==null)
+                        {
+                            return;
+                        }
+                        
                         s2j.parseSchema(uri, node);
                     }
                 }, parameters.getMessageListener());
@@ -508,129 +528,139 @@ public class Wadl2Java {
         }
 
 
-        // Apply any customizations
-        //
-        for (URI customization: parameters.getCustomizations()) {
-            URI incl = rootDesc.resolve(customization);
-            parameters.getMessageListener().info(Wadl2JavaMessages.PROCESSING(incl.toString()));
-            InputSource input = new InputSource(incl.toURL().openStream());
-            input.setSystemId(incl.toString());
-            s2j.parseSchema(input);
-        }
-
-
-        // generate code
-        applyXjcArguments(s2j.getOptions());
-        s2jModel = s2j.bind();
-        if (s2jModel != null) {
-            codeModel = s2jModel.generateCode(null, errorListener);
-            Iterator<JPackage> packages = codeModel.packages();
-            StringBuilder buf = new StringBuilder();
-            while(packages.hasNext()) {
-                JPackage genPkg = packages.next();
-                if (!genPkg.isDefined("ObjectFactory"))
-                    continue;
-                if (buf.length() > 0)
-                    buf.append(':');
-                buf.append(genPkg.name());
-            }
-            generatedPackages = buf.toString();
-            
-            // Generate the json classes, first find any references in the 
-            // elements themselves
+        if (isJava)
+        {
+            // Apply any customizations
             //
-            
-            an.visit(new NodeVisitor() {
+            for (URI customization: parameters.getCustomizations()) {
+                URI incl = rootDesc.resolve(customization);
+                parameters.getMessageListener().info(Wadl2JavaMessages.PROCESSING(incl.toString()));
+                InputSource input = new InputSource(incl.toURL().openStream());
+                input.setSystemId(incl.toString());
+                s2j.parseSchema(input);
+            }
 
-                public void visit(AbstractNode node) {
-                     
-                    if (node instanceof RepresentationNode) {
-                        RepresentationNode rn = (RepresentationNode) node;
-                        String uriStr = rn.getOtherAttribute(JSON_SCHEMA_DESCRIBEDBY);
-                        if (uriStr!=null)
-                        {
-                            URI uri = rootDesc.resolve(uriStr);
-                            if (uri!=null) {
-                                jsonSchemas.add(uri);
+
+            // generate code
+            applyXjcArguments(s2j.getOptions());
+            s2jModel = s2j.bind();
+            if (s2jModel != null) {
+                codeModel = s2jModel.generateCode(null, errorListener);
+                Iterator<JPackage> packages = codeModel.packages();
+                StringBuilder buf = new StringBuilder();
+                while(packages.hasNext()) {
+                    JPackage genPkg = packages.next();
+                    if (!genPkg.isDefined("ObjectFactory"))
+                        continue;
+                    if (buf.length() > 0)
+                        buf.append(':');
+                    buf.append(genPkg.name());
+                }
+                generatedPackages = buf.toString();
+
+                // Generate the json classes, first find any references in the 
+                // elements themselves
+                //
+
+                an.visit(new NodeVisitor() {
+
+                    public void visit(AbstractNode node) {
+
+                        if (node instanceof RepresentationNode) {
+                            RepresentationNode rn = (RepresentationNode) node;
+                            String uriStr = rn.getOtherAttribute(JSON_SCHEMA_DESCRIBEDBY);
+                            if (uriStr!=null)
+                            {
+                                URI uri = rootDesc.resolve(uriStr);
+                                if (uri!=null) {
+                                    jsonSchemas.add(uri);
+                                }
                             }
                         }
+
                     }
-                        
+
+                });
+
+
+                // Commented out until we work out what to about JSON Schema
+                //
+
+                final AnnotationStyle sa = STYLE_JERSEY1X.equals(parameters.getGenerationStyle()) ?
+                        AnnotationStyle.JACKSON1 : AnnotationStyle.JACKSON2;
+                GenerationConfig gc = new DefaultGenerationConfig() {
+                    public AnnotationStyle getAnnotationStyle() {
+                        return sa;
+                    }
+
+                };
+                AnnotatorFactory af = new AnnotatorFactory();
+
+                SchemaMapper sm = new SchemaMapper(
+                        new RuleFactory(
+                            gc, 
+                            af.getAnnotator(sa),
+                            new SchemaStore()), 
+                        new SchemaGenerator());
+
+
+
+                for (URI jsonSchema : jsonSchemas)
+                {
+                    String jsonSchemaStr = jsonSchema.toString();
+                    String name = jsonSchemaStr.substring(jsonSchemaStr.lastIndexOf('/')+1
+                            );
+                    String withoutExtension = name.lastIndexOf('.')!=-1
+                            ? name.substring(0,name.lastIndexOf('.'))
+                            : name;
+
+                    String className = Character.toUpperCase(withoutExtension.charAt(0))
+                            + ((withoutExtension.length() > 1 ? withoutExtension.substring(1) : ""));
+
+                    sm.generate(codeModel, 
+                            className, parameters.getPkg(), jsonSchema.toURL());
+
+                    // Store this as we would any other json type
+                    jsonTypes.put(
+                            jsonSchema, 
+                            codeModel._getClass(parameters.getPkg() + "." + className));
                 }
-                
-            });
-            
-            
-            // Commented out until we work out what to about JSON Schema
-            //
-            
-            final AnnotationStyle sa = STYLE_JERSEY1X.equals(parameters.getGenerationStyle()) ?
-                    AnnotationStyle.JACKSON1 : AnnotationStyle.JACKSON2;
-            GenerationConfig gc = new DefaultGenerationConfig() {
-                public AnnotationStyle getAnnotationStyle() {
-                    return sa;
-                }
-                
-            };
-            AnnotatorFactory af = new AnnotatorFactory();
-            
-            SchemaMapper sm = new SchemaMapper(
-                    new RuleFactory(
-                        gc, 
-                        af.getAnnotator(sa),
-                        new SchemaStore()), 
-                    new SchemaGenerator());
-            
-            
-            
-            for (URI jsonSchema : jsonSchemas)
-            {
-                String jsonSchemaStr = jsonSchema.toString();
-                String name = jsonSchemaStr.substring(jsonSchemaStr.lastIndexOf('/')+1
-                        );
-                String withoutExtension = name.lastIndexOf('.')!=-1
-                        ? name.substring(0,name.lastIndexOf('.'))
-                        : name;
-                
-                String className = Character.toUpperCase(withoutExtension.charAt(0))
-                        + ((withoutExtension.length() > 1 ? withoutExtension.substring(1) : ""));
-                
-                sm.generate(codeModel, 
-                        className, parameters.getPkg(), jsonSchema.toURL());
-                
-                // Store this as we would any other json type
-                jsonTypes.put(
-                        jsonSchema, 
-                        codeModel._getClass(parameters.getPkg() + "." + className));
-            }
-            
-            
-            // Generate the resource interface
-            //
-            jPkg = codeModel._package(parameters.getPkg());
- 
-            
-            Map<String, ResourceTypeNode> ifaceMap = astBuilder.getInterfaceMap();
-            for (String id: ifaceMap.keySet()) {
-                ResourceTypeNode n = ifaceMap.get(id);
-                
-                ResourceClassGenerator rcGen = createGeneratorForResourceType();
-                rcGen.generateResourceTypeInterface(n);
-            }
 
 
-            for (ResourceNode r: rs)
-            {
-                ResourceClassGenerator rcg = createGeneratorForResource(r);
-                rcg.generateEndpointClass(rootDesc, r); 
+                // Generate the resource interface
+                //
+                jPkg = codeModel._package(parameters.getPkg());
             }
-
-            codeModel.build(parameters.getCodeWriter());
+        }
+        else
+        {
+            codeModel = new JCodeModel();
         }
 
+        
+        Map<String, ResourceTypeNode> ifaceMap = astBuilder.getInterfaceMap();
+        for (String id: ifaceMap.keySet()) {
+            ResourceTypeNode n = ifaceMap.get(id);
+
+            ResourceClassGenerator rcGen = createGeneratorForResourceType();
+            rcGen.generateResourceTypeInterface(n);
+        }
+
+
+        for (ResourceNode r: rs)
+        {
+            ResourceClassGenerator rcg = createGeneratorForResource(r);
+            rcg.generateEndpointClass(rootDesc, r); 
+        }
+
+
+        // Reuse the codemodel abstract for the moment
+        codeModel.build(parameters.getCodeWriter());
+        
+ 
         // If we have gotten this far as we have recorded a fatal error then
         // we should wrap and re-throw it
-        if (errorListener.hasFatalErrorOccured())
+        if (errorListener!=null && errorListener.hasFatalErrorOccured())
         {
             throw new JAXBException(
                     Wadl2JavaMessages.JAXB_PROCESSING_FAILED(),
@@ -667,6 +697,11 @@ public class Wadl2Java {
                 resolver,
                 codeModel, jPkg, generatedPackages, javaDoc, resource);
         }
+        else if (STYLE_JQUERY_JAVASCRIPT.equals(parameters.getGenerationStyle())) {
+            return  new JavaScriptGenerator(
+                    parameters,
+                    codeModel);
+        }
         else{
             throw new IllegalStateException("Invalid generation style");
         }
@@ -683,6 +718,11 @@ public class Wadl2Java {
                     parameters,
                     resolver,
                     codeModel, jPkg, generatedPackages, javaDoc);
+        }
+        else if (STYLE_JQUERY_JAVASCRIPT.equals(parameters.getGenerationStyle())) {
+            return  new JavaScriptGenerator(
+                    parameters,
+                    codeModel);
         }
         else {
             throw new IllegalStateException("Invalid generation style");
