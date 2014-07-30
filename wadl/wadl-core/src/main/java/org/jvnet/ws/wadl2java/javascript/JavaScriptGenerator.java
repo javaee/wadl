@@ -17,8 +17,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jvnet.ws.wadl.Param;
@@ -462,12 +466,16 @@ public class JavaScriptGenerator
     }
 
     private static class BlockTracker {
+        
 
         public BlockTracker(PrintWriter pw) {
             this.pw = pw;
         }
 
-        int depth;
+        // Workaround for the fact gdavison didn't ensure that each method returned
+        // an instance of Block, enough to track how many items in a 
+        // json style object
+        Deque<AtomicInteger> counterStack = new ArrayDeque<>();
         PrintWriter pw;
 
         public Block assignment(String name) {
@@ -520,6 +528,13 @@ public class JavaScriptGenerator
         }
 
         public Block jsonValue(String name) {
+            
+            AtomicInteger counter = counterStack.peek();
+            if (counter.getAndIncrement()> 0)
+            {
+                pw.println(",");
+            }
+            
             pw.print(name);
             pw.print(" : ");
 
@@ -527,7 +542,9 @@ public class JavaScriptGenerator
 
                 @Override
                 public void close() {
-                    pw.println(",");
+                    // Do noting as you can;t know to generate another
+                    // , without the next item being set.
+                    //pw.println(",");
                 }
 
             };
@@ -567,16 +584,20 @@ public class JavaScriptGenerator
 
         public Block block() {
             pw.println("{");
-            depth++;
+            counterStack.push(new AtomicInteger(0));
 
             return new Block() {
 
                 @Override
                 public void close() {
                     pw.println("\n}");
-                    depth--;
-                    if (depth < 0) {
-                        throw new IllegalStateException("Ended pop too much out of a block");
+                    try
+                    {
+                        counterStack.pop();
+                    }
+                    catch (NoSuchElementException nee)
+                    {
+                        throw new IllegalStateException("Ended pop too much out of a block", nee);
                     }
                 }
 
