@@ -419,7 +419,23 @@ public class JavaScriptGenerator
                                             }
 
                                             try (Block value = bt.jsonValue("data")) {
-                                                bt.reference("requestEntity");
+                                                
+                                                if (inputRep.getMediaType().contains("json"))
+                                                {
+                                                    bt.invokefunction("JSON","stringify", 
+                                                        new Parameter()
+                                                        {
+                                                            @Override
+                                                            public void build() {
+                                                                bt.reference("requestEntity");
+                                                            }
+                                                        });
+                                                }
+                                                else
+                                                {
+                                                    bt.reference("requestEntity");
+                                                }
+                                                
                                             }
 
                                         }

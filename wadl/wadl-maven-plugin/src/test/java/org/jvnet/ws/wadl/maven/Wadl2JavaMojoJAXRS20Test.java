@@ -69,6 +69,11 @@ public class Wadl2JavaMojoJAXRS20Test
                                     public String getMethod() {
                                         return cr.getMethod();
                                     }
+
+                                    @Override
+                                    public String getBodyAsString() {
+                                        throw new UnsupportedOperationException("Not supported yet.");
+                                    }
                                 });
 
                         // Generate some pre-canned response

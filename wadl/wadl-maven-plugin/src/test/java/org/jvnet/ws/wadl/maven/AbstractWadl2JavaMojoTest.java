@@ -67,6 +67,7 @@ public abstract class AbstractWadl2JavaMojoTest extends AbstractMojoTestCase {
     {
        public URI getURI();
        public String getMethod();
+       public String getBodyAsString();
     }
     
     

@@ -74,6 +74,11 @@ public class Wadl2JavaMojoTest extends AbstractJavaWadl2JavaMojoTest<Client> {
                             public String getMethod() {
                                 return cr.getMethod();
                             }
+
+                            @Override
+                            public String getBodyAsString() {
+                                throw new UnsupportedOperationException("Not supported yet."); 
+                            }
                         });
 
                 ClientResponse resp;

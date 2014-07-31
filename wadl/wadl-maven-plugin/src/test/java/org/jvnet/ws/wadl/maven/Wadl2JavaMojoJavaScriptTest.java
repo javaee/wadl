@@ -118,6 +118,13 @@ public class Wadl2JavaMojoJavaScriptTest
                             public String getMethod() {
                                 return webRequest.getHttpMethod().name();
                             }
+
+                            @Override
+                            public String getBodyAsString() {
+                                return webRequest.getRequestBody();
+                            }
+                            
+                            
                         });
 
                 // Generate some pre-canned response
@@ -362,13 +369,17 @@ public class Wadl2JavaMojoJavaScriptTest
                        + "}).fail(function(jqXHR, textStatus, errorThrown) {"
                         + "     console.log(errorThrown);\n"
                         + "     console.log(jqXHR.responseText);"
-                        + "});");
+                        + "});"); 
 
-        assertThat("http://localhost:9998/helloworld",
-                equalTo(_requests.get(0).getURI().toString()));
+        assertThat(_requests.get(1).getURI().toString(),
+                equalTo("http://localhost:9998/helloworld"));
 
-        assertThat("world",
-                equalTo(result.get("hello")));
+        assertThat(_requests.get(1).getBodyAsString(),
+                containsString("{\"hello\":\"world\"}"));
+        
+        
+        assertThat(result.get("hello").toString(),
+                equalTo("world"));
         
     }    
 }
