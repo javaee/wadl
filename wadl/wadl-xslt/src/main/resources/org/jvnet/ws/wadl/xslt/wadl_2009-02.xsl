@@ -22,8 +22,8 @@
    <!-- Performance really slow   <xsl:import-schema schema-location="wadl_2009-02.xsd" namespace="http://wadl.dev.java.net/2009/02" /> -->
    <!-- This parameter allows this page to be used as a test tool, this value
      should be a URI that can be used to invoke a REST test tool of some kind -->
-   <xsl:param name="testButtonUri" as="xsd:string"/>
-   <xsl:param name="jQueryUri" as="xsd:string"/>
+   <xsl:param name="testButtonUri" as="xsd:string?"/>
+   <xsl:param name="jQueryUri" as="xsd:string?"/>
    
    
    <!-- This is a workaround for the fact that elements in a sequence loose there
@@ -1288,7 +1288,7 @@ h1.hidden {
       <!-- This allows us to walk back up the tree when we have object deferences -->
       <xsl:param name="resourceObjectPath" required="yes"/> 
     
-      <xsl:param name="resourceTypes" required="no"/>
+      <xsl:param name="resourceTypes" select="()" required="no"/>
 
       <!-- We need to de-reference each parameter before we can test it 
           otherwise we won't know what style it is extracted to here

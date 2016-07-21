@@ -119,7 +119,7 @@
             <xsl:otherwise>
                 <!-- Just copy over the element with the new namespace -->
                 <xsl:element namespace="http://wadl.dev.java.net/2009/02" name="{local-name()}">
-                    <xsl:copy-of select="namespace::*"/>
+<!--                    <xsl:copy-of select="namespace::*"/> -->
                     <xsl:apply-templates select="@*|node()"/>
                 </xsl:element>
             </xsl:otherwise>
