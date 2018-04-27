@@ -305,13 +305,34 @@ public abstract class AbstractJavaWadl2JavaMojoTest<ClientType> extends Abstract
                 .invoke("One", "Two", String.class);
         
         assertThat(result, not(nullValue()));
-        assertThat("http://otherhost/newsSearch?query=Two&appid=One",
-                equalTo(_requests.get(0).getURI().toString()));
-    }    
-    
 
-    
-    
+        URI target = URI.create("http://otherhost/newsSearch?query=Two&appid=One");
+
+
+        URI uri = _requests.get(0).getURI();
+
+        compareUriAndSortQueryParams(target, uri);
+
+    }
+
+    private void compareUriAndSortQueryParams(URI target, URI uri) {
+        assertThat(target.getHost(),
+                equalTo(uri.getHost()));
+        assertThat(target.getPath(),
+                equalTo(uri.getPath()));
+
+        String targetQueryParam[] = target.getQuery().split("&");
+        String uriQueryParams[] = uri.getQuery().split("&");
+        Arrays.sort(targetQueryParam);
+        Arrays.sort(uriQueryParams);
+
+        assertThat(
+                targetQueryParam,
+                equalTo(
+                    uriQueryParams));
+    }
+
+
     /**
      * Tests the case in which a valid wadl file exists, and it it contains a method that returns
      * just text/plain
@@ -1257,7 +1278,8 @@ public abstract class AbstractJavaWadl2JavaMojoTest<ClientType> extends Abstract
         String actualURI = _requests.get(0).getURI().toString();
         
         // Removed until Jersey-1369 is resolved
-        assertEquals("We should have a really funky URI",uri, actualURI);
+        compareUriAndSortQueryParams(
+                URI.create(actualURI), URI.create(uri));
         
 
         // Populate a canned response again
