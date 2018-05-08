@@ -594,7 +594,9 @@ public class Wadl2Java {
                     }
 
                 };
-                AnnotatorFactory af = new AnnotatorFactory();
+                // JRC: AnnotatorFactory constructor now takes argument of
+                // type GenerationConfig.
+                AnnotatorFactory af = new AnnotatorFactory(gc);
 
                 SchemaMapper sm = new SchemaMapper(
                         new RuleFactory(

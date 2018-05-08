@@ -47,7 +47,7 @@
     <parent>
         <groupId>org.jvnet.ws.wadl</groupId>
         <artifactId>wadl</artifactId>
-        <version>1.1.7-SNAPSHOT</version>
+        <version>1.1.8-SNAPSHOT</version>
     </parent>
     <artifactId>wadl-core</artifactId>
     <name>WADL Core</name>
@@ -106,18 +106,24 @@
             <artifactId>jersey-common</artifactId>
             <version>${jersey2.version}</version>
         </dependency>
-        
+        <!-- Update to version 0.5.1
         <dependency>
             <groupId>org.jsonschema2pojo</groupId>
             <artifactId>jsonschema2pojo-core</artifactId>
             <version>0.4.4</version>
         </dependency>
-
+        -->
+        <!-- https://mvnrepository.com/artifact/org.jsonschema2pojo/jsonschema2pojo-core -->
+        <dependency>
+            <groupId>org.jsonschema2pojo</groupId>
+            <artifactId>jsonschema2pojo-core</artifactId>
+            <version>0.5.1</version>
+        </dependency>
         <!-- Required to include the upgrade.xsl file -->
         <dependency>
             <groupId>org.jvnet.ws.wadl</groupId>
             <artifactId>wadl-xslt</artifactId>
-            <version>1.1.7-SNAPSHOT</version>
+            <version>1.1.8-SNAPSHOT</version>
         </dependency>
 
     </dependencies>
