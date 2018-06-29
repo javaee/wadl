@@ -3,16 +3,7 @@
 
     DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
-    Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
-
-    The contents of this file are subject to the terms of either the GNU
-    General Public License Version 2 only ("GPL") or the Common Development
-    and Distribution License("CDDL") (collectively, the "License").  You
-    may not use this file except in compliance with the License.  You can
-    obtain a copy of the License at
-    http://glassfish.java.net/public/CDDL+GPL_1_1.html
-    or packager/legal/LICENSE.txt.  See the License for the specific
-    language governing permissions and limitations under the License.
+    Copyright (c) 2012, 2018 Oracle and/or its affiliates. All rights reserved.
 
     When distributing the software, include this License Header Notice in each
     file and include the License file at packager/legal/LICENSE.txt.
@@ -182,7 +173,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>ant</groupId>
+                <groupId>org.apache.ant</groupId>
                 <artifactId>ant</artifactId>
                 <version>${ant.version}</version>
             </dependency>
@@ -324,7 +315,7 @@
         <!-- we're using a codehaus plugin snapshot -->
         <repository>
             <id>Maven Snapshots</id>
-            <url>http://snapshots.maven.codehaus.org/maven2/</url>
+            <url>https://maven.java.net/content/repositories/snapshots/</url>
             <snapshots>
                 <updatePolicy>daily</updatePolicy>
             </snapshots>
@@ -351,7 +342,7 @@
         </pluginRepository>
         <pluginRepository>
             <id>Maven Snapshots</id>
-            <url>http://snapshots.maven.codehaus.org/maven2</url>
+            <url>https://maven.java.net/content/repositories/snapshots</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -374,7 +365,7 @@
     </modules>
 
     <properties>
-        <ant.version>1.6.5</ant.version>
+        <ant.version>1.7.0</ant.version>
         <jersey1.version>1.18</jersey1.version>
         <jersey2.version>2.9</jersey2.version>
         <junit.version>4.10</junit.version>
